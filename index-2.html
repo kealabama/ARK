@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="VELA" />
+  <title>VELA — Portefeuille local</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #121214;
+      --surface-2: #1a1a1e;
+      --fg: #f4f4f1;
+      --muted: #8b8b86;
+      --subtle: #5c5c58;
+      --border: #26262b;
+      --accent: #c8ccd4;
+      --accent-fg: #09090b;
+      --up: #5fbf8a;
+      --down: #d16b6b;
+      --radius: 0.75rem;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --font: "Instrument Sans", system-ui, sans-serif;
+      --display: "Newsreader", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      overscroll-behavior-y: contain;
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    a { color: inherit; }
+    .app {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 0 1rem calc(5.5rem + var(--safe-b));
+    }
+    header.top {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: calc(0.55rem + env(safe-area-inset-top, 0px)) 0 0.7rem;
+      background: color-mix(in oklab, var(--bg) 92%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .seg {
+      display: inline-flex;
+      background: var(--surface-2);
+      border-radius: 999px;
+      padding: 0.18rem;
+      flex-shrink: 0;
+    }
+    .seg button {
+      height: 1.85rem;
+      min-width: 2.55rem;
+      padding: 0 0.55rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+    }
+    .seg button.on {
+      background: var(--fg);
+      color: var(--accent-fg);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .brand svg { width: 1.5rem; height: 1.5rem; color: var(--accent); }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .pill {
+      height: 2rem;
+      padding: 0 0.7rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+      border: 1px solid transparent;
+    }
+    .pill.on { background: var(--surface-2); color: var(--fg); }
+    .pill:hover { color: var(--fg); }
+    section { margin-top: 1.5rem; }
+    .label {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .hero {
+      font-family: var(--display);
+      font-size: clamp(2rem, 8vw, 2.75rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      margin: 0.35rem 0 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .subrow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .chg {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .chg.up { background: color-mix(in oklab, var(--up) 18%, transparent); color: var(--up); }
+    .chg.down { background: color-mix(in oklab, var(--down) 18%, transparent); color: var(--down); }
+    .chg.flat { background: var(--surface-2); color: var(--muted); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+    .card + .card { margin-top: 0.65rem; }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .row:last-child { border-bottom: none; padding-bottom: 0; }
+    .row:first-child { padding-top: 0; }
+    .logo {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 999px;
+      background: var(--surface-2);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .logo.ph {
+      display: grid;
+      place-items: center;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .grow { flex: 1; min-width: 0; }
+    .name { font-weight: 500; font-size: 0.95rem; }
+    .sym { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+    .right { text-align: right; font-variant-numeric: tabular-nums; }
+    .right .v { font-weight: 500; }
+    .right .s { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+    .sec-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+    }
+    .sec-head h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      height: 2.5rem;
+      padding: 0 1rem;
+      border-radius: 0.65rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn.primary { background: var(--accent); color: var(--accent-fg); }
+    .btn.secondary { background: var(--surface-2); color: var(--fg); }
+    .btn.ghost { color: var(--muted); }
+    .btn.ghost:hover { color: var(--fg); background: var(--surface-2); }
+    .btn.danger { background: color-mix(in oklab, var(--down) 18%, transparent); color: var(--down); }
+    .btn.sm { height: 2rem; padding: 0 0.75rem; font-size: 0.75rem; }
+    .btn.icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--fg);
+    }
+    .nav {
+      position: fixed;
+      inset-inline: 0;
+      bottom: 0;
+      z-index: 30;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--border);
+      background: color-mix(in oklab, var(--bg) 92%, transparent);
+      backdrop-filter: blur(14px);
+      padding-bottom: var(--safe-b);
+    }
+    .nav button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+      height: 3.5rem;
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+    .nav button.on { color: var(--fg); }
+    .nav svg { width: 1.25rem; height: 1.25rem; }
+    .empty {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .sheet-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: color-mix(in oklab, var(--bg) 70%, transparent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .sheet-bg.open { opacity: 1; pointer-events: auto; }
+    .sheet {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      z-index: 50;
+      width: min(100%, 28rem);
+      max-height: min(92dvh, 40rem);
+      transform: translate(-50%, 110%);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 1.25rem 1.25rem 0 0;
+      display: flex;
+      flex-direction: column;
+      padding: 0.5rem 1rem calc(1rem + var(--safe-b));
+    }
+    .sheet.open { transform: translate(-50%, 0); }
+    .handle {
+      width: 2.5rem;
+      height: 0.25rem;
+      border-radius: 999px;
+      background: var(--border);
+      margin: 0.35rem auto 0.75rem;
+      flex-shrink: 0;
+    }
+    .sheet h3 {
+      margin: 0 0 0.75rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .sheet-body {
+      overflow: auto;
+      flex: 1;
+      min-height: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    .field { margin-bottom: 0.75rem; }
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      height: 2.75rem;
+      padding: 0 0.75rem;
+      border-radius: 0.65rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 16px; /* iOS zoom prevent */
+    }
+    .field textarea {
+      height: auto;
+      min-height: 4rem;
+      padding: 0.65rem 0.75rem;
+      resize: vertical;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none;
+      border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+    .side-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+      margin-bottom: 0.85rem;
+    }
+    .side-toggle button {
+      height: 2.5rem;
+      border-radius: 0.65rem;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+    .side-toggle button.on-buy {
+      background: color-mix(in oklab, var(--up) 16%, transparent);
+      border-color: color-mix(in oklab, var(--up) 35%, var(--border));
+      color: var(--up);
+    }
+    .side-toggle button.on-sell {
+      background: color-mix(in oklab, var(--down) 16%, transparent);
+      border-color: color-mix(in oklab, var(--down) 35%, var(--border));
+      color: var(--down);
+    }
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+    .actions .btn { flex: 1; }
+    .status {
+      font-size: 0.75rem;
+      color: var(--subtle);
+      margin-top: 0.35rem;
+    }
+    .status.ok { color: var(--up); }
+    .status.err { color: var(--down); }
+    .search-list {
+      max-height: 12rem;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      background: var(--bg);
+    }
+    .search-list button {
+      width: 100%;
+      text-align: left;
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .search-list button:last-child { border-bottom: none; }
+    .search-list button:hover { background: var(--surface-2); }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(4.5rem + var(--safe-b));
+      transform: translateX(-50%) translateY(1rem);
+      z-index: 60;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      padding: 0.65rem 1rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      white-space: nowrap;
+      max-width: 90vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .alloc {
+      height: 0.35rem;
+      border-radius: 999px;
+      background: var(--surface-2);
+      overflow: hidden;
+      margin-top: 0.35rem;
+    }
+    .alloc > i {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.45rem;
+      margin-top: 1rem;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      padding: 0.7rem 0.65rem;
+    }
+    .stat .k {
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .stat .n {
+      margin-top: 0.25rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .pos {
+      padding: 0.9rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .pos:first-child { padding-top: 0; }
+    .pos:last-child { border-bottom: none; padding-bottom: 0; }
+    .pos-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+    }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.7rem;
+    }
+    .cmp {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      padding: 0.5rem 0.6rem;
+    }
+    .cmp .k { font-size: 0.65rem; color: var(--muted); }
+    .cmp .n {
+      margin-top: 0.15rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .perf-bar {
+      position: relative;
+      height: 0.42rem;
+      border-radius: 999px;
+      background: var(--surface-2);
+      margin-top: 0.65rem;
+      overflow: hidden;
+    }
+    .perf-bar > i {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      min-width: 4%;
+    }
+    .perf-bar > i.up { background: var(--up); }
+    .perf-bar > i.down { background: var(--down); }
+    .perf-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .muted { color: var(--muted); }
+    .hidden { display: none !important; }
+    .tx-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+    .danger-text { color: var(--down); font-size: 0.8rem; }
+    footer.note {
+      margin: 2rem 0 1rem;
+      font-size: 0.75rem;
+      color: var(--subtle);
+      line-height: 1.45;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M7 18.5c3.2-6 14.8-6 18 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M7 22h18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.45"/>
+        </svg>
+        <span>VELA</span>
+      </div>
+      <div class="seg" id="currencyPills"></div>
+    </header>
+
+    <main id="view-home">
+      <section>
+        <p class="label">Patrimoine</p>
+        <h1 class="hero" id="netWorth">—</h1>
+        <div class="subrow">
+          <span class="chg flat" id="pnlPill">—</span>
+          <span id="pnlLabel">plus-value latente</span>
+        </div>
+        <div class="stats" id="dashStats"></div>
+        <p class="status" id="priceStatus">Cours : en attente…</p>
+      </section>
+
+      <section>
+        <div class="sec-head">
+          <h2>Positions</h2>
+          <button type="button" class="btn sm secondary" id="btnRefreshPrices">Actualiser</button>
+        </div>
+        <div class="card" id="holdingsCard">
+          <div class="empty">Aucune position. Ajoute une transaction.</div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head">
+          <h2>Liquidités</h2>
+          <button type="button" class="btn sm secondary" id="btnAddCash">+</button>
+        </div>
+        <div class="card" id="cashCard">
+          <div class="empty">Aucune liquidité.</div>
+        </div>
+      </section>
+    </main>
+
+    <main id="view-tx" class="hidden">
+      <section>
+        <div class="sec-head">
+          <h2>Transactions</h2>
+          <button type="button" class="btn sm primary" id="btnAddTxTop">+ Ajouter</button>
+        </div>
+        <div class="card" id="txCard">
+          <div class="empty">Aucune transaction.</div>
+        </div>
+      </section>
+    </main>
+
+    <main id="view-markets" class="hidden">
+      <section>
+        <div class="sec-head">
+          <h2>Marchés suivis</h2>
+        </div>
+        <div class="card" id="marketsCard">
+          <div class="empty">Chargement…</div>
+        </div>
+        <p class="status">BTC, ETH, ONDO, COIN, CRCL en API. Touche une ligne pour saisir ou corriger un prix (surtout les tickers perso).</p>
+      </section>
+    </main>
+
+    <main id="view-settings" class="hidden">
+      <section>
+        <div class="sec-head"><h2>Données</h2></div>
+        <div class="card">
+          <p style="margin:0 0 0.75rem;font-size:0.9rem;color:var(--muted);line-height:1.45">
+            Tout est stocké <strong style="color:var(--fg)">dans ce navigateur</strong> (localStorage).
+            Aucun compte, aucun serveur VELA. Exporte régulièrement.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <button type="button" class="btn primary" id="btnExport">Exporter CSV</button>
+            <button type="button" class="btn secondary" id="btnExportJson">Exporter JSON (sauvegarde complète)</button>
+            <label class="btn secondary" style="cursor:pointer;text-align:center">
+              Importer JSON
+              <input type="file" id="importJson" accept="application/json,.json" class="hidden" />
+            </label>
+            <button type="button" class="btn danger" id="btnWipe">Effacer toutes les données</button>
+          </div>
+          <p class="status" id="storageInfo" style="margin-top:0.75rem"></p>
+        </div>
+      </section>
+      <section>
+        <div class="sec-head"><h2>À propos</h2></div>
+        <div class="card">
+          <p style="margin:0;font-size:0.9rem;color:var(--muted);line-height:1.5">
+            <strong style="color:var(--fg)">VELA local</strong> — carnet de portefeuille crypto & actions,
+            sans abonnement. Les cours viennent d’APIs publiques quand internet est dispo ;
+            sinon les derniers prix en cache ou saisie manuelle.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="note">
+      VELA local · données sur cet appareil · pas un conseil d’investissement
+    </footer>
+  </div>
+
+  <nav class="nav" aria-label="Navigation">
+    <button type="button" class="on" data-view="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z"/></svg>
+      Accueil
+    </button>
+    <button type="button" data-view="tx">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M8 7h13M8 12h13M8 17h13M3 7h.01M3 12h.01M3 17h.01"/></svg>
+      Transactions
+    </button>
+    <button type="button" data-view="markets">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>
+      Marchés
+    </button>
+    <button type="button" data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      Données
+    </button>
+  </nav>
+
+  <div class="sheet-bg" id="sheetBg"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true">
+    <div class="handle"></div>
+    <h3 id="sheetTitle">Ajouter</h3>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "vela.local.v1";
+  const PRICE_KEY = "vela.local.prices.v1";
+
+  /** Actifs de base (API auto). Le reste = tickers perso mémorisés. */
+  const BASE_CATALOG = [
+    { id: "btc-bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", gecko: "bitcoin", live: true },
+    { id: "eth-ethereum", symbol: "ETH", name: "Ethereum", kind: "crypto", gecko: "ethereum", live: true },
+    { id: "ondo-ondo", symbol: "ONDO", name: "Ondo", kind: "crypto", gecko: "ondo-finance", live: true },
+    { id: "eq-COIN", symbol: "COIN", name: "Coinbase", kind: "equity", live: true },
+    { id: "eq-CRCL", symbol: "CRCL", name: "Circle", kind: "equity", live: true },
+  ];
+
+  const VENUES = [
+    "Coinbase", "Binance", "Kraken", "Swissquote", "IBKR",
+    "Revolut", "Bitstamp", "NYSE", "NASDAQ", "SIX", "Autre",
+  ];
+
+  const FX_FALLBACK = { usd: 1, eur: 0.92, chf: 0.8, gbp: 0.74 };
+
+  /** @type {{ version: number, currency: string, txs: any[], liquidity: any[], customAssets: any[] }} */
+  let state = loadState();
+  /** @type {Record<string, { usd: number, chg?: number, at: number, source?: string }>} */
+  let prices = loadPrices();
+  let fx = { ...FX_FALLBACK };
+  let currentView = "home";
+
+  function uid() {
+    return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { version: 1, currency: "chf", txs: [], liquidity: [], customAssets: [] };
+      const data = JSON.parse(raw);
+      return {
+        version: 1,
+        currency: data.currency || "chf",
+        txs: Array.isArray(data.txs) ? data.txs : [],
+        liquidity: Array.isArray(data.liquidity) ? data.liquidity : [],
+        customAssets: Array.isArray(data.customAssets) ? data.customAssets : [],
+      };
+    } catch {
+      return { version: 1, currency: "chf", txs: [], liquidity: [], customAssets: [] };
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    updateStorageInfo();
+  }
+
+  function loadPrices() {
+    try {
+      const raw = localStorage.getItem(PRICE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function savePrices() {
+    localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
+  }
+
+  function n(v) {
+    const x = Number(v);
+    return Number.isFinite(x) ? x : 0;
+  }
+
+  /** Liste complète = base + tickers ajoutés par toi (persistés). */
+  function allAssets() {
+    const seen = new Set(BASE_CATALOG.map((a) => a.id));
+    const extra = [];
+    for (const a of state.customAssets || []) {
+      if (!a || !a.id || seen.has(a.id)) continue;
+      seen.add(a.id);
+      extra.push({
+        id: a.id,
+        symbol: a.symbol,
+        name: a.name || a.symbol,
+        kind: a.kind || "crypto",
+        live: false,
+        custom: true,
+      });
+    }
+    return BASE_CATALOG.concat(extra);
+  }
+
+  function findAsset(idOrSym) {
+    const q = String(idOrSym || "").toLowerCase();
+    return allAssets().find(
+      (a) => a.id === idOrSym || a.symbol.toLowerCase() === q || a.id.toLowerCase() === q
+    );
+  }
+
+  /** Enregistre un ticker libre dans la liste principale pour les prochaines fois. */
+  function ensureCustomAsset(symbol, name, kind) {
+    const sym = String(symbol || "").trim().toUpperCase();
+    if (!sym) return null;
+    const existing = findAsset(sym);
+    if (existing) return existing;
+    const id = "custom-" + sym.toLowerCase();
+    const asset = {
+      id,
+      symbol: sym,
+      name: (name || sym).trim(),
+      kind: kind === "equity" ? "equity" : "crypto",
+      live: false,
+      custom: true,
+    };
+    state.customAssets = state.customAssets || [];
+    state.customAssets.push({
+      id: asset.id,
+      symbol: asset.symbol,
+      name: asset.name,
+      kind: asset.kind,
+    });
+    saveState();
+    return asset;
+  }
+
+  /** Dernier prix connu → positions, marchés, accueil. */
+  function setLastPrice(assetId, usd, source) {
+    if (!assetId || !(usd > 0)) return;
+    const prev = prices[assetId]?.usd;
+    let chg = prices[assetId]?.chg ?? 0;
+    if (prev > 0 && source === "manual") {
+      chg = ((usd - prev) / prev) * 100;
+    }
+    prices[assetId] = {
+      usd,
+      chg: Number.isFinite(chg) ? chg : 0,
+      at: Date.now(),
+      source: source || "manual",
+    };
+    savePrices();
+  }
+
+  function formatMoney(value, currency) {
+    const cur = (currency || state.currency).toUpperCase();
+    try {
+      return new Intl.NumberFormat("fr-CH", {
+        style: "currency",
+        currency: cur,
+        maximumFractionDigits: Math.abs(value) >= 1000 ? 0 : Math.abs(value) >= 1 ? 2 : 6,
+      }).format(value);
+    } catch {
+      return value.toFixed(2) + " " + cur;
+    }
+  }
+
+  function formatPct(v) {
+    if (!Number.isFinite(v)) return "—";
+    const sign = v > 0 ? "+" : "";
+    return sign + v.toFixed(2) + " %";
+  }
+
+  function formatQty(v) {
+    const abs = Math.abs(v);
+    const d = abs >= 100 ? 2 : abs >= 1 ? 4 : 8;
+    return new Intl.NumberFormat("fr-CH", { maximumFractionDigits: d }).format(v);
+  }
+
+  function formatUnit(usd) {
+    const v = usdToDisplay(usd);
+    const abs = Math.abs(v);
+    const digits = abs >= 1000 ? 2 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : 6;
+    const cur = state.currency.toUpperCase();
+    try {
+      return new Intl.NumberFormat("fr-CH", {
+        style: "currency",
+        currency: cur,
+        maximumFractionDigits: digits,
+      }).format(v);
+    } catch {
+      return v.toFixed(digits) + " " + cur;
+    }
+  }
+
+  function formatDateTime(iso) {
+    const d = new Date(iso);
+    if (!Number.isFinite(d.getTime())) return "—";
+    return d.toLocaleString("fr-CH", {
+      day: "numeric", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  function fxRate(code) {
+    return fx[(code || "usd").toLowerCase()] || 1;
+  }
+
+  function usdToDisplay(usd) {
+    return usd * fxRate(state.currency);
+  }
+
+  function cashToUsd(amount, code) {
+    const c = (code || "USD").toUpperCase();
+    if (c === "USDT" || c === "USDC" || c === "DAI" || c === "USD") return amount;
+    if (c === "EUR") return amount / fxRate("eur");
+    if (c === "CHF") return amount / fxRate("chf");
+    if (c === "GBP") return amount / fxRate("gbp");
+    return amount;
+  }
+
+  function cashToDisplay(amount, code) {
+    return usdToDisplay(cashToUsd(amount, code));
+  }
+
+  function priceUsd(assetId) {
+    return prices[assetId]?.usd || 0;
+  }
+
+  function aggregateHoldings() {
+    const sorted = [...state.txs].sort(
+      (a, b) => Date.parse(a.executedAt) - Date.parse(b.executedAt)
+    );
+    /** @type {Map<string, any>} */
+    const map = new Map();
+    for (const tx of sorted) {
+      const qty = n(tx.quantity);
+      const px = n(tx.priceUsd);
+      const fee = n(tx.feeUsd);
+      const cur = map.get(tx.assetId) || {
+        assetId: tx.assetId,
+        symbol: tx.symbol,
+        name: tx.name,
+        qty: 0,
+        costUsd: 0,
+      };
+      if (tx.side === "buy") {
+        cur.qty += qty;
+        cur.costUsd += qty * px + fee;
+      } else {
+        const avg = cur.qty > 0 ? cur.costUsd / cur.qty : px;
+        const sellQty = Math.min(qty, cur.qty);
+        cur.qty -= sellQty;
+        cur.costUsd = Math.max(0, cur.costUsd - avg * sellQty);
+      }
+      cur.symbol = tx.symbol;
+      cur.name = tx.name;
+      map.set(tx.assetId, cur);
+    }
+    const holdings = [];
+    for (const acc of map.values()) {
+      if (acc.qty <= 1e-12) continue;
+      const pUsd = priceUsd(acc.assetId);
+      const valueUsd = acc.qty * pUsd;
+      const pnlUsd = valueUsd - acc.costUsd;
+      const chg = prices[acc.assetId]?.chg ?? 0;
+      holdings.push({
+        ...acc,
+        priceUsd: pUsd,
+        valueUsd,
+        value: usdToDisplay(valueUsd),
+        costUsd: acc.costUsd,
+        avgCostUsd: acc.qty > 0 ? acc.costUsd / acc.qty : 0,
+        pnlUsd,
+        pnl: usdToDisplay(pnlUsd),
+        pnlPct: acc.costUsd > 0 ? (pnlUsd / acc.costUsd) * 100 : 0,
+        chg24h: chg,
+      });
+    }
+    holdings.sort((a, b) => b.valueUsd - a.valueUsd);
+    const totalValue = holdings.reduce((s, h) => s + h.value, 0);
+    for (const h of holdings) h.allocation = totalValue > 0 ? (h.value / totalValue) * 100 : 0;
+    return holdings;
+  }
+
+  function portfolioTotals() {
+    const holdings = aggregateHoldings();
+    const valueUsd = holdings.reduce((s, h) => s + h.valueUsd, 0);
+    const costUsd = holdings.reduce((s, h) => s + h.costUsd, 0);
+    const cashUsd = state.liquidity.reduce((s, c) => s + cashToUsd(n(c.amount), c.currency), 0);
+    const totalUsd = valueUsd + cashUsd;
+    return {
+      holdings,
+      valueUsd,
+      costUsd,
+      cashUsd,
+      totalUsd,
+      value: usdToDisplay(valueUsd),
+      cash: usdToDisplay(cashUsd),
+      total: usdToDisplay(totalUsd),
+      pnlUsd: valueUsd - costUsd,
+      pnl: usdToDisplay(valueUsd - costUsd),
+      pnlPct: costUsd > 0 ? ((valueUsd - costUsd) / costUsd) * 100 : 0,
+    };
+  }
+
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove("show"), 2400);
+  }
+
+  function setView(name) {
+    currentView = name;
+    ["home", "tx", "markets", "settings"].forEach((v) => {
+      document.getElementById("view-" + v).classList.toggle("hidden", v !== name);
+    });
+    document.querySelectorAll(".nav button").forEach((b) => {
+      b.classList.toggle("on", b.dataset.view === name);
+    });
+    if (name === "settings") updateStorageInfo();
+  }
+
+  function openSheet(title, html) {
+    document.getElementById("sheetTitle").textContent = title;
+    document.getElementById("sheetBody").innerHTML = html;
+    document.getElementById("sheetBg").classList.add("open");
+    document.getElementById("sheet").classList.add("open");
+  }
+
+  function closeSheet() {
+    document.getElementById("sheetBg").classList.remove("open");
+    document.getElementById("sheet").classList.remove("open");
+  }
+
+  function assetLogo(asset) {
+    if (!asset) return '<div class="logo ph">?</div>';
+    const sym = (asset.symbol || "?").slice(0, 2);
+    if (asset.kind === "equity") {
+      const domain = asset.symbol === "COIN" ? "coinbase.com"
+        : asset.symbol === "CRCL" ? "circle.com"
+        : "google.com";
+      return `<img class="logo" alt="" src="https://www.google.com/s2/favicons?domain=${domain}&sz=64" onerror="this.outerHTML='<div class=\\'logo ph\\'>${sym}</div>'" />`;
+    }
+    if (asset.custom || String(asset.id).startsWith("custom-")) {
+      return `<div class="logo ph">${escapeHtml(sym)}</div>`;
+    }
+    return `<img class="logo" alt="" src="https://static.coinpaprika.com/coin/${asset.id}/logo.png" onerror="this.outerHTML='<div class=\\'logo ph\\'>${sym}</div>'" />`;
+  }
+
+  function renderCurrencyPills() {
+    const box = document.getElementById("currencyPills");
+    box.innerHTML = ["chf", "eur", "usd"].map((c) =>
+      `<button type="button" class="${state.currency === c ? "on" : ""}" data-cur="${c}">${c.toUpperCase()}</button>`
+    ).join("");
+  }
+
+  function renderHome() {
+    const t = portfolioTotals();
+    document.getElementById("netWorth").textContent = formatMoney(t.total);
+    const pill = document.getElementById("pnlPill");
+    const cls = t.pnlUsd > 0.01 ? "up" : t.pnlUsd < -0.01 ? "down" : "flat";
+    pill.className = "chg " + cls;
+    pill.textContent = formatPct(t.pnlPct) + " · " + formatMoney(t.pnl);
+    document.getElementById("pnlLabel").textContent =
+      t.holdings.length ? "gain ou perte depuis tes achats" : "liquidités incluses";
+
+    document.getElementById("dashStats").innerHTML = `
+      <div class="stat"><div class="k">Investi</div><div class="n">${formatMoney(usdToDisplay(t.costUsd))}</div></div>
+      <div class="stat"><div class="k">Positions</div><div class="n">${formatMoney(t.value)}</div></div>
+      <div class="stat"><div class="k">Cash</div><div class="n">${formatMoney(t.cash)}</div></div>
+    `;
+
+    const hBox = document.getElementById("holdingsCard");
+    if (!t.holdings.length) {
+      hBox.innerHTML = '<div class="empty">Aucune position. Ajoute une transaction.</div>';
+    } else {
+      hBox.innerHTML = t.holdings.map((h) => {
+        const asset = findAsset(h.assetId) || { symbol: h.symbol, name: h.name, kind: "crypto", id: h.assetId };
+        const win = h.pnlUsd > 0.01;
+        const lose = h.pnlUsd < -0.01;
+        const tone = win ? "up" : lose ? "down" : "flat";
+        const vsTxt = win ? "au-dessus du prix d’achat" : lose ? "sous le prix d’achat" : "au prix d’achat";
+        const ratio = h.avgCostUsd > 0 ? h.priceUsd / h.avgCostUsd : 1;
+        const barPct = Math.max(6, Math.min(100, ratio * 50));
+        const noPx = !(h.priceUsd > 0);
+        return `<article class="pos">
+          <div class="pos-top">
+            ${assetLogo(asset)}
+            <div class="grow">
+              <div class="name">${escapeHtml(h.name)}</div>
+              <div class="sym">${formatQty(h.qty)} ${escapeHtml(h.symbol)} · ${h.allocation.toFixed(0)} % du portefeuille</div>
+            </div>
+            <div class="right">
+              <div class="v">${noPx ? "—" : formatMoney(h.value)}</div>
+              <div class="s"><span class="chg ${tone}" style="padding:0">${formatPct(h.pnlPct)}</span></div>
+            </div>
+          </div>
+          <div class="compare">
+            <div class="cmp">
+              <div class="k">Prix d’achat moyen</div>
+              <div class="n">${formatUnit(h.avgCostUsd)}</div>
+            </div>
+            <div class="cmp">
+              <div class="k">Cours actuel</div>
+              <div class="n">${noPx ? "saisir un prix" : formatUnit(h.priceUsd)}</div>
+            </div>
+          </div>
+          <div class="perf-bar" aria-hidden="true"><i class="${tone}" style="width:${barPct.toFixed(1)}%"></i></div>
+          <div class="perf-meta">
+            <span>${vsTxt}</span>
+            <span style="color:${win ? "var(--up)" : lose ? "var(--down)" : "var(--muted)"}">${formatMoney(h.pnl)}</span>
+          </div>
+        </article>`;
+      }).join("");
+    }
+
+    const cBox = document.getElementById("cashCard");
+    if (!state.liquidity.length) {
+      cBox.innerHTML = '<div class="empty">Aucune liquidité.</div>';
+    } else {
+      cBox.innerHTML = state.liquidity.map((c) => {
+        const val = cashToDisplay(n(c.amount), c.currency);
+        return `<div class="row">
+          <div class="logo ph">${c.kind === "fiat" ? "€$" : "S"}</div>
+          <div class="grow">
+            <div class="name">${escapeHtml(c.currency)} · ${c.kind === "fiat" ? "Fiduciaire" : "Stablecoin"}</div>
+            <div class="sym">${c.venue ? escapeHtml(c.venue) : "—"} ${c.note ? "· " + escapeHtml(c.note) : ""}</div>
+          </div>
+          <div class="right">
+            <div class="v">${formatMoney(val)}</div>
+            <div class="s">${formatQty(n(c.amount))} ${escapeHtml(c.currency)}</div>
+          </div>
+          <button type="button" class="btn ghost sm" data-del-cash="${c.id}" title="Supprimer">✕</button>
+        </div>`;
+      }).join("");
+    }
+  }
+
+  function renderTx() {
+    const box = document.getElementById("txCard");
+    const txs = [...state.txs].sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
+    if (!txs.length) {
+      box.innerHTML = '<div class="empty">Aucune transaction.</div>';
+      return;
+    }
+    box.innerHTML = txs.map((tx) => {
+      const side = tx.side === "buy" ? "Achat" : "Vente";
+      const sideColor = tx.side === "buy" ? "var(--up)" : "var(--down)";
+      const total = n(tx.quantity) * n(tx.priceUsd) + (tx.side === "buy" ? n(tx.feeUsd) : 0);
+      return `<div class="row">
+        <div class="grow">
+          <div class="name"><span style="color:${sideColor}">${side}</span> ${escapeHtml(tx.symbol)}</div>
+          <div class="tx-meta">${formatQty(n(tx.quantity))} × ${formatMoney(usdToDisplay(n(tx.priceUsd)))}
+            ${tx.venue ? " · " + escapeHtml(tx.venue) : ""}
+            ${n(tx.feeUsd) ? " · frais " + formatMoney(usdToDisplay(n(tx.feeUsd))) : ""}
+          </div>
+          <div class="tx-meta">${formatDateTime(tx.executedAt)}${tx.note ? " · " + escapeHtml(tx.note) : ""}</div>
+        </div>
+        <div class="right">
+          <div class="v">${formatMoney(usdToDisplay(total))}</div>
+          <button type="button" class="btn ghost sm" data-del-tx="${tx.id}">Suppr.</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderMarkets() {
+    const box = document.getElementById("marketsCard");
+    const list = allAssets();
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">Aucun actif.</div>';
+      return;
+    }
+    box.innerHTML = list.map((a) => {
+      const p = prices[a.id];
+      const px = p && p.usd > 0 ? formatMoney(usdToDisplay(p.usd)) : "—";
+      const chg = p && Number.isFinite(p.chg) ? p.chg : null;
+      const chgCls = chg == null ? "flat" : chg > 0 ? "up" : chg < 0 ? "down" : "flat";
+      const live = a.live === true;
+      const src = p?.source === "manual" ? "manuel" : live ? "API" : "manuel";
+      const hint = live
+        ? (p?.usd ? src : "API ou saisie")
+        : "Toucher pour saisir le prix";
+      return `<button type="button" class="row" data-edit-price="${escapeHtml(a.id)}" style="width:100%;text-align:left;cursor:pointer">
+        ${assetLogo(a)}
+        <div class="grow">
+          <div class="name">${escapeHtml(a.name)}</div>
+          <div class="sym">${escapeHtml(a.symbol)} · ${a.kind === "crypto" ? "Crypto" : "Action"} · ${hint}</div>
+        </div>
+        <div class="right">
+          <div class="v">${px}</div>
+          <div class="s">${chg == null || !p?.usd ? "—" : `<span class="chg ${chgCls}" style="padding:0">${formatPct(chg)}</span>`}</div>
+        </div>
+      </button>`;
+    }).join("");
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function updateStorageInfo() {
+    const el = document.getElementById("storageInfo");
+    if (!el) return;
+    const size = new Blob([localStorage.getItem(STORAGE_KEY) || ""]).size;
+    el.textContent = `${state.txs.length} transaction(s) · ${state.liquidity.length} liquidité(s) · ~${size} octets`;
+  }
+
+  function renderAll() {
+    renderCurrencyPills();
+    renderHome();
+    renderTx();
+    renderMarkets();
+  }
+
+  /* ---------- forms ---------- */
+
+  function openManualPrice(assetId) {
+    const asset = findAsset(assetId);
+    if (!asset) return;
+    const current = priceUsd(asset.id);
+    openSheet("Prix · " + asset.symbol, `
+      <p style="margin:0 0 0.75rem;font-size:0.85rem;color:var(--muted);line-height:1.45">
+        Ce prix devient le <strong style="color:var(--fg)">dernier cours connu</strong> :
+        accueil, positions et marchés se mettent à jour.
+      </p>
+      <div class="field">
+        <label>Prix unitaire (USD)</label>
+        <input id="mpPrice" type="number" inputmode="decimal" step="any" min="0" value="${current > 0 ? current : ""}" placeholder="0" />
+      </div>
+      <div class="actions">
+        <button type="button" class="btn secondary" id="mpCancel">Annuler</button>
+        <button type="button" class="btn primary" id="mpSave">Enregistrer</button>
+      </div>
+    `);
+    document.getElementById("mpCancel").onclick = closeSheet;
+    document.getElementById("mpSave").onclick = () => {
+      const usd = n(document.getElementById("mpPrice").value);
+      if (!(usd > 0)) return toast("Prix invalide");
+      setLastPrice(asset.id, usd, "manual");
+      closeSheet();
+      renderAll();
+      toast("Prix " + asset.symbol + " mis à jour");
+    };
+  }
+
+  function openTxForm(prefill) {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+    const assetOptions = allAssets().map(
+      (a) => `<option value="${a.id}">${a.symbol} — ${a.name}</option>`
+    ).join("");
+    const venueOptions = VENUES.map((v) => `<option value="${v}">${v}</option>`).join("");
+
+    openSheet("Nouvelle transaction", `
+      <div class="side-toggle">
+        <button type="button" class="on-buy" data-side="buy">Achat</button>
+        <button type="button" data-side="sell">Vente</button>
+      </div>
+      <div class="field">
+        <label>Actif</label>
+        <select id="fAsset">${assetOptions}</select>
+      </div>
+      <div class="field">
+        <label>Ou nouveau symbole (ajouté à la liste pour la prochaine fois)</label>
+        <input id="fCustomSym" placeholder="ex. SOL" autocomplete="off" />
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Quantité</label>
+          <input id="fQty" type="number" inputmode="decimal" step="any" min="0" placeholder="0" />
+        </div>
+        <div class="field">
+          <label>Prix unitaire (USD)</label>
+          <input id="fPrice" type="number" inputmode="decimal" step="any" min="0" placeholder="0" />
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Frais (USD)</label>
+          <input id="fFee" type="number" inputmode="decimal" step="any" min="0" value="0" />
+        </div>
+        <div class="field">
+          <label>Plateforme</label>
+          <select id="fVenue">${venueOptions}</select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Date & heure</label>
+        <input id="fWhen" type="datetime-local" value="${local}" />
+      </div>
+      <div class="field">
+        <label>Note</label>
+        <textarea id="fNote" placeholder="Optionnel"></textarea>
+      </div>
+      <label class="field" style="display:flex;align-items:center;gap:0.5rem;color:var(--muted);font-size:0.85rem">
+        <input type="checkbox" id="fDeduct" style="width:auto;height:auto" />
+        Déduire le total des liquidités (achat uniquement)
+      </label>
+      <div class="field hidden" id="fDeductBox">
+        <label>Depuis quelle liquidité ?</label>
+        <select id="fDeductId"></select>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn secondary" id="fCancel">Annuler</button>
+        <button type="button" class="btn primary" id="fSave">Enregistrer</button>
+      </div>
+    `);
+
+    let side = "buy";
+    const sideBtns = document.querySelectorAll("[data-side]");
+    sideBtns.forEach((b) => {
+      b.addEventListener("click", () => {
+        side = b.dataset.side;
+        sideBtns.forEach((x) => {
+          x.classList.remove("on-buy", "on-sell");
+          if (x.dataset.side === side) x.classList.add(side === "buy" ? "on-buy" : "on-sell");
+        });
+        document.getElementById("fDeduct").closest("label").style.display =
+          side === "buy" ? "flex" : "none";
+        if (side !== "buy") document.getElementById("fDeduct").checked = false;
+        toggleDeduct();
+      });
+    });
+
+    function fillDeductOptions() {
+      const sel = document.getElementById("fDeductId");
+      if (!state.liquidity.length) {
+        sel.innerHTML = '<option value="">— aucune liquidité —</option>';
+        return;
+      }
+      sel.innerHTML = state.liquidity.map((c) =>
+        `<option value="${c.id}">${c.currency} · ${formatQty(n(c.amount))} (${c.kind})</option>`
+      ).join("");
+    }
+    fillDeductOptions();
+
+    function toggleDeduct() {
+      const on = document.getElementById("fDeduct").checked && side === "buy";
+      document.getElementById("fDeductBox").classList.toggle("hidden", !on);
+    }
+    document.getElementById("fDeduct").addEventListener("change", toggleDeduct);
+
+    // Prefill price from cache when asset changes
+    function syncPrice() {
+      const id = document.getElementById("fAsset").value;
+      const p = priceUsd(id);
+      if (p > 0 && !document.getElementById("fPrice").value) {
+        document.getElementById("fPrice").value = String(p);
+      }
+    }
+    document.getElementById("fAsset").addEventListener("change", () => {
+      document.getElementById("fPrice").value = "";
+      syncPrice();
+    });
+    syncPrice();
+
+    document.getElementById("fCancel").onclick = closeSheet;
+    document.getElementById("fSave").onclick = () => {
+      const custom = document.getElementById("fCustomSym").value.trim().toUpperCase();
+      let asset = findAsset(document.getElementById("fAsset").value);
+      if (custom) {
+        asset = ensureCustomAsset(custom, custom, "crypto") || findAsset(custom);
+      }
+      if (!asset) return toast("Choisis un actif");
+      const assetId = asset.id;
+      const symbol = asset.symbol;
+      const name = asset.name;
+      const quantity = n(document.getElementById("fQty").value);
+      const priceUsdVal = n(document.getElementById("fPrice").value);
+      const feeUsd = n(document.getElementById("fFee").value);
+      const venue = document.getElementById("fVenue").value;
+      const note = document.getElementById("fNote").value.trim();
+      const when = document.getElementById("fWhen").value;
+      if (!quantity || quantity <= 0) return toast("Quantité invalide");
+      if (!priceUsdVal || priceUsdVal <= 0) return toast("Prix invalide");
+      if (!when) return toast("Date requise");
+
+      const executedAt = new Date(when).toISOString();
+      const tx = {
+        id: uid(),
+        side,
+        assetId,
+        symbol,
+        name,
+        quantity,
+        priceUsd: priceUsdVal,
+        feeUsd,
+        venue,
+        note: note || null,
+        executedAt,
+      };
+
+      if (side === "buy" && document.getElementById("fDeduct").checked) {
+        const lid = document.getElementById("fDeductId").value;
+        const pos = state.liquidity.find((c) => c.id === lid);
+        if (!pos) return toast("Choisis une liquidité");
+        const totalUsd = quantity * priceUsdVal + feeUsd;
+        const unitUsd = cashToUsd(1, pos.currency);
+        const needAmount = unitUsd > 0 ? totalUsd / unitUsd : totalUsd;
+        if (n(pos.amount) + 1e-9 < needAmount) return toast("Liquidité insuffisante");
+        pos.amount = n(pos.amount) - needAmount;
+        if (pos.amount < 1e-10) {
+          state.liquidity = state.liquidity.filter((c) => c.id !== lid);
+        }
+      }
+
+      state.txs.push(tx);
+      // Le prix saisi = dernier cours connu (accueil + marchés + positions)
+      setLastPrice(assetId, priceUsdVal, "manual");
+      saveState();
+      closeSheet();
+      renderAll();
+      toast(custom ? "Transaction + " + symbol + " ajouté à la liste" : "Transaction enregistrée");
+      setView("tx");
+    };
+  }
+
+  function openCashForm() {
+    openSheet("Ajouter des liquidités", `
+      <div class="side-toggle">
+        <button type="button" class="on-buy" data-ckind="fiat">Fiduciaire</button>
+        <button type="button" data-ckind="stablecoin">Stablecoin</button>
+      </div>
+      <div class="field">
+        <label>Devise / token</label>
+        <select id="cCur">
+          <option value="CHF">CHF</option>
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+          <option value="GBP">GBP</option>
+          <option value="USDT">USDT</option>
+          <option value="USDC">USDC</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Montant</label>
+        <input id="cAmt" type="number" inputmode="decimal" step="any" min="0" placeholder="0" />
+      </div>
+      <div class="field">
+        <label>Plateforme (optionnel)</label>
+        <input id="cVenue" placeholder="ex. Swissquote" />
+      </div>
+      <div class="field">
+        <label>Note</label>
+        <input id="cNote" placeholder="Optionnel" />
+      </div>
+      <div class="actions">
+        <button type="button" class="btn secondary" id="cCancel">Annuler</button>
+        <button type="button" class="btn primary" id="cSave">Enregistrer</button>
+      </div>
+    `);
+    let kind = "fiat";
+    document.querySelectorAll("[data-ckind]").forEach((b) => {
+      b.addEventListener("click", () => {
+        kind = b.dataset.ckind;
+        document.querySelectorAll("[data-ckind]").forEach((x) => {
+          x.classList.remove("on-buy", "on-sell");
+          if (x.dataset.ckind === kind) x.classList.add("on-buy");
+        });
+        const sel = document.getElementById("cCur");
+        if (kind === "stablecoin") {
+          sel.innerHTML = '<option value="USDT">USDT</option><option value="USDC">USDC</option>';
+        } else {
+          sel.innerHTML = '<option value="CHF">CHF</option><option value="EUR">EUR</option><option value="USD">USD</option><option value="GBP">GBP</option>';
+        }
+      });
+    });
+    document.getElementById("cCancel").onclick = closeSheet;
+    document.getElementById("cSave").onclick = () => {
+      const amount = n(document.getElementById("cAmt").value);
+      if (amount <= 0) return toast("Montant invalide");
+      state.liquidity.push({
+        id: uid(),
+        kind,
+        currency: document.getElementById("cCur").value,
+        amount,
+        venue: document.getElementById("cVenue").value.trim() || null,
+        note: document.getElementById("cNote").value.trim() || null,
+      });
+      saveState();
+      closeSheet();
+      renderAll();
+      toast("Liquidité ajoutée");
+    };
+  }
+
+  /* ---------- prices ---------- */
+
+  async function fetchFx() {
+    try {
+      const res = await fetch("https://api.frankfurter.app/latest?from=USD&to=EUR,CHF,GBP");
+      if (!res.ok) throw new Error("fx");
+      const data = await res.json();
+      fx = {
+        usd: 1,
+        eur: n(data.rates.EUR) || FX_FALLBACK.eur,
+        chf: n(data.rates.CHF) || FX_FALLBACK.chf,
+        gbp: n(data.rates.GBP) || FX_FALLBACK.gbp,
+      };
+    } catch {
+      fx = { ...FX_FALLBACK };
+    }
+  }
+
+  async function fetchCryptoPrices() {
+    // CoinGecko simple — BTC, ETH, ONDO uniquement
+    try {
+      const ids = BASE_CATALOG.filter((a) => a.kind === "crypto" && a.gecko)
+        .map((a) => a.gecko)
+        .join(",");
+      const res = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=" +
+          encodeURIComponent(ids) +
+          "&vs_currencies=usd&include_24hr_change=true"
+      );
+      if (!res.ok) throw new Error("gecko " + res.status);
+      const data = await res.json();
+      for (const a of BASE_CATALOG.filter((x) => x.kind === "crypto" && x.gecko)) {
+        const row = data[a.gecko];
+        if (!row || !(n(row.usd) > 0)) continue;
+        prices[a.id] = {
+          usd: n(row.usd),
+          chg: n(row.usd_24h_change),
+          at: Date.now(),
+          source: "api",
+        };
+      }
+    } catch (e) {
+      console.warn("crypto prices", e);
+      throw e;
+    }
+  }
+
+  async function fetchEquityPrices() {
+    const tickers = BASE_CATALOG.filter((a) => a.kind === "equity").map((a) => a.symbol);
+    if (!tickers.length) return;
+    try {
+      const url =
+        "https://query1.finance.yahoo.com/v7/finance/spark?symbols=" +
+        encodeURIComponent(tickers.join(",")) +
+        "&range=2d&interval=1d";
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("yahoo " + res.status);
+      const data = await res.json();
+      const results = data.spark?.result || [];
+      for (const r of results) {
+        const sym = r.symbol;
+        const asset = BASE_CATALOG.find((a) => a.symbol === sym);
+        if (!asset) continue;
+        const meta = r.response?.[0]?.meta;
+        if (!meta) continue;
+        const px = n(meta.regularMarketPrice);
+        const prev = n(meta.previousClose || meta.chartPreviousClose);
+        const chg = prev > 0 ? ((px - prev) / prev) * 100 : 0;
+        if (px > 0) {
+          prices[asset.id] = { usd: px, chg, at: Date.now(), source: "api" };
+        }
+      }
+    } catch (e) {
+      console.warn("equity prices", e);
+    }
+  }
+
+  async function refreshPrices(manual) {
+    const st = document.getElementById("priceStatus");
+    st.textContent = "Cours : mise à jour…";
+    st.className = "status";
+    try {
+      await fetchFx();
+      await Promise.all([
+        fetchCryptoPrices().catch(() => null),
+        fetchEquityPrices().catch(() => null),
+      ]);
+      savePrices();
+      const age = new Date().toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+      st.textContent = "Cours : mis à jour " + age + (manual ? "" : "");
+      st.className = "status ok";
+      renderAll();
+      if (manual) toast("Cours actualisés");
+    } catch {
+      st.textContent = "Cours : hors ligne — cache / prix saisis utilisés";
+      st.className = "status err";
+      if (manual) toast("Impossible de joindre les APIs (réseau ou CORS)");
+      renderAll();
+    }
+  }
+
+  /* ---------- export / import ---------- */
+
+  function exportCsv() {
+    const lines = [
+      "type,side,asset_id,symbol,name,quantity,price_usd,fee_usd,venue,note,executed_at,currency,amount,kind",
+    ];
+    for (const tx of state.txs) {
+      lines.push([
+        "tx",
+        tx.side,
+        csv(tx.assetId),
+        csv(tx.symbol),
+        csv(tx.name),
+        tx.quantity,
+        tx.priceUsd,
+        tx.feeUsd,
+        csv(tx.venue),
+        csv(tx.note),
+        tx.executedAt,
+        "",
+        "",
+        "",
+      ].join(","));
+    }
+    for (const c of state.liquidity) {
+      lines.push([
+        "cash",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        csv(c.venue),
+        csv(c.note),
+        "",
+        csv(c.currency),
+        c.amount,
+        c.kind,
+      ].join(","));
+    }
+    downloadBlob(lines.join("\n"), "vela-export.csv", "text/csv;charset=utf-8");
+    toast("CSV téléchargé");
+  }
+
+  function csv(v) {
+    if (v == null) return "";
+    const s = String(v);
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function exportJson() {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      app: "vela-local",
+      state,
+      prices,
+    };
+    downloadBlob(JSON.stringify(payload, null, 2), "vela-backup.json", "application/json");
+    toast("JSON téléchargé");
+  }
+
+  function downloadBlob(text, name, type) {
+    const blob = new Blob([text], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function importJson(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result));
+        const s = data.state || data;
+        if (!s || !Array.isArray(s.txs)) throw new Error("format");
+        state = {
+          version: 1,
+          currency: s.currency || "chf",
+          txs: s.txs,
+          liquidity: Array.isArray(s.liquidity) ? s.liquidity : [],
+          customAssets: Array.isArray(s.customAssets) ? s.customAssets : [],
+        };
+        if (data.prices && typeof data.prices === "object") {
+          prices = data.prices;
+          savePrices();
+        }
+        saveState();
+        renderAll();
+        toast("Import réussi");
+      } catch {
+        toast("Fichier JSON invalide");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  /* ---------- events ---------- */
+
+  document.querySelectorAll(".nav button").forEach((b) => {
+    b.addEventListener("click", () => setView(b.dataset.view));
+  });
+  document.getElementById("currencyPills").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-cur]");
+    if (!btn) return;
+    state.currency = btn.dataset.cur;
+    saveState();
+    renderAll();
+  });
+  document.getElementById("btnRefreshPrices").onclick = () => refreshPrices(true);
+  document.getElementById("btnAddCash").onclick = openCashForm;
+  document.getElementById("btnAddTxTop").onclick = () => openTxForm();
+  document.getElementById("sheetBg").onclick = closeSheet;
+  document.getElementById("btnExport").onclick = exportCsv;
+  document.getElementById("btnExportJson").onclick = exportJson;
+  document.getElementById("importJson").addEventListener("change", (e) => {
+    const f = e.target.files?.[0];
+    if (f) importJson(f);
+    e.target.value = "";
+  });
+  document.getElementById("btnWipe").onclick = () => {
+    if (!confirm("Effacer toutes les transactions, liquidités et tickers perso sur cet appareil ?")) return;
+    state = { version: 1, currency: state.currency, txs: [], liquidity: [], customAssets: [] };
+    saveState();
+    renderAll();
+    toast("Données effacées");
+  };
+
+  document.getElementById("holdingsCard").addEventListener("click", () => {});
+  document.getElementById("cashCard").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-del-cash]")?.dataset?.delCash;
+    if (!id) return;
+    if (!confirm("Supprimer cette liquidité ?")) return;
+    state.liquidity = state.liquidity.filter((c) => c.id !== id);
+    saveState();
+    renderAll();
+  });
+  document.getElementById("txCard").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-del-tx]")?.dataset?.delTx;
+    if (!id) return;
+    if (!confirm("Supprimer cette transaction ?")) return;
+    state.txs = state.txs.filter((t) => t.id !== id);
+    saveState();
+    renderAll();
+  });
+  document.getElementById("marketsCard").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-edit-price]")?.dataset?.editPrice;
+    if (!id) return;
+    openManualPrice(id);
+  });
+
+  renderAll();
+  refreshPrices(false);
+
+  // PWA-ish: suggest install
+  if (window.matchMedia("(display-mode: standalone)").matches) {
+    document.querySelector("footer.note").textContent =
+      "VELA local · mode écran d’accueil · données sur cet appareil";
+  }
+})();
+  </script>
+</body>
+</html>
