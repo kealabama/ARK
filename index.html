@@ -37,6 +37,8 @@
       color: var(--fg);
       font-family: var(--font);
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      overscroll-behavior-y: contain;
     }
     button, input, select, textarea { font: inherit; color: inherit; }
     button { cursor: pointer; border: none; background: none; }
@@ -54,10 +56,31 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
-      padding: 0.85rem 0;
-      background: color-mix(in oklab, var(--bg) 88%, transparent);
+      padding: calc(0.55rem + env(safe-area-inset-top, 0px)) 0 0.7rem;
+      background: color-mix(in oklab, var(--bg) 92%, transparent);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
+    }
+    .seg {
+      display: inline-flex;
+      background: var(--surface-2);
+      border-radius: 999px;
+      padding: 0.18rem;
+      flex-shrink: 0;
+    }
+    .seg button {
+      height: 1.85rem;
+      min-width: 2.55rem;
+      padding: 0 0.55rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+    }
+    .seg button.on {
+      background: var(--fg);
+      color: var(--accent-fg);
     }
     .brand {
       display: flex;
@@ -395,6 +418,84 @@
       background: var(--accent);
       border-radius: 999px;
     }
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.45rem;
+      margin-top: 1rem;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      padding: 0.7rem 0.65rem;
+    }
+    .stat .k {
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .stat .n {
+      margin-top: 0.25rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .pos {
+      padding: 0.9rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .pos:first-child { padding-top: 0; }
+    .pos:last-child { border-bottom: none; padding-bottom: 0; }
+    .pos-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+    }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.7rem;
+    }
+    .cmp {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      padding: 0.5rem 0.6rem;
+    }
+    .cmp .k { font-size: 0.65rem; color: var(--muted); }
+    .cmp .n {
+      margin-top: 0.15rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .perf-bar {
+      position: relative;
+      height: 0.42rem;
+      border-radius: 999px;
+      background: var(--surface-2);
+      margin-top: 0.65rem;
+      overflow: hidden;
+    }
+    .perf-bar > i {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      min-width: 4%;
+    }
+    .perf-bar > i.up { background: var(--up); }
+    .perf-bar > i.down { background: var(--down); }
+    .perf-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
     .muted { color: var(--muted); }
     .hidden { display: none !important; }
     .tx-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
@@ -418,7 +519,7 @@
         </svg>
         <span>VELA</span>
       </div>
-      <div class="pill-row" id="currencyPills"></div>
+      <div class="seg" id="currencyPills"></div>
     </header>
 
     <main id="view-home">
@@ -429,13 +530,14 @@
           <span class="chg flat" id="pnlPill">—</span>
           <span id="pnlLabel">plus-value latente</span>
         </div>
+        <div class="stats" id="dashStats"></div>
         <p class="status" id="priceStatus">Cours : en attente…</p>
       </section>
 
       <section>
         <div class="sec-head">
           <h2>Positions</h2>
-          <button type="button" class="btn sm secondary" id="btnRefreshPrices">Actualiser les cours</button>
+          <button type="button" class="btn sm secondary" id="btnRefreshPrices">Actualiser</button>
         </div>
         <div class="card" id="holdingsCard">
           <div class="empty">Aucune position. Ajoute une transaction.</div>
@@ -709,6 +811,22 @@
     return new Intl.NumberFormat("fr-CH", { maximumFractionDigits: d }).format(v);
   }
 
+  function formatUnit(usd) {
+    const v = usdToDisplay(usd);
+    const abs = Math.abs(v);
+    const digits = abs >= 1000 ? 2 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : 6;
+    const cur = state.currency.toUpperCase();
+    try {
+      return new Intl.NumberFormat("fr-CH", {
+        style: "currency",
+        currency: cur,
+        maximumFractionDigits: digits,
+      }).format(v);
+    } catch {
+      return v.toFixed(digits) + " " + cur;
+    }
+  }
+
   function formatDateTime(iso) {
     const d = new Date(iso);
     if (!Number.isFinite(d.getTime())) return "—";
@@ -869,7 +987,7 @@
   function renderCurrencyPills() {
     const box = document.getElementById("currencyPills");
     box.innerHTML = ["chf", "eur", "usd"].map((c) =>
-      `<button type="button" class="pill ${state.currency === c ? "on" : ""}" data-cur="${c}">${c.toUpperCase()}</button>`
+      `<button type="button" class="${state.currency === c ? "on" : ""}" data-cur="${c}">${c.toUpperCase()}</button>`
     ).join("");
   }
 
@@ -881,7 +999,13 @@
     pill.className = "chg " + cls;
     pill.textContent = formatPct(t.pnlPct) + " · " + formatMoney(t.pnl);
     document.getElementById("pnlLabel").textContent =
-      t.holdings.length ? "plus-value latente (hors liquidités)" : "liquidités incluses";
+      t.holdings.length ? "gain ou perte depuis tes achats" : "liquidités incluses";
+
+    document.getElementById("dashStats").innerHTML = `
+      <div class="stat"><div class="k">Investi</div><div class="n">${formatMoney(usdToDisplay(t.costUsd))}</div></div>
+      <div class="stat"><div class="k">Positions</div><div class="n">${formatMoney(t.value)}</div></div>
+      <div class="stat"><div class="k">Cash</div><div class="n">${formatMoney(t.cash)}</div></div>
+    `;
 
     const hBox = document.getElementById("holdingsCard");
     if (!t.holdings.length) {
@@ -889,19 +1013,41 @@
     } else {
       hBox.innerHTML = t.holdings.map((h) => {
         const asset = findAsset(h.assetId) || { symbol: h.symbol, name: h.name, kind: "crypto", id: h.assetId };
-        const chgCls = h.chg24h > 0 ? "up" : h.chg24h < 0 ? "down" : "flat";
-        return `<div class="row">
-          ${assetLogo(asset)}
-          <div class="grow">
-            <div class="name">${escapeHtml(h.name)}</div>
-            <div class="sym">${formatQty(h.qty)} ${escapeHtml(h.symbol)} · PRU ${formatMoney(usdToDisplay(h.avgCostUsd))}</div>
-            <div class="alloc"><i style="width:${Math.min(100, h.allocation).toFixed(1)}%"></i></div>
+        const win = h.pnlUsd > 0.01;
+        const lose = h.pnlUsd < -0.01;
+        const tone = win ? "up" : lose ? "down" : "flat";
+        const vsTxt = win ? "au-dessus du prix d’achat" : lose ? "sous le prix d’achat" : "au prix d’achat";
+        const ratio = h.avgCostUsd > 0 ? h.priceUsd / h.avgCostUsd : 1;
+        const barPct = Math.max(6, Math.min(100, ratio * 50));
+        const noPx = !(h.priceUsd > 0);
+        return `<article class="pos">
+          <div class="pos-top">
+            ${assetLogo(asset)}
+            <div class="grow">
+              <div class="name">${escapeHtml(h.name)}</div>
+              <div class="sym">${formatQty(h.qty)} ${escapeHtml(h.symbol)} · ${h.allocation.toFixed(0)} % du portefeuille</div>
+            </div>
+            <div class="right">
+              <div class="v">${noPx ? "—" : formatMoney(h.value)}</div>
+              <div class="s"><span class="chg ${tone}" style="padding:0">${formatPct(h.pnlPct)}</span></div>
+            </div>
           </div>
-          <div class="right">
-            <div class="v">${formatMoney(h.value)}</div>
-            <div class="s"><span class="chg ${chgCls}" style="padding:0">${formatPct(h.pnlPct)}</span></div>
+          <div class="compare">
+            <div class="cmp">
+              <div class="k">Prix d’achat moyen</div>
+              <div class="n">${formatUnit(h.avgCostUsd)}</div>
+            </div>
+            <div class="cmp">
+              <div class="k">Cours actuel</div>
+              <div class="n">${noPx ? "saisir un prix" : formatUnit(h.priceUsd)}</div>
+            </div>
           </div>
-        </div>`;
+          <div class="perf-bar" aria-hidden="true"><i class="${tone}" style="width:${barPct.toFixed(1)}%"></i></div>
+          <div class="perf-meta">
+            <span>${vsTxt}</span>
+            <span style="color:${win ? "var(--up)" : lose ? "var(--down)" : "var(--muted)"}">${formatMoney(h.pnl)}</span>
+          </div>
+        </article>`;
       }).join("");
     }
 
