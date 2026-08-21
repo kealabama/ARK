@@ -69,9 +69,37 @@
       font-size: .72rem; font-weight: 600; color: var(--muted); background: var(--surface);
     }
     .periods button.on { background: var(--fg); color: var(--bg); }
-    .chart-wrap { height: 9.2rem; margin: .2rem -0.25rem 0; }
+    .chart-wrap { height: 11.5rem; margin: .35rem -0.15rem 0; position: relative; }
     .chart-wrap svg { width: 100%; height: 100%; display: block; }
+    .chart-meta {
+      display: flex; justify-content: space-between; gap: .5rem;
+      margin-top: .35rem; font-size: .68rem; color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .chart-meta strong { color: var(--fg); font-weight: 600; }
+    .split3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .4rem; margin-top: .75rem; }
+    .split3 .stat .n { font-size: .78rem; }
+    .donut-row {
+      display: grid; grid-template-columns: 7.2rem 1fr; gap: .85rem;
+      align-items: center; margin-top: .85rem;
+      background: var(--surface); border-radius: 1rem; padding: .85rem .9rem;
+    }
+    .donut-svg { width: 7.2rem; height: 7.2rem; }
+    .donut-leg { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+    .donut-leg-row {
+      display: flex; align-items: center; gap: .45rem;
+      font-size: .72rem; color: var(--muted);
+    }
+    .donut-leg-row i {
+      width: .5rem; height: .5rem; border-radius: 99px; flex-shrink: 0;
+    }
+    .donut-leg-row .nm { flex: 1; min-width: 0; color: var(--fg); font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .donut-leg-row .pc { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--fg); }
     .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .4rem; margin-top: .85rem; }
+    .ver {
+      margin-top: 1.4rem; text-align: center;
+      font-size: .65rem; color: var(--subtle); letter-spacing: .04em;
+    }
     .stat { background: var(--surface); border-radius: .8rem; padding: .65rem .6rem; }
     .stat .k { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
     .stat .n { margin-top: .22rem; font-size: .8rem; font-weight: 650; font-variant-numeric: tabular-nums; }
@@ -240,7 +268,10 @@
         </div>
         <div class="periods" id="homePeriods"></div>
         <div class="chart-wrap" id="homeChart"></div>
+        <div class="chart-meta" id="chartMeta"></div>
         <div class="stats" id="dashStats"></div>
+        <div class="split3" id="splitStats"></div>
+        <div id="donutBox"></div>
         <p class="status" id="priceStatus">Cours : en attente…</p>
       </section>
       <section>
@@ -250,11 +281,16 @@
         <div class="card" id="holdingsCard"><div class="empty">Aucune position.</div></div>
       </section>
       <section>
-        <div class="sec-head"><h2>Liquidités</h2>
+        <div class="sec-head"><h2>Liquidités USD</h2>
           <button type="button" class="btn sm secondary" id="btnAddCash">+</button>
         </div>
         <div class="card" id="cashCard"><div class="empty">Aucune liquidité.</div></div>
       </section>
+      <section>
+        <div class="sec-head"><h2>Plateformes</h2></div>
+        <div class="card" id="venuesCard"><div class="empty">Aucun solde.</div></div>
+      </section>
+      <p class="ver" id="appVersion"></p>
     </main>
 
     <main id="view-asset" class="hidden page-asset">
@@ -332,6 +368,9 @@
   const STORAGE_KEY = "vela.local.v1";
   const PRICE_KEY = "vela.local.prices.v1";
   const HIST_KEY = "vela.local.hist.v1";
+  const APP_VERSION = "002";
+  const APP_BUILT = "21.08.2026 12:05";
+  const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
   const BASE_CATALOG = [
     { id: "btc-bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", gecko: "bitcoin", live: true },
     { id: "eth-ethereum", symbol: "ETH", name: "Ethereum", kind: "crypto", gecko: "ethereum", live: true },
@@ -556,31 +595,70 @@
     return `<img class="logo" alt="" src="https://static.coinpaprika.com/coin/${asset.id}/logo.png" onerror="this.outerHTML='<div class=\\'logo ph\\'>${sym}</div>'" />`;
   }
 
-  function drawChart(el, points, up) {
+  function shortMoney(v) {
+    const a = Math.abs(v);
+    if (a >= 1e6) return (v / 1e6).toFixed(2) + "M";
+    if (a >= 1e3) return (v / 1e3).toFixed(a >= 1e4 ? 1 : 2) + "k";
+    return v.toFixed(0);
+  }
+  function drawChart(el, points, up, metaEl) {
     if (!el) return;
     if (!points || points.length < 2) {
       el.innerHTML = '<div class="empty" style="padding:1.4rem 0">Pas assez d’historique</div>';
+      if (metaEl) metaEl.innerHTML = "";
       return;
     }
-    const w = 320, h = 148, pad = 6;
+    const w = 360, h = 168, padL = 36, padR = 10, padT = 14, padB = 18;
     const ys = points.map((p) => p[1]);
-    const min = Math.min(...ys), max = Math.max(...ys);
-    const span = max - min || 1;
-    const coords = points.map((p, i) => {
-      const x = pad + (i / (points.length - 1)) * (w - pad * 2);
-      const y = pad + (1 - (p[1] - min) / span) * (h - pad * 2);
-      return [x, y];
-    });
+    let min = Math.min(...ys), max = Math.max(...ys);
+    if (max === min) { max = min + 1; min = min - 1; }
+    const span = max - min;
+    const mid = (min + max) / 2;
+    const start = points[0][1];
+    const end = points.at(-1)[1];
+    const xAt = (i) => padL + (i / (points.length - 1)) * (w - padL - padR);
+    const yAt = (v) => padT + (1 - (v - min) / span) * (h - padT - padB);
+    const coords = points.map((p, i) => [xAt(i), yAt(p[1])]);
     const line = coords.map((c, i) => (i ? "L" : "M") + c[0].toFixed(1) + " " + c[1].toFixed(1)).join(" ");
-    const area = line + ` L ${coords.at(-1)[0].toFixed(1)} ${h} L ${coords[0][0].toFixed(1)} ${h} Z`;
+    const area = line + ` L ${coords.at(-1)[0].toFixed(1)} ${h - padB} L ${coords[0][0].toFixed(1)} ${h - padB} Z`;
     const color = up ? "#3ecf8e" : "#eb5757";
+    const gid = "cg" + (up ? "u" : "d");
+    const yStart = yAt(start);
+    const levels = [max, mid, min];
+    const grid = levels.map((lv) => {
+      const y = yAt(lv);
+      return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="#26262b" stroke-width="1"/>
+        <text x="${padL - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#5a5a56" font-size="9" font-family="Inter,sans-serif">${shortMoney(lv)}</text>`;
+    }).join("");
+    const maxIdx = ys.indexOf(Math.max(...ys));
+    const minIdx = ys.indexOf(Math.min(...ys));
+    const t0 = points[0][0], t1 = points.at(-1)[0];
+    const fmtT = (ts) => {
+      const d = new Date(ts);
+      if (t1 - t0 <= 2 * 86400000) return d.toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+      if (t1 - t0 <= 40 * 86400000) return d.toLocaleDateString("fr-CH", { day: "numeric", month: "short" });
+      return d.toLocaleDateString("fr-CH", { month: "short", year: "2-digit" });
+    };
     el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-      <defs><linearGradient id="g${up ? "u" : "d"}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${color}" stop-opacity=".35"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity=".32"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/>
       </linearGradient></defs>
-      <path d="${area}" fill="url(#g${up ? "u" : "d"})"/>
-      <path d="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${grid}
+      <line x1="${padL}" y1="${yStart.toFixed(1)}" x2="${w - padR}" y2="${yStart.toFixed(1)}"
+        stroke="${color}" stroke-opacity=".35" stroke-dasharray="4 4" stroke-width="1"/>
+      <path d="${area}" fill="url(#${gid})"/>
+      <path d="${line}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${coords[maxIdx][0].toFixed(1)}" cy="${coords[maxIdx][1].toFixed(1)}" r="3.2" fill="${color}"/>
+      <circle cx="${coords[minIdx][0].toFixed(1)}" cy="${coords[minIdx][1].toFixed(1)}" r="3.2" fill="#8b8b86"/>
+      <circle cx="${coords.at(-1)[0].toFixed(1)}" cy="${coords.at(-1)[1].toFixed(1)}" r="3.6" fill="${color}" stroke="#0a0a0b" stroke-width="1.5"/>
+      <text x="${padL}" y="${h - 4}" fill="#5a5a56" font-size="9" font-family="Inter,sans-serif">${fmtT(t0)}</text>
+      <text x="${w - padR}" y="${h - 4}" text-anchor="end" fill="#5a5a56" font-size="9" font-family="Inter,sans-serif">${fmtT(t1)}</text>
     </svg>`;
+    if (metaEl) {
+      metaEl.innerHTML = `<span>Bas <strong>${formatMoney(Math.min(...ys))}</strong></span>
+        <span>Haut <strong>${formatMoney(Math.max(...ys))}</strong></span>
+        <span>Début période <strong>${formatMoney(start)}</strong></span>`;
+    }
   }
   function renderPeriods(boxId, current, onPick) {
     const box = document.getElementById(boxId);
@@ -643,6 +721,76 @@
     return pts;
   }
 
+  function venueBalances() {
+    const inv = new Map();
+    const sorted = [...state.txs].sort((a, b) => Date.parse(a.executedAt) - Date.parse(b.executedAt));
+    for (const tx of sorted) {
+      const venue = tx.venue || "Autre";
+      if (!inv.has(tx.assetId)) inv.set(tx.assetId, []);
+      const q = n(tx.quantity);
+      if (tx.side === "buy") {
+        inv.get(tx.assetId).push({ venue, qty: q });
+      } else {
+        let left = q;
+        const lots = inv.get(tx.assetId);
+        while (left > 1e-12 && lots.length) {
+          const lot = lots[0];
+          const take = Math.min(lot.qty, left);
+          lot.qty -= take;
+          left -= take;
+          if (lot.qty <= 1e-12) lots.shift();
+        }
+      }
+    }
+    const byVenue = new Map();
+    for (const [assetId, lots] of inv) {
+      const px = priceUsd(assetId);
+      for (const lot of lots) {
+        if (lot.qty <= 1e-12) continue;
+        byVenue.set(lot.venue, (byVenue.get(lot.venue) || 0) + lot.qty * px);
+      }
+    }
+    for (const c of state.liquidity) {
+      const venue = c.venue || "Cash";
+      byVenue.set(venue, (byVenue.get(venue) || 0) + cashToUsd(n(c.amount), c.currency));
+    }
+    return [...byVenue.entries()].map(([name, value]) => ({ name, value }))
+      .filter((x) => x.value > 0.5)
+      .sort((a, b) => b.value - a.value);
+  }
+  function drawDonut(segments) {
+    const total = segments.reduce((s, x) => s + x.value, 0);
+    if (!(total > 0)) return '<div class="empty">Rien à répartir.</div>';
+    const r = 42, cx = 50, cy = 50, stroke = 14;
+    const c = 2 * Math.PI * r;
+    let offset = 0;
+    const arcs = segments.map((seg, i) => {
+      const len = (seg.value / total) * c;
+      const color = DONUT_COLORS[i % DONUT_COLORS.length];
+      const arc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+        stroke-dasharray="${len.toFixed(2)} ${(c - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"
+        transform="rotate(-90 ${cx} ${cy})"/>`;
+      offset += len;
+      return arc;
+    }).join("");
+    const legend = segments.map((seg, i) => {
+      const pct = (seg.value / total) * 100;
+      return `<div class="donut-leg-row">
+        <i style="background:${DONUT_COLORS[i % DONUT_COLORS.length]}"></i>
+        <span class="nm">${escapeHtml(seg.label)}</span>
+        <span class="pc">${pct.toFixed(0)} %</span>
+      </div>`;
+    }).join("");
+    return `<div class="donut-row">
+      <svg class="donut-svg" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="#1c1c1f" stroke-width="14"/>
+        ${arcs}
+        <text x="50" y="48" text-anchor="middle" fill="#f5f5f4" font-size="11" font-weight="700" font-family="Inter,sans-serif">${shortMoney(total)}</text>
+        <text x="50" y="60" text-anchor="middle" fill="#8b8b86" font-size="7" font-family="Inter,sans-serif">TOTAL</text>
+      </svg>
+      <div class="donut-leg">${legend}</div>
+    </div>`;
+  }
   function renderHome() {
     const t = portfolioTotals();
     document.getElementById("netWorth").textContent = formatMoney(t.totalUsd);
@@ -656,12 +804,20 @@
     pill.className = "chg " + (Math.abs(d) < 0.5 ? "flat" : up ? "up" : "down");
     pill.textContent = formatPct(dp) + " · " + formatMoney(d);
     document.getElementById("periodDelta").textContent = "sur la période · latent " + formatPct(t.pnlPct);
-    drawChart(document.getElementById("homeChart"), pts, up);
+    drawChart(document.getElementById("homeChart"), pts, up, document.getElementById("chartMeta"));
     renderPeriods("homePeriods", homePeriod, (id) => { homePeriod = id; renderHome(); });
     document.getElementById("dashStats").innerHTML = `
       <div class="stat"><div class="k">Investi</div><div class="n">${formatMoney(t.costUsd)}</div></div>
       <div class="stat"><div class="k">Latent</div><div class="n">${formatMoney(t.pnlUsd)}</div></div>
       <div class="stat"><div class="k">Réalisé</div><div class="n">${formatMoney(t.realized)}</div></div>`;
+    document.getElementById("splitStats").innerHTML = `
+      <div class="stat"><div class="k">Tout</div><div class="n">${formatMoney(t.totalUsd)}</div></div>
+      <div class="stat"><div class="k">Positions</div><div class="n">${formatMoney(t.valueUsd)}</div></div>
+      <div class="stat"><div class="k">Cash USD</div><div class="n">${formatMoney(t.cashUsd)}</div></div>`;
+
+    const segs = t.holdings.map((h) => ({ label: h.symbol, value: h.valueUsd }));
+    if (t.cashUsd > 0.5) segs.push({ label: "Cash", value: t.cashUsd });
+    document.getElementById("donutBox").innerHTML = segs.length ? drawDonut(segs) : "";
 
     const hBox = document.getElementById("holdingsCard");
     if (!t.holdings.length) {
@@ -680,7 +836,7 @@
       }).join("");
     }
     const cBox = document.getElementById("cashCard");
-    if (!state.liquidity.length) cBox.innerHTML = '<div class="empty">Aucune liquidité USD / stable / CHF banque.</div>';
+    if (!state.liquidity.length) cBox.innerHTML = '<div class="empty">Aucune liquidité USD / stablecoin d’investissement.</div>';
     else {
       cBox.innerHTML = state.liquidity.map((c) => `<div class="row">
         <div class="logo ph">${c.kind === "fiat" ? "$" : "S"}</div>
@@ -690,6 +846,20 @@
         <button type="button" class="btn ghost" data-del-cash="${c.id}">✕</button>
       </div>`).join("");
     }
+    const vBox = document.getElementById("venuesCard");
+    const venues = venueBalances();
+    if (!venues.length) vBox.innerHTML = '<div class="empty">Renseigne la plateforme sur tes mouvements.</div>';
+    else {
+      const sum = venues.reduce((s, v) => s + v.value, 0) || 1;
+      vBox.innerHTML = venues.map((v) => `<div class="row">
+        <div class="logo ph">${escapeHtml(v.name.slice(0, 2).toUpperCase())}</div>
+        <div class="grow"><div class="name">${escapeHtml(v.name)}</div>
+          <div class="sym">${((v.value / sum) * 100).toFixed(0)} % du total suivi</div></div>
+        <div class="right"><div class="v">${formatMoney(v.value)}</div></div>
+      </div>`).join("");
+    }
+    const ver = document.getElementById("appVersion");
+    if (ver) ver.textContent = "version " + APP_VERSION + " · " + APP_BUILT;
   }
 
   function openAsset(id) {
@@ -720,7 +890,7 @@
     pill.className = "chg " + (Math.abs(d) < 0.5 ? "flat" : up ? "up" : "down");
     pill.textContent = formatPct(dp) + " · " + formatMoney(d);
     document.getElementById("assetPeriodLbl").textContent = "valeur de ta position";
-    drawChart(document.getElementById("assetChart"), pts, up);
+    drawChart(document.getElementById("assetChart"), pts, up, null);
     renderPeriods("assetPeriods", assetPeriod, (pid) => { assetPeriod = pid; renderAsset(); });
     document.getElementById("assetStats").innerHTML = `
       <div class="stat"><div class="k">Achat moy.</div><div class="n">${formatUnit(acc.qty ? acc.costUsd / acc.qty : 0)}</div></div>
@@ -990,15 +1160,16 @@
   }
 
   function openCashForm() {
-    openSheet("Liquidité", `
+    openSheet("Liquidité USD", `
       <div class="side-toggle">
-        <button type="button" class="on-buy" data-ckind="fiat">Banque / fiat</button>
+        <button type="button" class="on-buy" data-ckind="fiat">USD</button>
         <button type="button" data-ckind="stablecoin">Stablecoin</button>
       </div>
       <div class="field"><label>Devise</label>
-        <select id="cCur"><option>USD</option><option>USDT</option><option>USDC</option><option>CHF</option><option>EUR</option></select></div>
+        <select id="cCur"><option>USD</option><option>USDT</option><option>USDC</option></select></div>
       <div class="field"><label>Montant</label><input id="cAmt" type="number" inputmode="decimal" step="any" /></div>
-      <div class="field"><label>Lieu</label><input id="cVenue" placeholder="ex. UBS / Coinbase" /></div>
+      <div class="field"><label>Plateforme</label>
+        <select id="cVenue">${VENUES.map((v) => `<option>${v}</option>`).join("")}</select></div>
       <div class="actions"><button type="button" class="btn secondary" id="cCancel">Annuler</button>
         <button type="button" class="btn primary" id="cSave">Enregistrer</button></div>`);
     let kind = "fiat";
@@ -1007,6 +1178,9 @@
       document.querySelectorAll("[data-ckind]").forEach((x) => {
         x.classList.toggle("on-buy", x.dataset.ckind === kind);
       });
+      const sel = document.getElementById("cCur");
+      if (kind === "stablecoin") sel.innerHTML = "<option>USDT</option><option>USDC</option>";
+      else sel.innerHTML = "<option>USD</option>";
     }));
     document.getElementById("cCancel").onclick = closeSheet;
     document.getElementById("cSave").onclick = () => {
@@ -1014,7 +1188,7 @@
       if (!(amount > 0)) return toast("Montant invalide");
       state.liquidity.push({
         id: uid(), kind, currency: document.getElementById("cCur").value,
-        amount, venue: document.getElementById("cVenue").value.trim() || null, note: null,
+        amount, venue: document.getElementById("cVenue").value || null, note: null,
       });
       saveState(); closeSheet(); renderAll(); toast("Liquidité ajoutée");
     };
