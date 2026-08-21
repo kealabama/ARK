@@ -169,6 +169,54 @@
       background: var(--surface); border-radius: .8rem; padding: .7rem .8rem;
       font-size: .78rem; color: var(--muted); display: flex; justify-content: space-between; gap: .5rem; align-items: center;
     }
+    .tl { position: relative; }
+    .tl-year, .tl-month {
+      width: 100%; text-align: left;
+      display: flex; align-items: baseline; justify-content: space-between; gap: .5rem;
+    }
+    .tl-year {
+      padding: .85rem 0 .35rem;
+      font-size: 1.35rem; font-weight: 650; letter-spacing: -.03em;
+    }
+    .tl-year .meta { font-size: .72rem; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+    .tl-month {
+      padding: .55rem 0 .25rem;
+      font-size: .78rem; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    }
+    .tl-month .meta { letter-spacing: 0; text-transform: none; font-weight: 500; }
+    .tl-day {
+      position: relative;
+      margin: .45rem 0 .15rem 0;
+      padding-left: 1.15rem;
+      font-size: .72rem; font-weight: 600; color: var(--subtle);
+    }
+    .tl-day::before {
+      content: "";
+      position: absolute; left: 0; top: .35rem;
+      width: .42rem; height: .42rem; border-radius: 99px;
+      background: var(--fg);
+    }
+    .tl-body { position: relative; padding-left: 1.15rem; }
+    .tl-body::before {
+      content: "";
+      position: absolute; left: .16rem; top: 0; bottom: 0;
+      width: 1px; background: var(--border);
+    }
+    .tl-item {
+      display: flex; align-items: flex-start; gap: .65rem;
+      padding: .55rem 0;
+      border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+    }
+    .tl-item:last-child { border-bottom: none; }
+    .tl-time {
+      width: 2.7rem; flex-shrink: 0;
+      font-size: .68rem; font-weight: 650; color: var(--subtle);
+      font-variant-numeric: tabular-nums; padding-top: .12rem;
+    }
+    .tl-dot {
+      width: .38rem; height: .38rem; border-radius: 99px; margin-top: .35rem; flex-shrink: 0;
+    }
+    .collapsed { display: none; }
     footer.note { margin: 1.6rem 0 .6rem; font-size: .72rem; color: var(--subtle); text-align: center; }
   </style>
 </head>
@@ -233,7 +281,7 @@
         <div class="sec-head"><h2>Transactions</h2>
           <button type="button" class="btn sm primary" id="btnAddTxTop">+ Ajouter</button>
         </div>
-        <div class="card" id="txCard"><div class="empty">Aucune transaction.</div></div>
+        <div class="card" id="txCard" style="padding:.35rem .95rem 1rem"><div class="empty">Aucune transaction.</div></div>
       </section>
     </main>
 
@@ -703,10 +751,88 @@
       </div>
     </div>`;
   }
+  function txNet(tx) {
+    const t = n(tx.quantity) * n(tx.priceUsd) + n(tx.feeUsd);
+    return tx.side === "buy" ? -t : t - n(tx.feeUsd);
+  }
   function renderTx() {
     const box = document.getElementById("txCard");
     const txs = [...state.txs].sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
-    box.innerHTML = txs.length ? txs.map(txRow).join("") : '<div class="empty">Aucun mouvement.</div>';
+    if (!txs.length) {
+      box.innerHTML = '<div class="empty">Aucun mouvement.</div>';
+      return;
+    }
+    const now = new Date();
+    const groups = new Map();
+    for (const tx of txs) {
+      const d = new Date(tx.executedAt);
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      const day = d.getDate();
+      if (!groups.has(y)) groups.set(y, new Map());
+      const ym = groups.get(y);
+      if (!ym.has(m)) ym.set(m, new Map());
+      const yd = ym.get(m);
+      if (!yd.has(day)) yd.set(day, []);
+      yd.get(day).push(tx);
+    }
+    const years = [...groups.keys()].sort((a, b) => b - a);
+    let html = '<div class="tl">';
+    for (const y of years) {
+      const months = groups.get(y);
+      const yearTxs = [];
+      for (const days of months.values()) for (const list of days.values()) yearTxs.push(...list);
+      const yOpen = y === now.getFullYear();
+      html += `<button type="button" class="tl-year" data-tl="y${y}">
+        <span>${y}</span>
+        <span class="meta">${yearTxs.length} · ${formatMoney(yearTxs.reduce((s, t) => s + txNet(t), 0))}</span>
+      </button><div class="${yOpen ? "" : "collapsed"}" id="y${y}">`;
+      const monthKeys = [...months.keys()].sort((a, b) => b - a);
+      for (const mo of monthKeys) {
+        const days = months.get(mo);
+        const monthTxs = [];
+        for (const list of days.values()) monthTxs.push(...list);
+        const label = new Date(y, mo, 1).toLocaleDateString("fr-CH", { month: "long" });
+        const mOpen = yOpen && mo === now.getMonth();
+        const mid = "m" + y + "-" + mo;
+        html += `<button type="button" class="tl-month" data-tl="${mid}">
+          <span>${label}</span>
+          <span class="meta">${monthTxs.length}</span>
+        </button><div class="${mOpen ? "" : "collapsed"}" id="${mid}">`;
+        const dayKeys = [...days.keys()].sort((a, b) => b - a);
+        for (const day of dayKeys) {
+          const list = days.get(day).sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
+          const dlabel = new Date(y, mo, day).toLocaleDateString("fr-CH", { weekday: "short", day: "numeric", month: "short" });
+          html += `<div class="tl-day">${dlabel}</div><div class="tl-body">`;
+          for (const tx of list) {
+            const side = tx.side === "buy" ? "Achat" : "Vente";
+            const col = tx.side === "buy" ? "var(--up)" : "var(--down)";
+            const total = n(tx.quantity) * n(tx.priceUsd) + (tx.side === "buy" ? n(tx.feeUsd) : 0);
+            const hh = new Date(tx.executedAt).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+            html += `<div class="tl-item">
+              <div class="tl-time">${hh}</div>
+              <div class="tl-dot" style="background:${col}"></div>
+              <div class="grow">
+                <div class="name"><span style="color:${col}">${side}</span> ${escapeHtml(tx.symbol)}</div>
+                <div class="tx-meta">${formatQty(n(tx.quantity))} × ${formatUnit(n(tx.priceUsd))}${tx.venue ? " · " + escapeHtml(tx.venue) : ""}</div>
+              </div>
+              <div class="right">
+                <div class="v">${formatMoney(total)}</div>
+                <div>
+                  <button type="button" class="btn ghost" data-edit-tx="${tx.id}">Édit.</button>
+                  <button type="button" class="btn ghost" data-del-tx="${tx.id}">✕</button>
+                </div>
+              </div>
+            </div>`;
+          }
+          html += "</div>";
+        }
+        html += "</div>";
+      }
+      html += "</div>";
+    }
+    html += "</div>";
+    box.innerHTML = html;
   }
   function renderMarkets() {
     const box = document.getElementById("marketsCard");
@@ -857,7 +983,7 @@
         }
         state.txs.push({ id: uid(), ...payload });
       }
-      setLastPrice(asset.id, priceUsdVal, "manual");
+      if (!priceUsd(asset.id)) setLastPrice(asset.id, priceUsdVal, "manual");
       saveState(); closeSheet(); renderAll();
       toast(edit ? "Mouvement mis à jour" : "Enregistré");
     };
@@ -1044,6 +1170,11 @@
     saveState(); renderAll();
   });
   function onTxClick(e) {
+    const fold = e.target.closest("[data-tl]")?.dataset?.tl;
+    if (fold) {
+      document.getElementById(fold)?.classList.toggle("collapsed");
+      return;
+    }
     const del = e.target.closest("[data-del-tx]")?.dataset?.delTx;
     const ed = e.target.closest("[data-edit-tx]")?.dataset?.editTx;
     if (del) {
