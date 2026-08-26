@@ -249,8 +249,8 @@
   const STORAGE_KEY = "vela.local.v1";
   const PRICE_KEY = "vela.local.prices.v1";
   const HIST_KEY = "vela.local.hist.v1";
-  const APP_VERSION = "003.1";
-  const APP_BUILT = "26.08.2026 13:40";
+  const APP_VERSION = "003.2";
+  const APP_BUILT = "26.08.2026 16:30";
   const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
   const VENUES = ["Ledger","MetaMask","Coinbase","Binance","Kraken","Swissquote","IBKR","Revolut","Bitstamp","Autre"];
   const PERIODS = [{ id: "1d", label: "1J", days: 1 }, { id: "1w", label: "1S", days: 7 }, { id: "1m", label: "1M", days: 30 }, { id: "1y", label: "1A", days: 365 }];
@@ -307,15 +307,16 @@
   function loadState() {
     try {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      if (!data) return { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], lastExportAt: null };
+      if (!data) return { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], hiddenMarket: [], lastExportAt: null };
       return {
         version: 1, currency: "usd",
         txs: Array.isArray(data.txs) ? data.txs : [],
         liquidity: Array.isArray(data.liquidity) ? data.liquidity : [],
         customAssets: Array.isArray(data.customAssets) ? data.customAssets : [],
+        hiddenMarket: Array.isArray(data.hiddenMarket) ? data.hiddenMarket : [],
         lastExportAt: data.lastExportAt || null,
       };
-    } catch { return { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], lastExportAt: null }; }
+    } catch { return { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], hiddenMarket: [], lastExportAt: null }; }
   }
   function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
   let state = loadState();
@@ -329,30 +330,89 @@
   let assetPeriod = "1w";
   let openAssetId = null;
 
+  const ALIASES = {
+    "btc-bitcoin": "bitcoin",
+    bitcoin: "bitcoin",
+    "eth-ethereum": "ethereum",
+    ethereum: "ethereum",
+    "ondo-ondo": "ondo-finance",
+    "ondo-finance": "ondo-finance",
+    "eq-COIN": "COIN",
+    COIN: "COIN",
+    "eq-CRCL": "CRCL",
+    CRCL: "CRCL",
+  };
+  const PRETTY = {
+    bitcoin: { symbol: "BTC", name: "Bitcoin", kind: "crypto", cg: "bitcoin" },
+    ethereum: { symbol: "ETH", name: "Ethereum", kind: "crypto", cg: "ethereum" },
+    "ondo-finance": { symbol: "ONDO", name: "Ondo", kind: "crypto", cg: "ondo-finance" },
+    COIN: { symbol: "COIN", name: "Coinbase", kind: "equity", yahoo: "COIN" },
+    CRCL: { symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL" },
+  };
+  function canon(id) {
+    return ALIASES[id] || id;
+  }
+  function relatedIds(id) {
+    const c = canon(id);
+    const out = new Set([id, c]);
+    for (const [k, v] of Object.entries(ALIASES)) if (v === c) out.add(k);
+    return [...out];
+  }
+  function resolveAsset(id) {
+    if (!id) return { id: "", symbol: "?", name: "?", kind: "crypto" };
+    const custom = state.customAssets.find((a) => a.id === id || a.symbol === id);
+    const c = canon(id);
+    const pretty = PRETTY[c];
+    if (pretty) return { id, ...pretty, cg: pretty.cg, yahoo: pretty.yahoo };
+    if (custom) return { ...custom, custom: true };
+    const core = CORE.find((a) => a.id === id || a.id === c);
+    if (core) return { ...core, id };
+    let symbol = String(id);
+    let name = String(id);
+    if (symbol.startsWith("eq-")) symbol = symbol.slice(3);
+    else if (symbol.startsWith("custom-")) symbol = symbol.slice(7).toUpperCase();
+    else if (symbol.includes("-")) {
+      const [tick, ...rest] = symbol.split("-");
+      symbol = tick.toUpperCase();
+      name = rest.join(" ").replace(/\b\w/g, (ch) => ch.toUpperCase()) || symbol;
+    }
+    if (PRETTY[canon(id)]) name = PRETTY[canon(id)].name;
+    if (symbol === name && symbol.length <= 8) name = symbol;
+    if (name === id && id === symbol.toLowerCase()) name = symbol;
+    return { id, symbol: symbol.toUpperCase().slice(0, 12), name, kind: "crypto", custom: true };
+  }
   function allAssets() {
-    const map = new Map(CORE.map((a) => [a.id, { ...a }]));
+    const map = new Map();
+    for (const a of CORE) map.set(a.id, { ...a });
+    for (const tx of state.txs) {
+      if (!map.has(tx.assetId)) map.set(tx.assetId, resolveAsset(tx.assetId));
+    }
     for (const c of state.customAssets) {
       if (!map.has(c.id)) map.set(c.id, { ...c, custom: true });
     }
     return [...map.values()];
   }
   function findAsset(id) {
-    return allAssets().find((a) => a.id === id) || null;
+    return resolveAsset(id);
   }
   function assetBySymbol(sym) {
     const s = String(sym || "").toUpperCase();
     return allAssets().find((a) => a.symbol.toUpperCase() === s) || null;
   }
   function priceUsd(id) {
-    const p = prices[id];
-    if (p && p.usd > 0) return p.usd;
-    const last = [...state.txs].filter((t) => t.assetId === id && n(t.priceUsd) > 0).pop();
+    for (const k of relatedIds(id)) {
+      const p = prices[k];
+      if (p && p.usd > 0) return p.usd;
+    }
+    const last = [...state.txs].filter((t) => relatedIds(id).includes(t.assetId) && n(t.priceUsd) > 0).pop();
     return last ? n(last.priceUsd) : 0;
   }
   function setLastPrice(id, usd, { force } = {}) {
     if (!(usd > 0)) return;
-    if (!force && prices[id] && prices[id].usd > 0 && prices[id].src === "api") return;
-    prices[id] = { usd, at: Date.now(), src: force ? "api" : (prices[id]?.src || "manual") };
+    for (const k of relatedIds(id)) {
+      if (!force && prices[k] && prices[k].usd > 0 && prices[k].src === "api") continue;
+      prices[k] = { usd, at: Date.now(), src: force ? "api" : (prices[k]?.src || "manual") };
+    }
     localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
   }
 
@@ -405,7 +465,7 @@
     const holdings = [];
     for (const [assetId, acc] of byAsset) {
       if (acc.qty <= 1e-12) continue;
-      const asset = findAsset(assetId) || { symbol: assetId, name: assetId, id: assetId };
+      const asset = findAsset(assetId);
       const px = priceUsd(assetId);
       const valueUsd = acc.qty * px;
       const avg = acc.qty > 0 ? acc.cost / acc.qty : 0;
@@ -645,8 +705,8 @@
         const tone = h.pnlUsd > 0.01 ? "up" : h.pnlUsd < -0.01 ? "down" : "flat";
         return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}">
           ${assetLogo(asset)}
-          <div class="grow"><div class="name">${escapeHtml(h.name)}</div>
-            <div class="sym">${formatQty(h.qty)} ${escapeHtml(h.symbol)} · moy. ${formatUnit(h.avgCostUsd)}</div></div>
+          <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
+            <div class="sym">${formatQty(h.qty)} · moy. ${formatUnit(h.avgCostUsd)}</div></div>
           <div class="right"><div class="v">${h.priceUsd > 0 ? formatMoney(h.valueUsd) : "—"}</div>
             <div class="s"><span class="chg ${tone}" style="padding:0">${formatPct(h.pnlPct)}</span></div></div>
         </button>`;
@@ -671,9 +731,8 @@
       vBox.innerHTML = venues.map((v) => `<div class="row">
         <div class="logo ph">${escapeHtml(v.name.slice(0, 2).toUpperCase())}</div>
         <div class="grow"><div class="name">${escapeHtml(v.name)}</div>
-          <div class="sym">${((v.value / sum) * 100).toFixed(0)} % · coût ${formatMoney(v.cost)}${v.qtyHint.length ? " · " + v.qtyHint.join(", ") : ""}</div></div>
-        <div class="right"><div class="v">${formatMoney(v.value)}</div>
-          <div class="s">${v.cash > 0.5 ? "dont cash " + formatMoney(v.cash) : "valeur actuelle"}</div></div>
+          <div class="sym">${((v.value / sum) * 100).toFixed(0)} % · coût ${formatMoney(v.cost)}</div></div>
+        <div class="right"><div class="v">${formatMoney(v.value)}</div></div>
       </div>`).join("");
     }
     document.getElementById("appVersion").textContent = "version " + APP_VERSION + " · " + APP_BUILT;
@@ -688,7 +747,7 @@
     const qty = h?.qty || 0;
     const px = priceUsd(id);
     const value = qty * px;
-    document.getElementById("assetSym").textContent = asset.symbol + " · " + asset.name;
+    document.getElementById("assetSym").textContent = asset.name;
     document.getElementById("assetValue").textContent = px > 0 ? formatMoney(value) : "—";
     const pts = buildAssetPoints(id, PERIODS.find((p) => p.id === assetPeriod).days);
     const first = pts[0]?.[1] || value, last = pts.at(-1)?.[1] || value;
@@ -766,16 +825,19 @@
 
   function renderMkt() {
     const box = document.getElementById("mktCard");
-    const rows = allAssets().map((a) => {
+    const hidden = new Set(state.hiddenMarket || []);
+    const rows = allAssets().filter((a) => !hidden.has(a.id)).map((a) => {
       const px = priceUsd(a.id);
-      const live = prices[a.id]?.src === "api";
-      return `<button type="button" class="pos" data-set-price="${escapeHtml(a.id)}">
-        ${assetLogo(a)}
-        <div class="grow"><div class="name">${escapeHtml(a.name)}</div>
-          <div class="sym">${escapeHtml(a.symbol)} · ${live ? "API" : "prix saisi / dernier connu"}</div></div>
-        <div class="right"><div class="v">${px > 0 ? formatUnit(px) : "—"}</div>
-          <div class="s">${live ? "cliquer pour forcer manuel" : "cliquer pour saisir"}</div></div>
-      </button>`;
+      const live = relatedIds(a.id).some((k) => prices[k]?.src === "api");
+      return `<div class="row">
+        <button type="button" class="pos" style="border:0;padding:.2rem 0;flex:1" data-set-price="${escapeHtml(a.id)}">
+          ${assetLogo(a)}
+          <div class="grow"><div class="name">${escapeHtml(a.name)}</div>
+            <div class="sym">${live ? "Cours API" : "Prix saisi / dernier connu"}</div></div>
+          <div class="right"><div class="v">${px > 0 ? formatUnit(px) : "—"}</div></div>
+        </button>
+        <button type="button" class="btn ghost" data-del-asset="${escapeHtml(a.id)}" aria-label="Retirer">✕</button>
+      </div>`;
     });
     box.innerHTML = rows.join("") || '<div class="empty">Aucun actif.</div>';
   }
@@ -1025,11 +1087,21 @@
     if (id) openTxForm(state.txs.find((t) => t.id === id));
   });
   document.getElementById("mktCard").addEventListener("click", (e) => {
+    const del = e.target.closest("[data-del-asset]")?.dataset?.delAsset;
+    if (del) {
+      if (!confirm("Retirer cet actif de Marché ? Tes transactions restent en place.")) return;
+      state.hiddenMarket = [...new Set([...(state.hiddenMarket || []), del])];
+      state.customAssets = (state.customAssets || []).filter((c) => c.id !== del);
+      saveState();
+      renderAll();
+      toast("Ligne retirée");
+      return;
+    }
     const id = e.target.closest("[data-set-price]")?.dataset?.setPrice;
     if (!id) return;
     const a = findAsset(id);
-    openSheet("Prix " + a.symbol, `
-      <p class="hint">Pour un ticker sans API, ce prix devient le dernier connu — il valorise positions, accueil et plateformes.</p>
+    openSheet("Prix " + a.name, `
+      <p class="hint">Pour un ticker sans API, ce prix devient le dernier connu.</p>
       <div class="field"><label>Prix USD</label><input id="mPx" inputmode="decimal" value="${priceUsd(id) || ""}" /></div>
       <div class="actions"><button type="button" class="btn secondary" id="mCancel">Annuler</button>
         <button type="button" class="btn primary" id="mSave">Enregistrer</button></div>`);
@@ -1037,7 +1109,8 @@
     document.getElementById("mSave").onclick = () => {
       const px = n(document.getElementById("mPx").value);
       if (!(px > 0)) return toast("Prix invalide");
-      prices[id] = { usd: px, at: Date.now(), src: "manual" };
+      setLastPrice(id, px, { force: true });
+      prices[id].src = "manual";
       localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
       closeSheet(); renderAll(); toast("Prix mis à jour");
     };
@@ -1062,6 +1135,7 @@
           txs: src.txs || [],
           liquidity: src.liquidity || [],
           customAssets: src.customAssets || [],
+          hiddenMarket: src.hiddenMarket || [],
           lastExportAt: null,
         };
         if (data.prices) prices = data.prices;
@@ -1074,7 +1148,7 @@
   };
   document.getElementById("btnReset").onclick = () => {
     if (!confirm("Effacer toutes les données locales ?")) return;
-    state = { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], lastExportAt: null };
+    state = { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], hiddenMarket: [], lastExportAt: null };
     prices = {}; hist = {};
     saveState();
     localStorage.removeItem(PRICE_KEY); localStorage.removeItem(HIST_KEY);
