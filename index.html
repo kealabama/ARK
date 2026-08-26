@@ -91,8 +91,8 @@
     .empty { padding: 1.1rem 0; font-size: .82rem; color: var(--muted); text-align: center; }
     .sheet-bg { position: fixed; inset: 0; z-index: 40; background: #0008; display: none; }
     .sheet-bg.on { display: block; }
-    .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; max-height: min(92vh, 40rem); overflow: auto; background: var(--surface); border-radius: 1.1rem 1.1rem 0 0; padding: 1rem 1rem calc(1.2rem + var(--safe-b)); transform: translateY(110%); transition: transform .22s ease; }
-    .sheet.on { transform: none; }
+    .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; max-height: min(92vh, 40rem); overflow: auto; background: var(--surface); border-radius: 1.1rem 1.1rem 0 0; padding: 1rem 1rem calc(1.2rem + var(--safe-b)); transform: translateY(110%); transition: transform .22s ease; pointer-events: none; }
+    .sheet.on { transform: none; pointer-events: auto; }
     .sheet h3 { margin: 0 0 .8rem; font-size: 1.05rem; }
     .field { margin-top: .7rem; }
     .field label { display: block; font-size: .72rem; color: var(--muted); margin-bottom: .3rem; }
@@ -249,8 +249,8 @@
   const STORAGE_KEY = "vela.local.v1";
   const PRICE_KEY = "vela.local.prices.v1";
   const HIST_KEY = "vela.local.hist.v1";
-  const APP_VERSION = "003";
-  const APP_BUILT = "26.08.2026 13:30";
+  const APP_VERSION = "003.1";
+  const APP_BUILT = "26.08.2026 13:40";
   const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
   const VENUES = ["Ledger","MetaMask","Coinbase","Binance","Kraken","Swissquote","IBKR","Revolut","Bitstamp","Autre"];
   const PERIODS = [{ id: "1d", label: "1J", days: 1 }, { id: "1w", label: "1S", days: 7 }, { id: "1m", label: "1M", days: 30 }, { id: "1y", label: "1A", days: 365 }];
@@ -263,8 +263,16 @@
   ];
 
   const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
-  const uid = () => crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();
-  const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&","<":"<",">":">","\"":""","'":"&#39;" }[c]));
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      if (c === "&") return "\u0026amp;";
+      if (c === "<") return "\u0026lt;";
+      if (c === ">") return "\u0026gt;";
+      if (c === '"') return "\u0026quot;";
+      return "\u0026#39;";
+    });
+  }
   function formatMoney(v) {
     if (!Number.isFinite(v)) return "—";
     return new Intl.NumberFormat("fr-CH", { style: "currency", currency: "USD", maximumFractionDigits: Math.abs(v) >= 1000 ? 0 : 2 }).format(v);
