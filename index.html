@@ -13,27 +13,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0a0a0b;
-      --surface: #121214;
-      --surface-2: #1c1c1f;
-      --fg: #f5f5f4;
-      --muted: #8b8b86;
-      --subtle: #5a5a56;
-      --border: #26262b;
-      --up: #3ecf8e;
-      --down: #eb5757;
+      --bg: #0a0a0b; --surface: #121214; --surface-2: #1c1c1f;
+      --fg: #f5f5f4; --muted: #8b8b86; --subtle: #5a5a56; --border: #26262b;
+      --up: #3ecf8e; --down: #eb5757;
       --safe-b: env(safe-area-inset-bottom, 0px);
       --safe-t: env(safe-area-inset-top, 0px);
       --font: Inter, system-ui, sans-serif;
     }
     * { box-sizing: border-box; }
     html, body {
-      margin: 0; min-height: 100%;
-      background: var(--bg); color: var(--fg);
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-      overscroll-behavior-y: contain;
+      margin: 0; min-height: 100%; background: var(--bg); color: var(--fg);
+      font-family: var(--font); -webkit-font-smoothing: antialiased;
+      overflow-x: hidden; overscroll-behavior-y: contain;
     }
     button, input, select, textarea { font: inherit; color: inherit; }
     button { cursor: pointer; border: none; background: none; }
@@ -49,73 +40,36 @@
     .brand svg { width: 1.4rem; height: 1.4rem; }
     .usd-tag { font-size: .68rem; font-weight: 600; color: var(--muted); letter-spacing: .08em; }
     section { margin-top: 1.15rem; }
-    .hero {
-      font-size: clamp(2.1rem, 8.4vw, 2.7rem);
-      font-weight: 650; letter-spacing: -.04em;
-      margin: .15rem 0 0; font-variant-numeric: tabular-nums;
-    }
+    .hero { font-size: clamp(2.1rem, 8.4vw, 2.7rem); font-weight: 650; letter-spacing: -.04em; margin: .15rem 0 0; font-variant-numeric: tabular-nums; }
     .subrow { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-top: .4rem; font-size: .82rem; color: var(--muted); }
-    .chg {
-      display: inline-flex; align-items: center;
-      padding: .12rem .45rem; border-radius: 999px;
-      font-size: .72rem; font-weight: 650; font-variant-numeric: tabular-nums;
-    }
+    .chg { display: inline-flex; align-items: center; padding: .12rem .45rem; border-radius: 999px; font-size: .72rem; font-weight: 650; font-variant-numeric: tabular-nums; }
     .chg.up { background: color-mix(in oklab, var(--up) 16%, transparent); color: var(--up); }
     .chg.down { background: color-mix(in oklab, var(--down) 16%, transparent); color: var(--down); }
     .chg.flat { background: var(--surface-2); color: var(--muted); }
     .periods { display: flex; gap: .3rem; margin: .85rem 0 .35rem; }
-    .periods button {
-      flex: 1; height: 1.85rem; border-radius: 999px;
-      font-size: .72rem; font-weight: 600; color: var(--muted); background: var(--surface);
-    }
+    .periods button { flex: 1; height: 1.85rem; border-radius: 999px; font-size: .72rem; font-weight: 600; color: var(--muted); background: var(--surface); }
     .periods button.on { background: var(--fg); color: var(--bg); }
     .chart-wrap { height: 11.5rem; margin: .35rem -0.15rem 0; position: relative; }
     .chart-wrap svg { width: 100%; height: 100%; display: block; }
-    .chart-meta {
-      display: flex; justify-content: space-between; gap: .5rem;
-      margin-top: .35rem; font-size: .68rem; color: var(--muted);
-      font-variant-numeric: tabular-nums;
-    }
+    .chart-meta { display: flex; justify-content: space-between; gap: .5rem; margin-top: .35rem; font-size: .68rem; color: var(--muted); font-variant-numeric: tabular-nums; }
     .chart-meta strong { color: var(--fg); font-weight: 600; }
-    .split3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .4rem; margin-top: .75rem; }
-    .split3 .stat .n { font-size: .78rem; }
-    .donut-row {
-      display: grid; grid-template-columns: 7.2rem 1fr; gap: .85rem;
-      align-items: center; margin-top: .85rem;
-      background: var(--surface); border-radius: 1rem; padding: .85rem .9rem;
-    }
-    .donut-svg { width: 7.2rem; height: 7.2rem; }
-    .donut-leg { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
-    .donut-leg-row {
-      display: flex; align-items: center; gap: .45rem;
-      font-size: .72rem; color: var(--muted);
-    }
-    .donut-leg-row i {
-      width: .5rem; height: .5rem; border-radius: 99px; flex-shrink: 0;
-    }
-    .donut-leg-row .nm { flex: 1; min-width: 0; color: var(--fg); font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .donut-leg-row .pc { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--fg); }
-    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .4rem; margin-top: .85rem; }
-    .ver {
-      margin-top: 1.4rem; text-align: center;
-      font-size: .65rem; color: var(--subtle); letter-spacing: .04em;
-    }
+    .stats, .split3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .4rem; margin-top: .85rem; }
     .stat { background: var(--surface); border-radius: .8rem; padding: .65rem .6rem; }
     .stat .k { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
     .stat .n { margin-top: .22rem; font-size: .8rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+    .donut-row { display: grid; grid-template-columns: 7.2rem 1fr; gap: .85rem; align-items: center; margin-top: .85rem; background: var(--surface); border-radius: 1rem; padding: .85rem .9rem; }
+    .donut-svg { width: 7.2rem; height: 7.2rem; }
+    .donut-leg { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+    .donut-leg-row { display: flex; align-items: center; gap: .45rem; font-size: .72rem; color: var(--muted); }
+    .donut-leg-row i { width: .5rem; height: .5rem; border-radius: 99px; flex-shrink: 0; }
+    .donut-leg-row .nm { flex: 1; min-width: 0; color: var(--fg); font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .donut-leg-row .pc { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--fg); }
     .card { background: var(--surface); border-radius: 1rem; padding: .15rem .9rem; }
     .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .55rem; }
     .sec-head h2 { margin: 0; font-size: .92rem; font-weight: 650; }
-    .row, .pos {
-      display: flex; align-items: center; gap: .7rem;
-      padding: .78rem 0; border-bottom: 1px solid var(--border);
-      width: 100%; text-align: left;
-    }
+    .row, .pos { display: flex; align-items: center; gap: .7rem; padding: .78rem 0; border-bottom: 1px solid var(--border); width: 100%; text-align: left; }
     .row:last-child, .pos:last-child { border-bottom: none; }
-    .logo, .logo.ph {
-      width: 2.15rem; height: 2.15rem; border-radius: 999px;
-      background: var(--surface-2); object-fit: cover; flex-shrink: 0;
-    }
+    .logo, .logo.ph { width: 2.15rem; height: 2.15rem; border-radius: 999px; background: var(--surface-2); object-fit: cover; flex-shrink: 0; }
     .logo.ph { display: grid; place-items: center; font-size: .62rem; font-weight: 650; color: var(--muted); }
     .grow { flex: 1; min-width: 0; }
     .name { font-weight: 600; font-size: .92rem; }
@@ -123,137 +77,60 @@
     .right { text-align: right; font-variant-numeric: tabular-nums; }
     .right .v { font-weight: 600; }
     .right .s { font-size: .72rem; margin-top: .08rem; color: var(--muted); }
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: .3rem;
-      height: 2.45rem; padding: 0 .95rem; border-radius: .7rem;
-      font-size: .85rem; font-weight: 600;
-    }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: .3rem; height: 2.45rem; padding: 0 .95rem; border-radius: .7rem; font-size: .85rem; font-weight: 600; }
     .btn.primary { background: var(--fg); color: var(--bg); }
     .btn.secondary { background: var(--surface-2); }
     .btn.ghost { color: var(--muted); height: 2rem; padding: 0 .55rem; font-size: .72rem; }
     .btn.danger { background: color-mix(in oklab, var(--down) 16%, transparent); color: var(--down); }
     .btn.sm { height: 2rem; padding: 0 .7rem; font-size: .72rem; }
-    .nav {
-      position: fixed; inset-inline: 0; bottom: 0; z-index: 30;
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      border-top: 1px solid var(--border);
-      background: color-mix(in oklab, var(--bg) 92%, transparent);
-      backdrop-filter: blur(16px); padding-bottom: var(--safe-b);
-    }
-    .nav button {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: .15rem; height: 3.4rem; font-size: .62rem; color: var(--muted);
-    }
+    .nav { position: fixed; inset-inline: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(16px); padding-bottom: var(--safe-b); }
+    .nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem; height: 3.4rem; font-size: .62rem; color: var(--muted); }
     .nav button.on { color: var(--fg); }
     .nav svg { width: 1.2rem; height: 1.2rem; }
-    .empty { text-align: center; padding: 1.4rem .8rem; color: var(--muted); font-size: .88rem; line-height: 1.5; }
-    .sheet-bg { position: fixed; inset: 0; z-index: 40; background: #0008; opacity: 0; pointer-events: none; transition: opacity .2s; }
-    .sheet-bg.open { opacity: 1; pointer-events: auto; }
-    .sheet {
-      position: fixed; left: 50%; bottom: 0; z-index: 50;
-      width: min(100%, 28rem); max-height: min(92dvh, 42rem);
-      transform: translate(-50%, 110%);
-      transition: transform .28s cubic-bezier(.22,1,.36,1);
-      background: var(--surface); border-radius: 1.15rem 1.15rem 0 0;
-      display: flex; flex-direction: column;
-      padding: .45rem 1rem calc(1rem + var(--safe-b));
-    }
-    .sheet.open { transform: translate(-50%, 0); }
-    .handle { width: 2.3rem; height: .22rem; border-radius: 99px; background: var(--border); margin: .3rem auto .7rem; }
-    .sheet h3 { margin: 0 0 .7rem; font-size: 1.02rem; }
-    .sheet-body { overflow: auto; flex: 1; min-height: 0; -webkit-overflow-scrolling: touch; }
-    .field { margin-bottom: .7rem; }
+    .status { font-size: .72rem; color: var(--subtle); margin: .55rem 0 0; }
+    .empty { padding: 1.1rem 0; font-size: .82rem; color: var(--muted); text-align: center; }
+    .sheet-bg { position: fixed; inset: 0; z-index: 40; background: #0008; display: none; }
+    .sheet-bg.on { display: block; }
+    .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; max-height: min(92vh, 40rem); overflow: auto; background: var(--surface); border-radius: 1.1rem 1.1rem 0 0; padding: 1rem 1rem calc(1.2rem + var(--safe-b)); transform: translateY(110%); transition: transform .22s ease; }
+    .sheet.on { transform: none; }
+    .sheet h3 { margin: 0 0 .8rem; font-size: 1.05rem; }
+    .field { margin-top: .7rem; }
     .field label { display: block; font-size: .72rem; color: var(--muted); margin-bottom: .3rem; }
-    .field input, .field select, .field textarea {
-      width: 100%; height: 2.7rem; padding: 0 .75rem; border-radius: .65rem;
-      border: 1px solid var(--border); background: var(--bg); font-size: 16px;
-    }
-    .field textarea { height: auto; min-height: 3.6rem; padding: .6rem .75rem; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
-    .side-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; margin-bottom: .8rem; }
-    .side-toggle button {
-      height: 2.4rem; border-radius: .65rem; border: 1px solid var(--border); color: var(--muted); font-weight: 600; font-size: .85rem;
-    }
-    .side-toggle button.on-buy { background: color-mix(in oklab, var(--up) 16%, transparent); border-color: #3ecf8e55; color: var(--up); }
-    .side-toggle button.on-sell { background: color-mix(in oklab, var(--down) 16%, transparent); border-color: #eb575755; color: var(--down); }
-    .actions { display: flex; gap: .45rem; margin-top: .45rem; padding-top: .7rem; border-top: 1px solid var(--border); }
+    .field input, .field select { width: 100%; height: 2.6rem; border-radius: .7rem; border: 1px solid var(--border); background: var(--bg); padding: 0 .75rem; }
+    .side-toggle { display: flex; gap: .35rem; background: var(--surface-2); padding: .25rem; border-radius: 999px; }
+    .side-toggle button { flex: 1; height: 2rem; border-radius: 999px; font-size: .78rem; font-weight: 600; color: var(--muted); }
+    .side-toggle button.on-buy { background: color-mix(in oklab, var(--up) 22%, transparent); color: var(--up); }
+    .side-toggle button.on-sell { background: color-mix(in oklab, var(--down) 22%, transparent); color: var(--down); }
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .chips button { height: 1.85rem; padding: 0 .65rem; border-radius: 999px; font-size: .72rem; border: 1px solid var(--border); color: var(--muted); }
+    .chips button.on { background: var(--surface-2); color: var(--fg); border-color: transparent; }
+    .actions { display: flex; gap: .5rem; margin-top: 1rem; }
     .actions .btn { flex: 1; }
-    .status { font-size: .72rem; color: var(--subtle); margin-top: .35rem; }
-    .status.ok { color: var(--up); }
-    .status.err { color: var(--down); }
-    .toast {
-      position: fixed; left: 50%; bottom: calc(4.4rem + var(--safe-b));
-      transform: translateX(-50%) translateY(1rem);
-      z-index: 60; background: var(--surface-2); border: 1px solid var(--border);
-      padding: .6rem 1rem; border-radius: 999px; font-size: .82rem;
-      opacity: 0; pointer-events: none; transition: .2s; max-width: 90vw;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .hidden { display: none !important; }
-    .tx-meta { font-size: .72rem; color: var(--muted); margin-top: .12rem; }
-    .page-asset header.top { gap: .6rem; }
-    .back { width: 2.1rem; height: 2.1rem; border-radius: 99px; background: var(--surface-2); font-size: 1.1rem; }
-    .banner {
-      background: var(--surface); border-radius: .8rem; padding: .7rem .8rem;
-      font-size: .78rem; color: var(--muted); display: flex; justify-content: space-between; gap: .5rem; align-items: center;
-    }
-    .tl { position: relative; }
-    .tl-year, .tl-month {
-      width: 100%; text-align: left;
-      display: flex; align-items: baseline; justify-content: space-between; gap: .5rem;
-    }
-    .tl-year {
-      padding: .85rem 0 .35rem;
-      font-size: 1.35rem; font-weight: 650; letter-spacing: -.03em;
-    }
-    .tl-year .meta { font-size: .72rem; font-weight: 500; color: var(--muted); letter-spacing: 0; }
-    .tl-month {
-      padding: .55rem 0 .25rem;
-      font-size: .78rem; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
-    }
-    .tl-month .meta { letter-spacing: 0; text-transform: none; font-weight: 500; }
-    .tl-day {
-      position: relative;
-      margin: .45rem 0 .15rem 0;
-      padding-left: 1.15rem;
-      font-size: .72rem; font-weight: 600; color: var(--subtle);
-    }
-    .tl-day::before {
-      content: "";
-      position: absolute; left: 0; top: .35rem;
-      width: .42rem; height: .42rem; border-radius: 99px;
-      background: var(--fg);
-    }
+    .toast { position: fixed; left: 50%; bottom: calc(4.6rem + var(--safe-b)); transform: translateX(-50%) translateY(1rem); z-index: 50; background: var(--fg); color: var(--bg); padding: .55rem .9rem; border-radius: 999px; font-size: .78rem; font-weight: 600; opacity: 0; pointer-events: none; transition: .2s; }
+    .toast.on { opacity: 1; transform: translateX(-50%); }
+    .tl-year, .tl-month, .tl-day { width: 100%; text-align: left; }
+    .tl-year { display: flex; justify-content: space-between; padding: .7rem 0; font-weight: 650; border-bottom: 1px solid var(--border); }
+    .tl-month { padding: .45rem 0 .2rem; font-size: .78rem; color: var(--muted); }
+    .tl-day { position: relative; padding: .35rem 0 .15rem 1.15rem; font-size: .72rem; font-weight: 600; color: var(--subtle); }
+    .tl-day::before { content: ""; position: absolute; left: 0; top: .35rem; width: .42rem; height: .42rem; border-radius: 99px; background: var(--fg); }
     .tl-body { position: relative; padding-left: 1.15rem; }
-    .tl-body::before {
-      content: "";
-      position: absolute; left: .16rem; top: 0; bottom: 0;
-      width: 1px; background: var(--border);
-    }
-    .tl-item {
-      display: flex; align-items: flex-start; gap: .65rem;
-      padding: .55rem 0;
-      border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
-    }
-    .tl-item:last-child { border-bottom: none; }
-    .tl-time {
-      width: 2.7rem; flex-shrink: 0;
-      font-size: .68rem; font-weight: 650; color: var(--subtle);
-      font-variant-numeric: tabular-nums; padding-top: .12rem;
-    }
-    .tl-dot {
-      width: .38rem; height: .38rem; border-radius: 99px; margin-top: .35rem; flex-shrink: 0;
-    }
+    .tl-body::before { content: ""; position: absolute; left: .16rem; top: 0; bottom: 0; width: 1px; background: var(--border); }
+    .tl-item { display: flex; align-items: flex-start; gap: .65rem; padding: .55rem 0; border-bottom: 1px solid color-mix(in oklab, var(--border) 70%, transparent); width: 100%; text-align: left; }
+    .tl-time { width: 2.7rem; flex-shrink: 0; font-size: .68rem; font-weight: 650; color: var(--subtle); font-variant-numeric: tabular-nums; padding-top: .12rem; }
     .collapsed { display: none; }
-    footer.note { margin: 1.6rem 0 .6rem; font-size: .72rem; color: var(--subtle); text-align: center; }
+    .ver { margin-top: 1.4rem; text-align: center; font-size: .65rem; color: var(--subtle); letter-spacing: .04em; }
+    .hidden { display: none !important; }
+    .check { display: flex; align-items: center; gap: .55rem; margin-top: .85rem; font-size: .82rem; }
+    .check input { width: 1.05rem; height: 1.05rem; }
+    .hint { font-size: .72rem; color: var(--muted); margin-top: .35rem; }
   </style>
 </head>
 <body>
   <div class="app">
-    <header class="top" id="headerHome">
+    <header class="top">
       <div class="brand">
         <svg viewBox="0 0 32 32"><path d="M7 18.5c3.2-6 14.8-6 18 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M7 22h18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".4"/></svg>
-        <span>VELA</span>
+        <span id="hdrTitle">VELA</span>
       </div>
       <span class="usd-tag">USD</span>
     </header>
@@ -288,26 +165,26 @@
       </section>
       <section>
         <div class="sec-head"><h2>Plateformes</h2></div>
+        <p class="status" style="margin:0 0 .4rem">Valeur actuelle des quantités restantes ici — le coût d’achat est indiqué à part.</p>
         <div class="card" id="venuesCard"><div class="empty">Aucun solde.</div></div>
       </section>
       <p class="ver" id="appVersion"></p>
     </main>
 
-    <main id="view-asset" class="hidden page-asset">
-      <header class="top">
-        <button type="button" class="back" id="btnBackAsset">←</button>
-        <div class="grow"><div class="name" id="assetTitle">Actif</div><div class="sym" id="assetSub"></div></div>
-        <button type="button" class="btn sm primary" id="btnAddTxAsset">+</button>
-      </header>
+    <main id="view-asset" class="hidden">
+      <button type="button" class="btn ghost" id="btnBackHome">← Accueil</button>
       <section>
+        <p class="status" style="margin:0" id="assetSym">—</p>
         <h1 class="hero" id="assetValue">—</h1>
-        <div class="subrow"><span class="chg flat" id="assetPnl">—</span><span id="assetPeriodLbl">période</span></div>
+        <div class="subrow"><span class="chg flat" id="assetPill">—</span><span id="assetSub"></span></div>
         <div class="periods" id="assetPeriods"></div>
         <div class="chart-wrap" id="assetChart"></div>
         <div class="stats" id="assetStats"></div>
       </section>
       <section>
-        <div class="sec-head"><h2>Mouvements</h2></div>
+        <div class="sec-head"><h2>Mouvements</h2>
+          <button type="button" class="btn sm secondary" id="btnAddTxAsset">+</button>
+        </div>
         <div class="card" id="assetTxs"></div>
       </section>
     </main>
@@ -315,90 +192,114 @@
     <main id="view-tx" class="hidden">
       <section>
         <div class="sec-head"><h2>Transactions</h2>
-          <button type="button" class="btn sm primary" id="btnAddTxTop">+ Ajouter</button>
+          <button type="button" class="btn sm primary" id="btnAddTx">+</button>
         </div>
-        <div class="card" id="txCard" style="padding:.35rem .95rem 1rem"><div class="empty">Aucune transaction.</div></div>
+        <div id="txTimeline"></div>
       </section>
     </main>
 
-    <main id="view-markets" class="hidden">
+    <main id="view-mkt" class="hidden">
       <section>
-        <div class="sec-head"><h2>Marchés</h2></div>
-        <div class="card" id="marketsCard"><div class="empty">Chargement…</div></div>
-        <p class="status">BTC, ETH, ONDO, COIN, CRCL via API. Touche une ligne pour un prix manuel.</p>
+        <div class="sec-head"><h2>Marché</h2>
+          <button type="button" class="btn sm secondary" id="btnRefreshMkt">Actualiser</button>
+        </div>
+        <div class="card" id="mktCard"></div>
       </section>
     </main>
 
-    <main id="view-settings" class="hidden">
+    <main id="view-set" class="hidden">
       <section>
-        <div class="sec-head"><h2>Données</h2></div>
-        <div id="exportBanner"></div>
-        <div class="card" style="padding:1rem">
-          <p style="margin:0 0 .75rem;font-size:.88rem;color:var(--muted);line-height:1.45">
-            Stockage <strong style="color:var(--fg)">dans Safari</strong>. Tout est en <strong style="color:var(--fg)">USD</strong>. Exporte régulièrement.
-          </p>
-          <div style="display:flex;flex-direction:column;gap:.45rem">
-            <button type="button" class="btn primary" id="btnExportJson">Exporter JSON</button>
-            <button type="button" class="btn secondary" id="btnExport">Exporter CSV</button>
-            <label class="btn secondary" style="cursor:pointer">Importer JSON
-              <input type="file" id="importJson" accept="application/json,.json" class="hidden" />
-            </label>
-            <button type="button" class="btn danger" id="btnWipe">Effacer</button>
-          </div>
-          <p class="status" id="storageInfo"></p>
+        <h2 style="margin:0 0 .6rem;font-size:.92rem">Données</h2>
+        <p class="hint">Tout reste dans ce navigateur (localStorage). Exporte un JSON avant de changer d’appareil.</p>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="btnExport">Exporter</button>
+          <button type="button" class="btn secondary" id="btnImport">Importer</button>
         </div>
+        <input type="file" id="importFile" accept="application/json" class="hidden" />
+        <div class="actions"><button type="button" class="btn danger" id="btnReset">Tout effacer</button></div>
       </section>
     </main>
-    <footer class="note">VELA · USD · données locales · pas un conseil</footer>
   </div>
 
   <nav class="nav">
-    <button type="button" class="on" data-view="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
-    <button type="button" data-view="tx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M8 7h13M8 12h13M8 17h13M3 7h.01M3 12h.01M3 17h.01"/></svg>Mouvements</button>
-    <button type="button" data-view="markets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>Marchés</button>
-    <button type="button" data-view="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2"/></svg>Données</button>
+    <button type="button" data-view="home" class="on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg>
+      Accueil
+    </button>
+    <button type="button" data-view="tx">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
+      Mouvements
+    </button>
+    <button type="button" data-view="mkt">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9l5 4 5-8 6 10"/></svg>
+      Marché
+    </button>
+    <button type="button" data-view="set">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Réglages
+    </button>
   </nav>
+
   <div class="sheet-bg" id="sheetBg"></div>
-  <div class="sheet" id="sheet"><div class="handle"></div><h3 id="sheetTitle">Ajouter</h3><div class="sheet-body" id="sheetBody"></div></div>
+  <div class="sheet" id="sheet"></div>
   <div class="toast" id="toast"></div>
 
 <script>
 (function () {
-  "use strict";
   const STORAGE_KEY = "vela.local.v1";
   const PRICE_KEY = "vela.local.prices.v1";
   const HIST_KEY = "vela.local.hist.v1";
-  const APP_VERSION = "002";
-  const APP_BUILT = "21.08.2026 12:05";
+  const APP_VERSION = "003";
+  const APP_BUILT = "26.08.2026 13:30";
   const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
-  const BASE_CATALOG = [
-    { id: "btc-bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", gecko: "bitcoin", live: true },
-    { id: "eth-ethereum", symbol: "ETH", name: "Ethereum", kind: "crypto", gecko: "ethereum", live: true },
-    { id: "ondo-ondo", symbol: "ONDO", name: "Ondo", kind: "crypto", gecko: "ondo-finance", live: true },
-    { id: "eq-COIN", symbol: "COIN", name: "Coinbase", kind: "equity", yahoo: "COIN", live: true },
-    { id: "eq-CRCL", symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL", live: true },
+  const VENUES = ["Ledger","MetaMask","Coinbase","Binance","Kraken","Swissquote","IBKR","Revolut","Bitstamp","Autre"];
+  const PERIODS = [{ id: "1d", label: "1J", days: 1 }, { id: "1w", label: "1S", days: 7 }, { id: "1m", label: "1M", days: 30 }, { id: "1y", label: "1A", days: 365 }];
+  const CORE = [
+    { id: "bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", cg: "bitcoin" },
+    { id: "ethereum", symbol: "ETH", name: "Ethereum", kind: "crypto", cg: "ethereum" },
+    { id: "ondo-finance", symbol: "ONDO", name: "Ondo", kind: "crypto", cg: "ondo-finance" },
+    { id: "COIN", symbol: "COIN", name: "Coinbase", kind: "equity", yahoo: "COIN" },
+    { id: "CRCL", symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL" },
   ];
-  const VENUES = ["Coinbase","Binance","Kraken","Swissquote","IBKR","Revolut","Bitstamp","NYSE","NASDAQ","Autre"];
-  const PERIODS = [
-    { id: "1d", label: "1J", days: 1 },
-    { id: "1w", label: "1S", days: 7 },
-    { id: "1m", label: "1M", days: 30 },
-    { id: "1y", label: "1A", days: 365 },
-  ];
-  let state = loadState();
-  let prices = loadPrices();
-  let hist = loadHist();
-  let fx = { usd: 1, eur: 0.92, chf: 0.8 };
-  let currentView = "home";
-  let homePeriod = "1m";
-  let assetPeriod = "1m";
-  let openAssetId = null;
 
-  function uid() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2); }
-  function n(v) { const x = Number(v); return Number.isFinite(x) ? x : 0; }
+  const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
+  const uid = () => crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random();
+  const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&","<":"<",">":">","\"":""","'":"&#39;" }[c]));
+  function formatMoney(v) {
+    if (!Number.isFinite(v)) return "—";
+    return new Intl.NumberFormat("fr-CH", { style: "currency", currency: "USD", maximumFractionDigits: Math.abs(v) >= 1000 ? 0 : 2 }).format(v);
+  }
+  function formatQty(v) {
+    if (!(v > 0)) return "0";
+    const d = v >= 100 ? 2 : v >= 1 ? 4 : 6;
+    return new Intl.NumberFormat("fr-CH", { maximumFractionDigits: d }).format(v);
+  }
+  function formatUnit(v) {
+    if (!(v > 0)) return "—";
+    const d = v >= 1000 ? 0 : v >= 1 ? 2 : 6;
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: d }).format(v);
+  }
+  function formatPct(v) {
+    if (!Number.isFinite(v)) return "—";
+    const s = (v >= 0 ? "+" : "") + v.toFixed(1) + " %";
+    return s;
+  }
+  function shortMoney(v) {
+    const a = Math.abs(v);
+    if (a >= 1e6) return (v / 1e6).toFixed(2) + "M";
+    if (a >= 1e3) return (v / 1e3).toFixed(a >= 1e4 ? 1 : 2) + "k";
+    return v.toFixed(0);
+  }
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg; el.classList.add("on");
+    clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove("on"), 2200);
+  }
+
   function loadState() {
     try {
-      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || {};
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (!data) return { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], lastExportAt: null };
       return {
         version: 1, currency: "usd",
         txs: Array.isArray(data.txs) ? data.txs : [],
@@ -408,132 +309,148 @@
       };
     } catch { return { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], lastExportAt: null }; }
   }
-  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); updateStorageInfo(); }
-  function loadPrices() { try { return JSON.parse(localStorage.getItem(PRICE_KEY) || "{}"); } catch { return {}; } }
-  function savePrices() { localStorage.setItem(PRICE_KEY, JSON.stringify(prices)); }
-  function loadHist() { try { return JSON.parse(localStorage.getItem(HIST_KEY) || "{}"); } catch { return {}; } }
-  function saveHist() { localStorage.setItem(HIST_KEY, JSON.stringify(hist)); }
+  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  let state = loadState();
+  let prices = {};
+  try { prices = JSON.parse(localStorage.getItem(PRICE_KEY) || "{}") || {}; } catch { prices = {}; }
+  let hist = {};
+  try { hist = JSON.parse(localStorage.getItem(HIST_KEY) || "{}") || {}; } catch { hist = {}; }
+
+  let view = "home";
+  let homePeriod = "1w";
+  let assetPeriod = "1w";
+  let openAssetId = null;
 
   function allAssets() {
-    const seen = new Set(BASE_CATALOG.map((a) => a.id));
-    const extra = [];
-    for (const a of state.customAssets || []) {
-      if (!a || !a.id || seen.has(a.id)) continue;
-      seen.add(a.id);
-      extra.push({ id: a.id, symbol: a.symbol, name: a.name || a.symbol, kind: a.kind || "crypto", live: false, custom: true });
+    const map = new Map(CORE.map((a) => [a.id, { ...a }]));
+    for (const c of state.customAssets) {
+      if (!map.has(c.id)) map.set(c.id, { ...c, custom: true });
     }
-    return BASE_CATALOG.concat(extra);
+    return [...map.values()];
   }
-  function findAsset(idOrSym) {
-    const q = String(idOrSym || "").toLowerCase();
-    return allAssets().find((a) => a.id === idOrSym || a.symbol.toLowerCase() === q || a.id.toLowerCase() === q);
+  function findAsset(id) {
+    return allAssets().find((a) => a.id === id) || null;
   }
-  function ensureCustomAsset(symbol) {
-    const sym = String(symbol || "").trim().toUpperCase();
-    if (!sym) return null;
-    const existing = findAsset(sym);
-    if (existing) return existing;
-    const asset = { id: "custom-" + sym.toLowerCase(), symbol: sym, name: sym, kind: "crypto", live: false, custom: true };
-    state.customAssets = state.customAssets || [];
-    state.customAssets.push({ id: asset.id, symbol: asset.symbol, name: asset.name, kind: asset.kind });
-    saveState();
-    return asset;
+  function assetBySymbol(sym) {
+    const s = String(sym || "").toUpperCase();
+    return allAssets().find((a) => a.symbol.toUpperCase() === s) || null;
   }
-  function setLastPrice(assetId, usd, source) {
-    if (!assetId || !(usd > 0)) return;
-    const prev = prices[assetId]?.usd;
-    let chg = prices[assetId]?.chg ?? 0;
-    if (prev > 0 && source === "manual") chg = ((usd - prev) / prev) * 100;
-    prices[assetId] = { usd, chg: Number.isFinite(chg) ? chg : 0, at: Date.now(), source: source || "manual" };
-    savePrices();
+  function priceUsd(id) {
+    const p = prices[id];
+    if (p && p.usd > 0) return p.usd;
+    const last = [...state.txs].filter((t) => t.assetId === id && n(t.priceUsd) > 0).pop();
+    return last ? n(last.priceUsd) : 0;
   }
-  function formatMoney(v) {
-    try { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: Math.abs(v) >= 1000 ? 0 : 2 }).format(v); }
-    catch { return v.toFixed(2) + " $"; }
+  function setLastPrice(id, usd, { force } = {}) {
+    if (!(usd > 0)) return;
+    if (!force && prices[id] && prices[id].usd > 0 && prices[id].src === "api") return;
+    prices[id] = { usd, at: Date.now(), src: force ? "api" : (prices[id]?.src || "manual") };
+    localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
   }
-  function formatPct(v) { if (!Number.isFinite(v)) return "—"; return (v > 0 ? "+" : "") + v.toFixed(2) + " %"; }
-  function formatQty(v) {
-    const abs = Math.abs(v); const d = abs >= 100 ? 2 : abs >= 1 ? 4 : 8;
-    return new Intl.NumberFormat("fr-CH", { maximumFractionDigits: d }).format(v);
-  }
-  function formatUnit(v) {
-    const abs = Math.abs(v); const d = abs >= 1000 ? 2 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : 6;
-    try { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: d }).format(v); }
-    catch { return v.toFixed(d) + " $"; }
-  }
-  function formatDateTime(iso) {
-    const d = new Date(iso);
-    if (!Number.isFinite(d.getTime())) return "—";
-    return d.toLocaleString("fr-CH", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  }
-  function cashToUsd(amount, code) {
-    const c = (code || "USD").toUpperCase();
-    if (c === "USDT" || c === "USDC" || c === "DAI" || c === "USD") return amount;
-    if (c === "EUR") return amount / (fx.eur || 0.92);
-    if (c === "CHF") return amount / (fx.chf || 0.8);
-    return amount;
-  }
-  function priceUsd(id) { return prices[id]?.usd || 0; }
 
-  function ledger(assetFilter) {
+  function cashToUsd(amount) { return n(amount); }
+
+  function ledger() {
     const sorted = [...state.txs].sort((a, b) => Date.parse(a.executedAt) - Date.parse(b.executedAt));
-    const map = new Map();
+    const byAsset = new Map();
     let realized = 0;
     for (const tx of sorted) {
-      if (assetFilter && tx.assetId !== assetFilter) continue;
-      const qty = n(tx.quantity), px = n(tx.priceUsd), fee = n(tx.feeUsd);
-      const cur = map.get(tx.assetId) || { assetId: tx.assetId, symbol: tx.symbol, name: tx.name, qty: 0, costUsd: 0, realized: 0 };
+      const acc = byAsset.get(tx.assetId) || { qty: 0, cost: 0, realized: 0, lots: [] };
+      const q = n(tx.quantity);
+      const px = n(tx.priceUsd);
+      const fee = n(tx.feeUsd);
+      const venue = (tx.venue || "Autre").trim() || "Autre";
       if (tx.side === "buy") {
-        cur.qty += qty;
-        cur.costUsd += qty * px + fee;
+        acc.qty += q;
+        acc.cost += q * px + fee;
+        acc.lots.push({ venue, qty: q, cost: q * px + fee });
       } else {
-        const avg = cur.qty > 0 ? cur.costUsd / cur.qty : px;
-        const sellQty = Math.min(qty, cur.qty);
-        const r = (px - avg) * sellQty - fee;
-        cur.realized += r;
-        realized += r;
-        cur.qty -= sellQty;
-        cur.costUsd = Math.max(0, cur.costUsd - avg * sellQty);
+        const avg = acc.qty > 0 ? acc.cost / acc.qty : px;
+        const take = Math.min(q, acc.qty);
+        const pnl = take * (px - avg) - fee;
+        acc.realized += pnl;
+        realized += pnl;
+        acc.qty -= take;
+        acc.cost = Math.max(0, acc.cost - avg * take);
+        let left = q;
+        const same = acc.lots.filter((l) => l.venue === venue);
+        const others = acc.lots.filter((l) => l.venue !== venue);
+        const order = [...same, ...others];
+        acc.lots = [];
+        for (const lot of order) {
+          if (left <= 1e-12) { acc.lots.push(lot); continue; }
+          const t = Math.min(lot.qty, left);
+          const share = lot.qty > 0 ? t / lot.qty : 1;
+          lot.qty -= t;
+          lot.cost = Math.max(0, lot.cost * (1 - share));
+          left -= t;
+          if (lot.qty > 1e-12) acc.lots.push(lot);
+        }
       }
-      cur.symbol = tx.symbol; cur.name = tx.name;
-      map.set(tx.assetId, cur);
+      byAsset.set(tx.assetId, acc);
     }
-    return { map, realized };
+    return { byAsset, realized };
   }
 
-  function aggregateHoldings() {
-    const { map } = ledger();
+  function portfolioTotals() {
+    const { byAsset, realized } = ledger();
     const holdings = [];
-    for (const acc of map.values()) {
+    for (const [assetId, acc] of byAsset) {
       if (acc.qty <= 1e-12) continue;
-      const pUsd = priceUsd(acc.assetId);
-      const valueUsd = acc.qty * pUsd;
-      const pnlUsd = valueUsd - acc.costUsd;
+      const asset = findAsset(assetId) || { symbol: assetId, name: assetId, id: assetId };
+      const px = priceUsd(assetId);
+      const valueUsd = acc.qty * px;
+      const avg = acc.qty > 0 ? acc.cost / acc.qty : 0;
       holdings.push({
-        ...acc, priceUsd: pUsd, valueUsd,
-        avgCostUsd: acc.qty > 0 ? acc.costUsd / acc.qty : 0,
-        pnlUsd, pnlPct: acc.costUsd > 0 ? (pnlUsd / acc.costUsd) * 100 : 0,
-        chg24h: prices[acc.assetId]?.chg ?? 0,
+        assetId, symbol: asset.symbol, name: asset.name, qty: acc.qty,
+        avgCostUsd: avg, costUsd: acc.cost, priceUsd: px, valueUsd,
+        pnlUsd: valueUsd - acc.cost, pnlPct: acc.cost > 0 ? ((valueUsd - acc.cost) / acc.cost) * 100 : 0,
+        realized: acc.realized,
       });
     }
     holdings.sort((a, b) => b.valueUsd - a.valueUsd);
-    const tot = holdings.reduce((s, h) => s + h.valueUsd, 0);
-    for (const h of holdings) h.allocation = tot > 0 ? (h.valueUsd / tot) * 100 : 0;
-    return holdings;
-  }
-  function portfolioTotals() {
-    const holdings = aggregateHoldings();
-    const { realized } = ledger();
     const valueUsd = holdings.reduce((s, h) => s + h.valueUsd, 0);
     const costUsd = holdings.reduce((s, h) => s + h.costUsd, 0);
-    const cashUsd = state.liquidity.reduce((s, c) => s + cashToUsd(n(c.amount), c.currency), 0);
+    const cashUsd = state.liquidity.reduce((s, c) => s + cashToUsd(n(c.amount)), 0);
     return {
-      holdings, valueUsd, costUsd, cashUsd, realized,
+      holdings, valueUsd, costUsd, cashUsd,
       totalUsd: valueUsd + cashUsd,
       pnlUsd: valueUsd - costUsd,
       pnlPct: costUsd > 0 ? ((valueUsd - costUsd) / costUsd) * 100 : 0,
+      realized,
     };
   }
+
+  function venueBalances() {
+    const { byAsset } = ledger();
+    const byVenue = new Map();
+    const bump = (name) => {
+      const cur = byVenue.get(name) || { value: 0, cost: 0, cash: 0, qtyHint: [] };
+      byVenue.set(name, cur);
+      return cur;
+    };
+    for (const [assetId, acc] of byAsset) {
+      const asset = findAsset(assetId);
+      const px = priceUsd(assetId);
+      for (const lot of acc.lots) {
+        if (lot.qty <= 1e-12) continue;
+        const mark = px > 0 ? px : (lot.qty > 0 ? lot.cost / lot.qty : 0);
+        const row = bump(lot.venue);
+        row.value += lot.qty * mark;
+        row.cost += lot.cost;
+        row.qtyHint.push(formatQty(lot.qty) + " " + (asset?.symbol || ""));
+      }
+    }
+    for (const c of state.liquidity) {
+      const row = bump(c.venue || "Cash");
+      const v = cashToUsd(n(c.amount));
+      row.value += v; row.cash += v;
+    }
+    return [...byVenue.entries()].map(([name, r]) => ({ name, ...r }))
+      .filter((x) => x.value > 0.01)
+      .sort((a, b) => b.value - a.value);
+  }
+
   function qtyAt(assetId, ts) {
     let q = 0;
     for (const tx of state.txs) {
@@ -543,64 +460,45 @@
     }
     return Math.max(0, q);
   }
-  function lookupPx(series, ts) {
-    if (!series || !series.length) return 0;
-    let best = series[0][1], bestD = Math.abs(series[0][0] - ts);
-    for (const [t, p] of series) {
-      const d = Math.abs(t - ts);
-      if (d < bestD) { bestD = d; best = p; }
+  function lookupPx(points, ts) {
+    if (!points.length) return 0;
+    let best = points[0][1], dist = Math.abs(points[0][0] - ts);
+    for (const p of points) {
+      const d = Math.abs(p[0] - ts);
+      if (d < dist) { dist = d; best = p[1]; }
     }
-    return n(best);
+    return best;
+  }
+  function buildPortfolioPoints(days) {
+    const now = Date.now(), from = now - days * 86400000;
+    const assets = [...new Set(state.txs.map((t) => t.assetId))];
+    const step = days <= 1 ? 3600000 : days <= 7 ? 3 * 3600000 : 86400000;
+    const cash = state.liquidity.reduce((s, c) => s + cashToUsd(n(c.amount)), 0);
+    const pts = [];
+    for (let t = from; t <= now; t += step) {
+      let v = cash;
+      for (const id of assets) {
+        const q = qtyAt(id, t);
+        if (q <= 0) continue;
+        const raw = hist[id + ":" + days]?.points || hist[id + ":365"]?.points || [];
+        let px = lookupPx(raw, t);
+        if (!(px > 0)) px = priceUsd(id);
+        v += q * px;
+      }
+      pts.push([t, v]);
+    }
+    return pts;
+  }
+  function buildAssetPoints(assetId, days) {
+    const now = Date.now(), from = now - days * 86400000;
+    const raw = hist[assetId + ":" + days]?.points || hist[assetId + ":365"]?.points || [];
+    if (raw.length) return raw.filter((p) => p[0] >= from).map(([t, p]) => [t, qtyAt(assetId, t) * p]);
+    const step = days <= 1 ? 3600000 : 86400000;
+    const pts = [];
+    for (let t = from; t <= now; t += step) pts.push([t, qtyAt(assetId, t) * priceUsd(assetId)]);
+    return pts;
   }
 
-  function toast(msg) {
-    const el = document.getElementById("toast");
-    el.textContent = msg; el.classList.add("show");
-    clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove("show"), 2200);
-  }
-  function setView(name) {
-    currentView = name;
-    if (name !== "asset") openAssetId = null;
-    ["home", "asset", "tx", "markets", "settings"].forEach((v) => {
-      const el = document.getElementById("view-" + v);
-      if (el) el.classList.toggle("hidden", v !== name);
-    });
-    document.getElementById("headerHome").classList.toggle("hidden", name === "asset");
-    document.querySelectorAll(".nav button").forEach((b) => {
-      b.classList.toggle("on", b.dataset.view === (name === "asset" ? "home" : name));
-    });
-    if (name === "settings") updateStorageInfo();
-  }
-  function openSheet(title, html) {
-    document.getElementById("sheetTitle").textContent = title;
-    document.getElementById("sheetBody").innerHTML = html;
-    document.getElementById("sheetBg").classList.add("open");
-    document.getElementById("sheet").classList.add("open");
-  }
-  function closeSheet() {
-    document.getElementById("sheetBg").classList.remove("open");
-    document.getElementById("sheet").classList.remove("open");
-  }
-  function escapeHtml(s) {
-    return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-  }
-  function assetLogo(asset) {
-    if (!asset) return '<div class="logo ph">?</div>';
-    const sym = (asset.symbol || "?").slice(0, 2);
-    if (asset.kind === "equity") {
-      const domain = asset.symbol === "COIN" ? "coinbase.com" : asset.symbol === "CRCL" ? "circle.com" : "google.com";
-      return `<img class="logo" alt="" src="https://www.google.com/s2/favicons?domain=${domain}&sz=64" onerror="this.outerHTML='<div class=\\'logo ph\\'>${sym}</div>'" />`;
-    }
-    if (asset.custom || String(asset.id).startsWith("custom-")) return `<div class="logo ph">${escapeHtml(sym)}</div>`;
-    return `<img class="logo" alt="" src="https://static.coinpaprika.com/coin/${asset.id}/logo.png" onerror="this.outerHTML='<div class=\\'logo ph\\'>${sym}</div>'" />`;
-  }
-
-  function shortMoney(v) {
-    const a = Math.abs(v);
-    if (a >= 1e6) return (v / 1e6).toFixed(2) + "M";
-    if (a >= 1e3) return (v / 1e3).toFixed(a >= 1e4 ? 1 : 2) + "k";
-    return v.toFixed(0);
-  }
   function drawChart(el, points, up, metaEl) {
     if (!el) return;
     if (!points || points.length < 2) {
@@ -612,20 +510,15 @@
     const ys = points.map((p) => p[1]);
     let min = Math.min(...ys), max = Math.max(...ys);
     if (max === min) { max = min + 1; min = min - 1; }
-    const span = max - min;
-    const mid = (min + max) / 2;
-    const start = points[0][1];
-    const end = points.at(-1)[1];
+    const span = max - min, mid = (min + max) / 2, start = points[0][1];
     const xAt = (i) => padL + (i / (points.length - 1)) * (w - padL - padR);
     const yAt = (v) => padT + (1 - (v - min) / span) * (h - padT - padB);
     const coords = points.map((p, i) => [xAt(i), yAt(p[1])]);
     const line = coords.map((c, i) => (i ? "L" : "M") + c[0].toFixed(1) + " " + c[1].toFixed(1)).join(" ");
     const area = line + ` L ${coords.at(-1)[0].toFixed(1)} ${h - padB} L ${coords[0][0].toFixed(1)} ${h - padB} Z`;
     const color = up ? "#3ecf8e" : "#eb5757";
-    const gid = "cg" + (up ? "u" : "d");
     const yStart = yAt(start);
-    const levels = [max, mid, min];
-    const grid = levels.map((lv) => {
+    const levels = [max, mid, min].map((lv) => {
       const y = yAt(lv);
       return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="#26262b" stroke-width="1"/>
         <text x="${padL - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#5a5a56" font-size="9" font-family="Inter,sans-serif">${shortMoney(lv)}</text>`;
@@ -640,157 +533,75 @@
       return d.toLocaleDateString("fr-CH", { month: "short", year: "2-digit" });
     };
     el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <defs><linearGradient id="cg${up ? "u" : "d"}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${color}" stop-opacity=".32"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/>
       </linearGradient></defs>
-      ${grid}
-      <line x1="${padL}" y1="${yStart.toFixed(1)}" x2="${w - padR}" y2="${yStart.toFixed(1)}"
-        stroke="${color}" stroke-opacity=".35" stroke-dasharray="4 4" stroke-width="1"/>
-      <path d="${area}" fill="url(#${gid})"/>
+      ${levels}
+      <line x1="${padL}" y1="${yStart.toFixed(1)}" x2="${w - padR}" y2="${yStart.toFixed(1)}" stroke="${color}" stroke-opacity=".35" stroke-dasharray="4 4"/>
+      <path d="${area}" fill="url(#cg${up ? "u" : "d"})"/>
       <path d="${line}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
       <circle cx="${coords[maxIdx][0].toFixed(1)}" cy="${coords[maxIdx][1].toFixed(1)}" r="3.2" fill="${color}"/>
       <circle cx="${coords[minIdx][0].toFixed(1)}" cy="${coords[minIdx][1].toFixed(1)}" r="3.2" fill="#8b8b86"/>
       <circle cx="${coords.at(-1)[0].toFixed(1)}" cy="${coords.at(-1)[1].toFixed(1)}" r="3.6" fill="${color}" stroke="#0a0a0b" stroke-width="1.5"/>
-      <text x="${padL}" y="${h - 4}" fill="#5a5a56" font-size="9" font-family="Inter,sans-serif">${fmtT(t0)}</text>
-      <text x="${w - padR}" y="${h - 4}" text-anchor="end" fill="#5a5a56" font-size="9" font-family="Inter,sans-serif">${fmtT(t1)}</text>
+      <text x="${padL}" y="${h - 4}" fill="#5a5a56" font-size="9">${fmtT(t0)}</text>
+      <text x="${w - padR}" y="${h - 4}" text-anchor="end" fill="#5a5a56" font-size="9">${fmtT(t1)}</text>
     </svg>`;
     if (metaEl) {
       metaEl.innerHTML = `<span>Bas <strong>${formatMoney(Math.min(...ys))}</strong></span>
         <span>Haut <strong>${formatMoney(Math.max(...ys))}</strong></span>
-        <span>Début période <strong>${formatMoney(start)}</strong></span>`;
+        <span>Début <strong>${formatMoney(start)}</strong></span>`;
     }
   }
   function renderPeriods(boxId, current, onPick) {
     const box = document.getElementById(boxId);
-    box.innerHTML = PERIODS.map((p) =>
-      `<button type="button" class="${p.id === current ? "on" : ""}" data-p="${p.id}">${p.label}</button>`
-    ).join("");
-    box.onclick = (e) => {
-      const id = e.target.closest("[data-p]")?.dataset?.p;
-      if (id) onPick(id);
-    };
-  }
-
-  function seriesFor(assetId, days) {
-    const key = (assetId || "ALL") + ":" + days;
-    const cached = hist[key];
-    if (cached && Date.now() - cached.at < 30 * 60 * 1000) return cached.points;
-    return (cached && cached.points) || [];
-  }
-
-  function buildPortfolioPoints(days) {
-    const now = Date.now();
-    const from = now - days * 86400000;
-    const assets = [...new Set(state.txs.map((t) => t.assetId))];
-    const step = days <= 1 ? 3600000 : days <= 7 ? 3 * 3600000 : 86400000;
-    const pts = [];
-    const cash = state.liquidity.reduce((s, c) => s + cashToUsd(n(c.amount), c.currency), 0);
-    for (let t = from; t <= now; t += step) {
-      let v = cash;
-      for (const id of assets) {
-        const q = qtyAt(id, t);
-        if (q <= 0) continue;
-        const raw = hist[id + ":" + days]?.points || hist[id + ":365"]?.points || [];
-        let px = lookupPx(raw, t);
-        if (!(px > 0)) px = priceUsd(id);
-        if (!(px > 0)) {
-          const lastTx = [...state.txs].filter((x) => x.assetId === id && Date.parse(x.executedAt) <= t).pop();
-          px = lastTx ? n(lastTx.priceUsd) : 0;
-        }
-        v += q * px;
-      }
-      pts.push([t, v]);
-    }
-    return pts;
-  }
-  function buildAssetPoints(assetId, days) {
-    const now = Date.now();
-    const from = now - days * 86400000;
-    const raw = hist[assetId + ":" + days]?.points || hist[assetId + ":365"]?.points || [];
-    if (raw.length) {
-      return raw.filter((p) => p[0] >= from).map(([t, p]) => [t, qtyAt(assetId, t) * p]);
-    }
-    const step = days <= 1 ? 3600000 : 86400000;
-    const pts = [];
-    for (let t = from; t <= now; t += step) {
-      const q = qtyAt(assetId, t);
-      const lastTx = [...state.txs].filter((x) => x.assetId === assetId && Date.parse(x.executedAt) <= t).pop();
-      const px = priceUsd(assetId) || (lastTx ? n(lastTx.priceUsd) : 0);
-      pts.push([t, q * px]);
-    }
-    return pts;
-  }
-
-  function venueBalances() {
-    const inv = new Map();
-    const sorted = [...state.txs].sort((a, b) => Date.parse(a.executedAt) - Date.parse(b.executedAt));
-    for (const tx of sorted) {
-      const venue = tx.venue || "Autre";
-      if (!inv.has(tx.assetId)) inv.set(tx.assetId, []);
-      const q = n(tx.quantity);
-      if (tx.side === "buy") {
-        inv.get(tx.assetId).push({ venue, qty: q });
-      } else {
-        let left = q;
-        const lots = inv.get(tx.assetId);
-        while (left > 1e-12 && lots.length) {
-          const lot = lots[0];
-          const take = Math.min(lot.qty, left);
-          lot.qty -= take;
-          left -= take;
-          if (lot.qty <= 1e-12) lots.shift();
-        }
-      }
-    }
-    const byVenue = new Map();
-    for (const [assetId, lots] of inv) {
-      const px = priceUsd(assetId);
-      for (const lot of lots) {
-        if (lot.qty <= 1e-12) continue;
-        byVenue.set(lot.venue, (byVenue.get(lot.venue) || 0) + lot.qty * px);
-      }
-    }
-    for (const c of state.liquidity) {
-      const venue = c.venue || "Cash";
-      byVenue.set(venue, (byVenue.get(venue) || 0) + cashToUsd(n(c.amount), c.currency));
-    }
-    return [...byVenue.entries()].map(([name, value]) => ({ name, value }))
-      .filter((x) => x.value > 0.5)
-      .sort((a, b) => b.value - a.value);
+    if (!box) return;
+    box.innerHTML = PERIODS.map((p) => `<button type="button" class="${p.id === current ? "on" : ""}" data-p="${p.id}">${p.label}</button>`).join("");
+    box.onclick = (e) => { const id = e.target.closest("[data-p]")?.dataset?.p; if (id) onPick(id); };
   }
   function drawDonut(segments) {
     const total = segments.reduce((s, x) => s + x.value, 0);
-    if (!(total > 0)) return '<div class="empty">Rien à répartir.</div>';
-    const r = 42, cx = 50, cy = 50, stroke = 14;
-    const c = 2 * Math.PI * r;
+    if (!(total > 0)) return "";
+    const r = 42, c = 2 * Math.PI * r;
     let offset = 0;
     const arcs = segments.map((seg, i) => {
       const len = (seg.value / total) * c;
       const color = DONUT_COLORS[i % DONUT_COLORS.length];
-      const arc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      const arc = `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="14"
         stroke-dasharray="${len.toFixed(2)} ${(c - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"
-        transform="rotate(-90 ${cx} ${cy})"/>`;
+        transform="rotate(-90 50 50)"/>`;
       offset += len;
       return arc;
     }).join("");
-    const legend = segments.map((seg, i) => {
-      const pct = (seg.value / total) * 100;
-      return `<div class="donut-leg-row">
-        <i style="background:${DONUT_COLORS[i % DONUT_COLORS.length]}"></i>
-        <span class="nm">${escapeHtml(seg.label)}</span>
-        <span class="pc">${pct.toFixed(0)} %</span>
-      </div>`;
-    }).join("");
-    return `<div class="donut-row">
-      <svg class="donut-svg" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="42" fill="none" stroke="#1c1c1f" stroke-width="14"/>
-        ${arcs}
-        <text x="50" y="48" text-anchor="middle" fill="#f5f5f4" font-size="11" font-weight="700" font-family="Inter,sans-serif">${shortMoney(total)}</text>
-        <text x="50" y="60" text-anchor="middle" fill="#8b8b86" font-size="7" font-family="Inter,sans-serif">TOTAL</text>
-      </svg>
-      <div class="donut-leg">${legend}</div>
-    </div>`;
+    const legend = segments.map((seg, i) => `<div class="donut-leg-row">
+      <i style="background:${DONUT_COLORS[i % DONUT_COLORS.length]}"></i>
+      <span class="nm">${escapeHtml(seg.label)}</span>
+      <span class="pc">${((seg.value / total) * 100).toFixed(0)} %</span>
+    </div>`).join("");
+    return `<div class="donut-row"><svg class="donut-svg" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="42" fill="none" stroke="#1c1c1f" stroke-width="14"/>${arcs}
+      <text x="50" y="48" text-anchor="middle" fill="#f5f5f4" font-size="11" font-weight="700">${shortMoney(total)}</text>
+      <text x="50" y="60" text-anchor="middle" fill="#8b8b86" font-size="7">TOTAL</text>
+    </svg><div class="donut-leg">${legend}</div></div>`;
   }
+  function assetLogo(asset) {
+    const sym = (asset.symbol || "?").slice(0, 2);
+    if (asset.kind === "equity") {
+      const domain = asset.symbol === "COIN" ? "coinbase.com" : asset.symbol === "CRCL" ? "circle.com" : "google.com";
+      return `<img class="logo" alt="" src="https://www.google.com/s2/favicons?domain=${domain}&sz=64" onerror="this.outerHTML='<div class=\\'logo ph\\'>${sym}</div>'" />`;
+    }
+    if (asset.custom || String(asset.id).startsWith("custom-")) return `<div class="logo ph">${escapeHtml(sym)}</div>`;
+    return `<img class="logo" alt="" src="https://static.coinpaprika.com/coin/${asset.id}/logo.png" onerror="this.outerHTML='<div class=\\'logo ph\\'>${sym}</div>'" />`;
+  }
+
+  function setView(id) {
+    view = id;
+    ["home","asset","tx","mkt","set"].forEach((v) => {
+      document.getElementById("view-" + v).classList.toggle("hidden", v !== id);
+    });
+    document.querySelectorAll(".nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === (id === "asset" ? "home" : id)));
+    document.getElementById("hdrTitle").textContent = id === "asset" ? "Actif" : "VELA";
+  }
+
   function renderHome() {
     const t = portfolioTotals();
     document.getElementById("netWorth").textContent = formatMoney(t.totalUsd);
@@ -814,17 +625,15 @@
       <div class="stat"><div class="k">Tout</div><div class="n">${formatMoney(t.totalUsd)}</div></div>
       <div class="stat"><div class="k">Positions</div><div class="n">${formatMoney(t.valueUsd)}</div></div>
       <div class="stat"><div class="k">Cash USD</div><div class="n">${formatMoney(t.cashUsd)}</div></div>`;
-
     const segs = t.holdings.map((h) => ({ label: h.symbol, value: h.valueUsd }));
     if (t.cashUsd > 0.5) segs.push({ label: "Cash", value: t.cashUsd });
     document.getElementById("donutBox").innerHTML = segs.length ? drawDonut(segs) : "";
 
     const hBox = document.getElementById("holdingsCard");
-    if (!t.holdings.length) {
-      hBox.innerHTML = '<div class="empty">Aucune position. Ajoute un mouvement.</div>';
-    } else {
+    if (!t.holdings.length) hBox.innerHTML = '<div class="empty">Aucune position. Ajoute un mouvement.</div>';
+    else {
       hBox.innerHTML = t.holdings.map((h) => {
-        const asset = findAsset(h.assetId) || { symbol: h.symbol, name: h.name, id: h.assetId, kind: "crypto" };
+        const asset = findAsset(h.assetId) || h;
         const tone = h.pnlUsd > 0.01 ? "up" : h.pnlUsd < -0.01 ? "down" : "flat";
         return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}">
           ${assetLogo(asset)}
@@ -836,13 +645,13 @@
       }).join("");
     }
     const cBox = document.getElementById("cashCard");
-    if (!state.liquidity.length) cBox.innerHTML = '<div class="empty">Aucune liquidité USD / stablecoin d’investissement.</div>';
+    if (!state.liquidity.length) cBox.innerHTML = '<div class="empty">Aucune liquidité USD / stablecoin.</div>';
     else {
       cBox.innerHTML = state.liquidity.map((c) => `<div class="row">
         <div class="logo ph">${c.kind === "fiat" ? "$" : "S"}</div>
         <div class="grow"><div class="name">${escapeHtml(c.currency)}</div>
-          <div class="sym">${c.venue ? escapeHtml(c.venue) : "cash"} · ${formatMoney(cashToUsd(n(c.amount), c.currency))}</div></div>
-        <div class="right"><div class="v">${formatQty(n(c.amount))}</div></div>
+          <div class="sym">${c.venue ? escapeHtml(c.venue) : "cash"}</div></div>
+        <div class="right"><div class="v">${formatMoney(n(c.amount))}</div></div>
         <button type="button" class="btn ghost" data-del-cash="${c.id}">✕</button>
       </div>`).join("");
     }
@@ -854,518 +663,419 @@
       vBox.innerHTML = venues.map((v) => `<div class="row">
         <div class="logo ph">${escapeHtml(v.name.slice(0, 2).toUpperCase())}</div>
         <div class="grow"><div class="name">${escapeHtml(v.name)}</div>
-          <div class="sym">${((v.value / sum) * 100).toFixed(0)} % du total suivi</div></div>
-        <div class="right"><div class="v">${formatMoney(v.value)}</div></div>
+          <div class="sym">${((v.value / sum) * 100).toFixed(0)} % · coût ${formatMoney(v.cost)}${v.qtyHint.length ? " · " + v.qtyHint.join(", ") : ""}</div></div>
+        <div class="right"><div class="v">${formatMoney(v.value)}</div>
+          <div class="s">${v.cash > 0.5 ? "dont cash " + formatMoney(v.cash) : "valeur actuelle"}</div></div>
       </div>`).join("");
     }
-    const ver = document.getElementById("appVersion");
-    if (ver) ver.textContent = "version " + APP_VERSION + " · " + APP_BUILT;
+    document.getElementById("appVersion").textContent = "version " + APP_VERSION + " · " + APP_BUILT;
   }
 
-  function openAsset(id) {
-    openAssetId = id;
-    setView("asset");
-    renderAsset();
-  }
   function renderAsset() {
     const id = openAssetId;
-    const asset = findAsset(id) || { id, symbol: id, name: id };
-    const { map, realized } = ledger(id);
-    const acc = map.get(id) || { qty: 0, costUsd: 0, realized: 0, symbol: asset.symbol, name: asset.name };
+    const asset = findAsset(id);
+    if (!asset) { setView("home"); return; }
+    const t = portfolioTotals();
+    const h = t.holdings.find((x) => x.assetId === id);
+    const qty = h?.qty || 0;
     const px = priceUsd(id);
-    const value = acc.qty * px;
-    const latent = value - acc.costUsd;
-    const pct = acc.costUsd > 0 ? (latent / acc.costUsd) * 100 : 0;
-    document.getElementById("assetTitle").textContent = acc.name || asset.name;
-    document.getElementById("assetSub").textContent = (acc.symbol || asset.symbol) + " · " + formatQty(acc.qty);
+    const value = qty * px;
+    document.getElementById("assetSym").textContent = asset.symbol + " · " + asset.name;
     document.getElementById("assetValue").textContent = px > 0 ? formatMoney(value) : "—";
-    const days = PERIODS.find((p) => p.id === assetPeriod).days;
-    const pts = buildAssetPoints(id, days);
-    const first = pts[0]?.[1] ?? value;
-    const last = pts.at(-1)?.[1] ?? value;
-    const d = last - first;
-    const dp = first > 0 ? (d / first) * 100 : 0;
-    const up = d >= 0;
-    const pill = document.getElementById("assetPnl");
+    const pts = buildAssetPoints(id, PERIODS.find((p) => p.id === assetPeriod).days);
+    const first = pts[0]?.[1] || value, last = pts.at(-1)?.[1] || value;
+    const d = last - first, dp = first > 0 ? (d / first) * 100 : 0, up = d >= 0;
+    const pill = document.getElementById("assetPill");
     pill.className = "chg " + (Math.abs(d) < 0.5 ? "flat" : up ? "up" : "down");
     pill.textContent = formatPct(dp) + " · " + formatMoney(d);
-    document.getElementById("assetPeriodLbl").textContent = "valeur de ta position";
+    document.getElementById("assetSub").textContent = formatQty(qty) + " · moy. " + formatUnit(h?.avgCostUsd || 0);
     drawChart(document.getElementById("assetChart"), pts, up, null);
     renderPeriods("assetPeriods", assetPeriod, (pid) => { assetPeriod = pid; renderAsset(); });
     document.getElementById("assetStats").innerHTML = `
-      <div class="stat"><div class="k">Achat moy.</div><div class="n">${formatUnit(acc.qty ? acc.costUsd / acc.qty : 0)}</div></div>
-      <div class="stat"><div class="k">Cours</div><div class="n">${px ? formatUnit(px) : "—"}</div></div>
-      <div class="stat"><div class="k">Réalisé</div><div class="n">${formatMoney(acc.realized || realized)}</div></div>`;
-    const txs = [...state.txs].filter((t) => t.assetId === id).sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
-    const box = document.getElementById("assetTxs");
-    if (!txs.length) box.innerHTML = '<div class="empty">Aucun mouvement.</div>';
-    else box.innerHTML = txs.map(txRow).join("");
+      <div class="stat"><div class="k">Investi</div><div class="n">${formatMoney(h?.costUsd || 0)}</div></div>
+      <div class="stat"><div class="k">Latent</div><div class="n">${formatMoney(h?.pnlUsd || 0)}</div></div>
+      <div class="stat"><div class="k">Réalisé</div><div class="n">${formatMoney(h?.realized || 0)}</div></div>`;
+    const txs = state.txs.filter((x) => x.assetId === id).sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
+    document.getElementById("assetTxs").innerHTML = txs.length
+      ? txs.map((tx) => txRow(tx)).join("")
+      : '<div class="empty">Aucun mouvement.</div>';
   }
 
-  function txRow(tx) {
-    const side = tx.side === "buy" ? "Achat" : "Vente";
-    const col = tx.side === "buy" ? "var(--up)" : "var(--down)";
-    const total = n(tx.quantity) * n(tx.priceUsd) + (tx.side === "buy" ? n(tx.feeUsd) : 0);
-    return `<div class="row">
-      <div class="grow">
-        <div class="name"><span style="color:${col}">${side}</span> ${escapeHtml(tx.symbol)}</div>
-        <div class="tx-meta">${formatQty(n(tx.quantity))} × ${formatUnit(n(tx.priceUsd))}${tx.venue ? " · " + escapeHtml(tx.venue) : ""}</div>
-        <div class="tx-meta">${formatDateTime(tx.executedAt)}</div>
-      </div>
-      <div class="right">
-        <div class="v">${formatMoney(total)}</div>
-        <div>
-          <button type="button" class="btn ghost" data-edit-tx="${tx.id}">Édit.</button>
-          <button type="button" class="btn ghost" data-del-tx="${tx.id}">✕</button>
-        </div>
-      </div>
-    </div>`;
-  }
   function txNet(tx) {
-    const t = n(tx.quantity) * n(tx.priceUsd) + n(tx.feeUsd);
-    return tx.side === "buy" ? -t : t - n(tx.feeUsd);
+    const tot = n(tx.quantity) * n(tx.priceUsd);
+    return tx.side === "buy" ? tot + n(tx.feeUsd) : tot - n(tx.feeUsd);
   }
+  function txRow(tx) {
+    const asset = findAsset(tx.assetId);
+    const d = new Date(tx.executedAt);
+    const time = d.toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+    return `<button type="button" class="tl-item" data-edit-tx="${tx.id}">
+      <span class="tl-time">${time}</span>
+      <div class="grow">
+        <div class="name">${tx.side === "buy" ? "Achat" : "Vente"} ${escapeHtml(asset?.symbol || "")}</div>
+        <div class="sym">${formatQty(n(tx.quantity))} · ${tx.venue || "—"} · ${formatUnit(n(tx.priceUsd))}</div>
+      </div>
+      <div class="right"><div class="v">${formatMoney(txNet(tx))}</div></div>
+    </button>`;
+  }
+
   function renderTx() {
-    const box = document.getElementById("txCard");
     const txs = [...state.txs].sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
-    if (!txs.length) {
-      box.innerHTML = '<div class="empty">Aucun mouvement.</div>';
-      return;
-    }
-    const now = new Date();
-    const groups = new Map();
+    const box = document.getElementById("txTimeline");
+    if (!txs.length) { box.innerHTML = '<div class="empty">Aucun mouvement.</div>'; return; }
+    const byYear = new Map();
     for (const tx of txs) {
       const d = new Date(tx.executedAt);
       const y = d.getFullYear();
       const m = d.getMonth();
-      const day = d.getDate();
-      if (!groups.has(y)) groups.set(y, new Map());
-      const ym = groups.get(y);
+      const day = d.toISOString().slice(0, 10);
+      if (!byYear.has(y)) byYear.set(y, new Map());
+      const ym = byYear.get(y);
       if (!ym.has(m)) ym.set(m, new Map());
       const yd = ym.get(m);
       if (!yd.has(day)) yd.set(day, []);
       yd.get(day).push(tx);
     }
-    const years = [...groups.keys()].sort((a, b) => b - a);
-    let html = '<div class="tl">';
-    for (const y of years) {
-      const months = groups.get(y);
-      const yearTxs = [];
-      for (const days of months.values()) for (const list of days.values()) yearTxs.push(...list);
-      const yOpen = y === now.getFullYear();
-      html += `<button type="button" class="tl-year" data-tl="y${y}">
-        <span>${y}</span>
-        <span class="meta">${yearTxs.length} · ${formatMoney(yearTxs.reduce((s, t) => s + txNet(t), 0))}</span>
-      </button><div class="${yOpen ? "" : "collapsed"}" id="y${y}">`;
-      const monthKeys = [...months.keys()].sort((a, b) => b - a);
-      for (const mo of monthKeys) {
-        const days = months.get(mo);
-        const monthTxs = [];
-        for (const list of days.values()) monthTxs.push(...list);
-        const label = new Date(y, mo, 1).toLocaleDateString("fr-CH", { month: "long" });
-        const mOpen = yOpen && mo === now.getMonth();
-        const mid = "m" + y + "-" + mo;
-        html += `<button type="button" class="tl-month" data-tl="${mid}">
-          <span>${label}</span>
-          <span class="meta">${monthTxs.length}</span>
-        </button><div class="${mOpen ? "" : "collapsed"}" id="${mid}">`;
-        const dayKeys = [...days.keys()].sort((a, b) => b - a);
-        for (const day of dayKeys) {
-          const list = days.get(day).sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
-          const dlabel = new Date(y, mo, day).toLocaleDateString("fr-CH", { weekday: "short", day: "numeric", month: "short" });
-          html += `<div class="tl-day">${dlabel}</div><div class="tl-body">`;
-          for (const tx of list) {
-            const side = tx.side === "buy" ? "Achat" : "Vente";
-            const col = tx.side === "buy" ? "var(--up)" : "var(--down)";
-            const total = n(tx.quantity) * n(tx.priceUsd) + (tx.side === "buy" ? n(tx.feeUsd) : 0);
-            const hh = new Date(tx.executedAt).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
-            html += `<div class="tl-item">
-              <div class="tl-time">${hh}</div>
-              <div class="tl-dot" style="background:${col}"></div>
-              <div class="grow">
-                <div class="name"><span style="color:${col}">${side}</span> ${escapeHtml(tx.symbol)}</div>
-                <div class="tx-meta">${formatQty(n(tx.quantity))} × ${formatUnit(n(tx.priceUsd))}${tx.venue ? " · " + escapeHtml(tx.venue) : ""}</div>
-              </div>
-              <div class="right">
-                <div class="v">${formatMoney(total)}</div>
-                <div>
-                  <button type="button" class="btn ghost" data-edit-tx="${tx.id}">Édit.</button>
-                  <button type="button" class="btn ghost" data-del-tx="${tx.id}">✕</button>
-                </div>
-              </div>
-            </div>`;
-          }
-          html += "</div>";
+    const months = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+    const nowY = new Date().getFullYear();
+    let html = "";
+    for (const [year, monthsMap] of byYear) {
+      const yearTxs = [...monthsMap.values()].flatMap((d) => [...d.values()].flat());
+      html += `<button type="button" class="tl-year" data-tog="y${year}"><span>${year}</span>
+        <span class="sym">${yearTxs.length} · ${formatMoney(yearTxs.reduce((s, t) => s + txNet(t), 0))}</span></button>
+        <div id="y${year}" class="${year === nowY ? "" : "collapsed"}">`;
+      for (const [m, days] of monthsMap) {
+        html += `<div class="tl-month">${months[m]}</div>`;
+        for (const [day, list] of days) {
+          const label = new Date(day + "T12:00:00").toLocaleDateString("fr-CH", { weekday: "short", day: "numeric", month: "short" });
+          html += `<div class="tl-day">${label}</div><div class="tl-body">${list.map(txRow).join("")}</div>`;
         }
-        html += "</div>";
       }
-      html += "</div>";
+      html += `</div>`;
     }
-    html += "</div>";
     box.innerHTML = html;
   }
-  function renderMarkets() {
-    const box = document.getElementById("marketsCard");
-    box.innerHTML = allAssets().map((a) => {
-      const p = prices[a.id];
-      const src = !p?.usd ? "—" : (p.source === "manual" ? "manuel" : "API");
-      const chg = p && Number.isFinite(p.chg) ? p.chg : null;
-      const tone = chg == null ? "flat" : chg > 0 ? "up" : chg < 0 ? "down" : "flat";
-      return `<button type="button" class="row" data-edit-price="${escapeHtml(a.id)}">
+
+  function renderMkt() {
+    const box = document.getElementById("mktCard");
+    const rows = allAssets().map((a) => {
+      const px = priceUsd(a.id);
+      const live = prices[a.id]?.src === "api";
+      return `<button type="button" class="pos" data-set-price="${escapeHtml(a.id)}">
         ${assetLogo(a)}
         <div class="grow"><div class="name">${escapeHtml(a.name)}</div>
-          <div class="sym">${escapeHtml(a.symbol)} · ${src}</div></div>
-        <div class="right"><div class="v">${p?.usd ? formatUnit(p.usd) : "—"}</div>
-          <div class="s">${chg == null ? "" : `<span class="chg ${tone}" style="padding:0">${formatPct(chg)}</span>`}</div></div>
+          <div class="sym">${escapeHtml(a.symbol)} · ${live ? "API" : "prix saisi / dernier connu"}</div></div>
+        <div class="right"><div class="v">${px > 0 ? formatUnit(px) : "—"}</div>
+          <div class="s">${live ? "cliquer pour forcer manuel" : "cliquer pour saisir"}</div></div>
       </button>`;
-    }).join("");
+    });
+    box.innerHTML = rows.join("") || '<div class="empty">Aucun actif.</div>';
   }
-  function updateStorageInfo() {
-    const el = document.getElementById("storageInfo");
-    if (!el) return;
-    const last = state.lastExportAt ? formatDateTime(state.lastExportAt) : "jamais";
-    el.textContent = `${state.txs.length} mouvement(s) · dernier export : ${last}`;
-    const ban = document.getElementById("exportBanner");
-    if (!ban) return;
-    const stale = !state.lastExportAt || (Date.now() - Date.parse(state.lastExportAt) > 7 * 86400000);
-    ban.innerHTML = stale && state.txs.length
-      ? `<div class="banner" style="margin-bottom:.65rem"><span>Pense à exporter une copie JSON.</span>
-          <button type="button" class="btn sm primary" id="btnExportHint">Exporter</button></div>`
-      : "";
-    document.getElementById("btnExportHint")?.addEventListener("click", exportJson);
-  }
+
   function renderAll() {
     renderHome();
+    if (view === "asset") renderAsset();
     renderTx();
-    renderMarkets();
-    if (currentView === "asset" && openAssetId) renderAsset();
-    updateStorageInfo();
+    renderMkt();
   }
 
-  function openManualPrice(assetId) {
-    const asset = findAsset(assetId);
-    if (!asset) return;
-    const current = priceUsd(asset.id);
-    openSheet("Prix · " + asset.symbol, `
-      <div class="field"><label>Prix unitaire (USD)</label>
-        <input id="mpPrice" type="number" inputmode="decimal" step="any" value="${current || ""}" /></div>
-      <div class="actions"><button type="button" class="btn secondary" id="mpCancel">Annuler</button>
-        <button type="button" class="btn primary" id="mpSave">Enregistrer</button></div>`);
-    document.getElementById("mpCancel").onclick = closeSheet;
-    document.getElementById("mpSave").onclick = () => {
-      const usd = n(document.getElementById("mpPrice").value);
-      if (!(usd > 0)) return toast("Prix invalide");
-      setLastPrice(asset.id, usd, "manual");
-      closeSheet(); renderAll(); toast("Prix mis à jour");
-    };
+  function closeSheet() {
+    document.getElementById("sheet").classList.remove("on");
+    document.getElementById("sheetBg").classList.remove("on");
+  }
+  function openSheet(title, body) {
+    const el = document.getElementById("sheet");
+    el.innerHTML = `<h3>${title}</h3>${body}`;
+    el.classList.add("on");
+    document.getElementById("sheetBg").classList.add("on");
   }
 
-  function openTxForm(prefill) {
-    const now = new Date();
-    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    const edit = prefill && prefill.id ? state.txs.find((t) => t.id === prefill.id) : null;
-    const lockAsset = prefill && prefill.assetId && !edit;
-    const assetOptions = allAssets().map((a) =>
-      `<option value="${a.id}" ${(edit?.assetId || lockAsset && prefill.assetId || "") === a.id ? "selected" : ""}>${a.symbol} — ${a.name}</option>`
-    ).join("");
-    const venueOptions = VENUES.map((v) => `<option ${edit?.venue === v ? "selected" : ""}>${v}</option>`).join("");
+  function venueChips(current) {
+    return `<div class="chips" id="venueChips">${VENUES.map((v) =>
+      `<button type="button" data-venue="${v}" class="${current === v ? "on" : ""}">${v}</button>`).join("")}</div>
+      <input id="fVenue" value="${escapeHtml(current || "")}" placeholder="Ou saisis une plateforme" />`;
+  }
+
+  function openTxForm(edit, presetAssetId) {
+    const assets = allAssets();
+    const pre = presetAssetId || edit?.assetId || assets[0]?.id || "";
+    const isNewOpt = "__new__";
+    const opts = [`<option value="${isNewOpt}">Enregistrer un autre actif</option>`]
+      .concat(assets.map((a) => `<option value="${a.id}" ${a.id === pre ? "selected" : ""}>${a.symbol} — ${a.name}</option>`))
+      .join("");
+    const dt = edit ? new Date(edit.executedAt) : new Date();
+    const pad = (x) => String(x).padStart(2, "0");
+    const local = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    const cashOpts = state.liquidity.map((c) =>
+      `<option value="${c.id}">${c.currency} · ${c.venue || "cash"} · ${formatQty(n(c.amount))}</option>`).join("");
     openSheet(edit ? "Modifier le mouvement" : "Nouveau mouvement", `
       <div class="side-toggle">
-        <button type="button" class="${!edit || edit.side === "buy" ? "on-buy" : ""}" data-side="buy">Achat</button>
-        <button type="button" class="${edit && edit.side === "sell" ? "on-sell" : ""}" data-side="sell">Vente</button>
+        <button type="button" class="${(edit?.side || "buy") === "buy" ? "on-buy" : ""}" data-side="buy">Achat</button>
+        <button type="button" class="${edit?.side === "sell" ? "on-sell" : ""}" data-side="sell">Vente</button>
       </div>
-      <div class="field"><label>Actif</label><select id="fAsset" ${lockAsset ? "disabled" : ""}>${assetOptions}</select></div>
-      ${edit || lockAsset ? "" : `<div class="field"><label>Ou nouveau symbole</label><input id="fCustomSym" placeholder="ex. SOL" /></div>`}
-      <div class="grid-2">
-        <div class="field"><label>Quantité</label><input id="fQty" type="number" inputmode="decimal" step="any" value="${edit ? edit.quantity : ""}" /></div>
-        <div class="field"><label>Prix USD</label><input id="fPrice" type="number" inputmode="decimal" step="any" value="${edit ? edit.priceUsd : ""}" /></div>
+      <div class="field"><label>Actif</label>
+        <select id="fAsset">${opts}</select></div>
+      <div id="newAssetBox" class="hidden">
+        <div class="field"><label>Nouveau symbole</label><input id="fNewSym" placeholder="ex. HYPE, PEPE" /></div>
+        <div class="field"><label>Nom (optionnel)</label><input id="fNewName" placeholder="ex. Hyperliquid" /></div>
       </div>
-      <div class="grid-2">
-        <div class="field"><label>Frais USD</label><input id="fFee" type="number" inputmode="decimal" step="any" value="${edit ? edit.feeUsd || 0 : 0}" /></div>
-        <div class="field"><label>Plateforme</label><select id="fVenue">${venueOptions}</select></div>
+      <div class="field"><label>Quantité</label><input id="fQty" inputmode="decimal" value="${edit ? edit.quantity : ""}" /></div>
+      <div class="field"><label>Prix USD</label><input id="fPx" inputmode="decimal" value="${edit ? edit.priceUsd : ""}" /></div>
+      <div class="field"><label>Date et heure</label><input id="fWhen" type="datetime-local" value="${local}" /></div>
+      <div class="field"><label>Plateforme</label>${venueChips(edit?.venue || "")}</div>
+      <div class="field"><label>Frais USD</label><input id="fFee" inputmode="decimal" value="${edit?.feeUsd || ""}" /></div>
+      <div id="buyCashBox">
+        <label class="check"><input type="checkbox" id="fDeduct" ${edit ? "" : ""} /> Déduire d’une liquidité existante</label>
+        <div class="field hidden" id="fDeductWrap"><label>Depuis</label>
+          <select id="fDeductId">${cashOpts || "<option value=''>Aucune liquidité</option>"}</select></div>
       </div>
-      <div class="field"><label>Date</label><input id="fWhen" type="datetime-local" value="${edit ? new Date(Date.parse(edit.executedAt) - new Date().getTimezoneOffset()*60000).toISOString().slice(0,16) : local}" /></div>
-      ${edit ? "" : `<label class="field" style="display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.82rem">
-        <input type="checkbox" id="fDeduct" style="width:auto" /> Déduire des liquidités</label>
-        <div class="field hidden" id="fDeductBox"><label>Depuis</label><select id="fDeductId"></select></div>`}
-      <div class="actions"><button type="button" class="btn secondary" id="fCancel">Annuler</button>
-        <button type="button" class="btn primary" id="fSave">${edit ? "Mettre à jour" : "Enregistrer"}</button></div>
-    `);
+      <div id="sellCashBox" class="hidden">
+        <label class="check"><input type="checkbox" id="fCredit" ${state.liquidity.length ? "checked" : ""} /> Ajouter le produit à une liquidité existante</label>
+        <div class="field" id="fCreditWrap"><label>Vers</label>
+          <select id="fCreditId">${cashOpts}<option value="__new__">+ Nouvelle réserve USD</option></select></div>
+        <p class="hint">La vente crédite quantité × prix − frais sur la réserve choisie. Si tu n’as pas encore de cash, une réserve USD est créée.</p>
+      </div>
+      <div class="actions">
+        ${edit ? '<button type="button" class="btn danger" id="fDel">Supprimer</button>' : '<button type="button" class="btn secondary" id="fCancel">Annuler</button>'}
+        <button type="button" class="btn primary" id="fSave">Enregistrer</button>
+      </div>`);
+
     let side = edit?.side || "buy";
-    document.querySelectorAll("[data-side]").forEach((b) => {
-      b.addEventListener("click", () => {
-        side = b.dataset.side;
-        document.querySelectorAll("[data-side]").forEach((x) => {
-          x.classList.remove("on-buy", "on-sell");
-          if (x.dataset.side === side) x.classList.add(side === "buy" ? "on-buy" : "on-sell");
-        });
-        const lab = document.getElementById("fDeduct")?.closest("label");
-        if (lab) lab.style.display = side === "buy" ? "flex" : "none";
+    const syncSide = () => {
+      document.querySelectorAll("[data-side]").forEach((b) => {
+        b.classList.toggle("on-buy", b.dataset.side === "buy" && side === "buy");
+        b.classList.toggle("on-sell", b.dataset.side === "sell" && side === "sell");
       });
-    });
-    if (!edit) {
-      const sel = document.getElementById("fDeductId");
-      if (sel) {
-        sel.innerHTML = state.liquidity.length
-          ? state.liquidity.map((c) => `<option value="${c.id}">${c.currency} · ${formatQty(n(c.amount))}</option>`).join("")
-          : '<option value="">—</option>';
-      }
-      document.getElementById("fDeduct")?.addEventListener("change", () => {
-        document.getElementById("fDeductBox").classList.toggle("hidden", !document.getElementById("fDeduct").checked);
-      });
-      const sync = () => {
-        const p = priceUsd(document.getElementById("fAsset").value);
-        if (p > 0 && !document.getElementById("fPrice").value) document.getElementById("fPrice").value = String(p);
+      document.getElementById("buyCashBox").classList.toggle("hidden", side !== "buy");
+      document.getElementById("sellCashBox").classList.toggle("hidden", side !== "sell");
+    };
+    syncSide();
+    document.querySelectorAll("[data-side]").forEach((b) => b.onclick = () => { side = b.dataset.side; syncSide(); });
+    const sel = document.getElementById("fAsset");
+    const newBox = document.getElementById("newAssetBox");
+    const syncNew = () => newBox.classList.toggle("hidden", sel.value !== "__new__");
+    sel.onchange = syncNew; syncNew();
+    document.getElementById("venueChips").onclick = (e) => {
+      const v = e.target.closest("[data-venue]")?.dataset?.venue;
+      if (!v) return;
+      document.getElementById("fVenue").value = v;
+      document.querySelectorAll("[data-venue]").forEach((x) => x.classList.toggle("on", x.dataset.venue === v));
+    };
+    const deduct = document.getElementById("fDeduct");
+    const deductWrap = document.getElementById("fDeductWrap");
+    deduct.onchange = () => deductWrap.classList.toggle("hidden", !deduct.checked);
+    const cancel = document.getElementById("fCancel");
+    if (cancel) cancel.onclick = closeSheet;
+    if (edit) {
+      document.getElementById("fDel").onclick = () => {
+        state.txs = state.txs.filter((t) => t.id !== edit.id);
+        saveState(); closeSheet(); renderAll(); toast("Mouvement supprimé");
       };
-      document.getElementById("fAsset").addEventListener("change", () => { document.getElementById("fPrice").value = ""; sync(); });
-      sync();
     }
-    document.getElementById("fCancel").onclick = closeSheet;
     document.getElementById("fSave").onclick = () => {
-      let asset = findAsset(document.getElementById("fAsset").value);
-      const customEl = document.getElementById("fCustomSym");
-      const custom = customEl ? customEl.value.trim().toUpperCase() : "";
-      if (custom) asset = ensureCustomAsset(custom);
-      if (!asset) return toast("Choisis un actif");
-      const quantity = n(document.getElementById("fQty").value);
-      const priceUsdVal = n(document.getElementById("fPrice").value);
-      const feeUsd = n(document.getElementById("fFee").value);
-      const when = document.getElementById("fWhen").value;
-      if (!(quantity > 0)) return toast("Quantité invalide");
-      if (!(priceUsdVal > 0)) return toast("Prix invalide");
-      if (!when) return toast("Date requise");
-      const payload = {
-        side, assetId: asset.id, symbol: asset.symbol, name: asset.name,
-        quantity, priceUsd: priceUsdVal, feeUsd,
-        venue: document.getElementById("fVenue").value,
-        note: null, executedAt: new Date(when).toISOString(),
-      };
-      if (edit) {
-        Object.assign(edit, payload);
-      } else {
-        if (side === "buy" && document.getElementById("fDeduct")?.checked) {
-          const pos = state.liquidity.find((c) => c.id === document.getElementById("fDeductId").value);
-          if (!pos) return toast("Choisis une liquidité");
-          const need = (quantity * priceUsdVal + feeUsd) / (cashToUsd(1, pos.currency) || 1);
-          if (n(pos.amount) < need) return toast("Liquidité insuffisante");
-          pos.amount -= need;
-          if (pos.amount < 1e-10) state.liquidity = state.liquidity.filter((c) => c.id !== pos.id);
+      let assetId = sel.value;
+      if (assetId === "__new__") {
+        const sym = document.getElementById("fNewSym").value.trim().toUpperCase();
+        if (!sym) return toast("Indique un symbole");
+        const existing = assetBySymbol(sym);
+        if (existing) assetId = existing.id;
+        else {
+          assetId = "custom-" + sym.toLowerCase();
+          const name = document.getElementById("fNewName").value.trim() || sym;
+          if (!state.customAssets.some((c) => c.id === assetId)) {
+            state.customAssets.push({ id: assetId, symbol: sym, name, kind: "crypto", custom: true });
+          }
         }
-        state.txs.push({ id: uid(), ...payload });
       }
-      if (!priceUsd(asset.id)) setLastPrice(asset.id, priceUsdVal, "manual");
-      saveState(); closeSheet(); renderAll();
-      toast(edit ? "Mouvement mis à jour" : "Enregistré");
+      const qty = n(document.getElementById("fQty").value);
+      const px = n(document.getElementById("fPx").value);
+      if (!(qty > 0) || !(px >= 0)) return toast("Quantité / prix invalides");
+      const when = document.getElementById("fWhen").value;
+      const executedAt = when ? new Date(when).toISOString() : new Date().toISOString();
+      const venue = document.getElementById("fVenue").value.trim() || "Autre";
+      const fee = n(document.getElementById("fFee").value);
+      const row = {
+        id: edit?.id || uid(),
+        assetId, side, quantity: qty, priceUsd: px, feeUsd: fee,
+        venue, note: null, executedAt,
+      };
+      if (edit) state.txs = state.txs.map((t) => t.id === edit.id ? row : t);
+      else state.txs.push(row);
+
+      const asset = findAsset(assetId);
+      if (asset?.custom && !(priceUsd(assetId) > 0)) setLastPrice(assetId, px);
+
+      const net = qty * px - (side === "sell" ? fee : -fee);
+      if (side === "buy" && deduct.checked) {
+        const pos = state.liquidity.find((c) => c.id === document.getElementById("fDeductId").value);
+        if (pos) {
+          pos.amount = Math.max(0, n(pos.amount) - (qty * px + fee));
+          if (pos.amount < 1e-8) state.liquidity = state.liquidity.filter((c) => c.id !== pos.id);
+        }
+      }
+      if (side === "sell" && document.getElementById("fCredit").checked) {
+        const creditId = document.getElementById("fCreditId").value;
+        const proceeds = Math.max(0, qty * px - fee);
+        if (creditId === "__new__" || !state.liquidity.length) {
+          const hit = state.liquidity.find((c) => c.currency === "USD" && (c.venue || "") === venue);
+          if (hit) hit.amount = n(hit.amount) + proceeds;
+          else state.liquidity.push({ id: uid(), kind: "fiat", currency: "USD", amount: proceeds, venue, note: null });
+        } else {
+          const pos = state.liquidity.find((c) => c.id === creditId);
+          if (pos) pos.amount = n(pos.amount) + proceeds;
+        }
+      }
+      saveState(); closeSheet(); renderAll(); toast("Enregistré");
     };
   }
 
   function openCashForm() {
     openSheet("Liquidité USD", `
-      <div class="side-toggle">
-        <button type="button" class="on-buy" data-ckind="fiat">USD</button>
-        <button type="button" data-ckind="stablecoin">Stablecoin</button>
-      </div>
       <div class="field"><label>Devise</label>
         <select id="cCur"><option>USD</option><option>USDT</option><option>USDC</option></select></div>
-      <div class="field"><label>Montant</label><input id="cAmt" type="number" inputmode="decimal" step="any" /></div>
+      <div class="field"><label>Montant</label><input id="cAmt" inputmode="decimal" /></div>
       <div class="field"><label>Plateforme</label>
         <select id="cVenue">${VENUES.map((v) => `<option>${v}</option>`).join("")}</select></div>
       <div class="actions"><button type="button" class="btn secondary" id="cCancel">Annuler</button>
         <button type="button" class="btn primary" id="cSave">Enregistrer</button></div>`);
-    let kind = "fiat";
-    document.querySelectorAll("[data-ckind]").forEach((b) => b.addEventListener("click", () => {
-      kind = b.dataset.ckind;
-      document.querySelectorAll("[data-ckind]").forEach((x) => {
-        x.classList.toggle("on-buy", x.dataset.ckind === kind);
-      });
-      const sel = document.getElementById("cCur");
-      if (kind === "stablecoin") sel.innerHTML = "<option>USDT</option><option>USDC</option>";
-      else sel.innerHTML = "<option>USD</option>";
-    }));
     document.getElementById("cCancel").onclick = closeSheet;
     document.getElementById("cSave").onclick = () => {
       const amount = n(document.getElementById("cAmt").value);
       if (!(amount > 0)) return toast("Montant invalide");
+      const cur = document.getElementById("cCur").value;
       state.liquidity.push({
-        id: uid(), kind, currency: document.getElementById("cCur").value,
-        amount, venue: document.getElementById("cVenue").value || null, note: null,
+        id: uid(), kind: cur === "USD" ? "fiat" : "stablecoin", currency: cur,
+        amount, venue: document.getElementById("cVenue").value, note: null,
       });
       saveState(); closeSheet(); renderAll(); toast("Liquidité ajoutée");
     };
   }
 
-  async function fetchFx() {
+  async function refreshPrices() {
+    document.getElementById("priceStatus").textContent = "Cours : chargement…";
     try {
-      const res = await fetch("https://api.frankfurter.app/latest?from=USD&to=EUR,CHF");
-      if (!res.ok) throw 0;
-      const data = await res.json();
-      fx = { usd: 1, eur: n(data.rates.EUR) || 0.92, chf: n(data.rates.CHF) || 0.8 };
-    } catch { /* keep */ }
-  }
-  async function fetchCryptoPrices() {
-    const ids = BASE_CATALOG.filter((a) => a.gecko).map((a) => a.gecko).join(",");
-    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + ids + "&vs_currencies=usd&include_24hr_change=true");
-    if (!res.ok) throw new Error("gecko");
-    const data = await res.json();
-    for (const a of BASE_CATALOG.filter((x) => x.gecko)) {
-      const row = data[a.gecko];
-      if (row && n(row.usd) > 0) prices[a.id] = { usd: n(row.usd), chg: n(row.usd_24h_change), at: Date.now(), source: "api" };
-    }
-  }
-  async function fetchEquityPrices() {
-    const tickers = BASE_CATALOG.filter((a) => a.yahoo).map((a) => a.yahoo).join(",");
-    const res = await fetch("https://query1.finance.yahoo.com/v7/finance/spark?symbols=" + tickers + "&range=2d&interval=1d");
-    if (!res.ok) throw new Error("yahoo");
-    const data = await res.json();
-    for (const r of data.spark?.result || []) {
-      const asset = BASE_CATALOG.find((a) => a.yahoo === r.symbol);
-      const meta = r.response?.[0]?.meta;
-      if (!asset || !meta) continue;
-      const px = n(meta.regularMarketPrice);
-      const prev = n(meta.previousClose || meta.chartPreviousClose);
-      if (px > 0) prices[asset.id] = { usd: px, chg: prev > 0 ? ((px - prev) / prev) * 100 : 0, at: Date.now(), source: "api" };
-    }
-  }
-  async function fetchHistAsset(asset, days) {
-    const key = asset.id + ":" + days;
-    if (hist[key] && Date.now() - hist[key].at < 30 * 60 * 1000) return;
-    try {
-      let points = [];
-      if (asset.gecko) {
-        const res = await fetch("https://api.coingecko.com/api/v3/coins/" + asset.gecko + "/market_chart?vs_currency=usd&days=" + days);
-        if (res.ok) {
-          const data = await res.json();
-          points = (data.prices || []).map((p) => [p[0], p[1]]);
-        }
-      } else if (asset.yahoo) {
-        const range = days <= 1 ? "1d" : days <= 7 ? "5d" : days <= 30 ? "1mo" : "1y";
-        const interval = days <= 1 ? "15m" : days <= 7 ? "1h" : "1d";
-        const res = await fetch("https://query1.finance.yahoo.com/v8/finance/chart/" + asset.yahoo + "?range=" + range + "&interval=" + interval);
-        if (res.ok) {
-          const data = await res.json();
-          const r = data.chart?.result?.[0];
-          const ts = r?.timestamp || [];
-          const cl = r?.indicators?.quote?.[0]?.close || [];
-          points = ts.map((t, i) => [t * 1000, cl[i]]).filter((p) => p[1] > 0);
-        }
+      const ids = CORE.filter((a) => a.cg).map((a) => a.cg).join(",");
+      const cg = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + ids + "&vs_currencies=usd").then((r) => r.json());
+      for (const a of CORE) {
+        if (a.cg && cg[a.cg]?.usd > 0) setLastPrice(a.id, cg[a.cg].usd, { force: true });
       }
-      if (points.length) { hist[key] = { at: Date.now(), points }; saveHist(); }
-    } catch (e) { console.warn("hist", asset.symbol, e); }
-  }
-  async function refreshPrices(manual) {
-    const st = document.getElementById("priceStatus");
-    st.textContent = "Cours : mise à jour…"; st.className = "status";
-    try {
-      await fetchFx();
-      await Promise.all([fetchCryptoPrices().catch(() => 0), fetchEquityPrices().catch(() => 0)]);
-      const days = PERIODS.find((p) => p.id === homePeriod).days;
-      await Promise.all(BASE_CATALOG.map((a) => fetchHistAsset(a, days)));
-      savePrices();
-      st.textContent = "Cours : " + new Date().toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
-      st.className = "status ok";
-      renderAll();
-      if (manual) toast("Cours actualisés");
-    } catch {
-      st.textContent = "Hors ligne — cache / prix saisis";
-      st.className = "status err";
-      renderAll();
+    } catch {}
+    for (const a of CORE.filter((x) => x.yahoo)) {
+      try {
+        const raw = await fetch("https://query1.finance.yahoo.com/v8/finance/chart/" + a.yahoo + "?interval=1d&range=5d").then((r) => r.json());
+        const px = raw.chart?.result?.[0]?.meta?.regularMarketPrice;
+        if (px > 0) setLastPrice(a.id, px, { force: true });
+      } catch {}
     }
+    document.getElementById("priceStatus").textContent = "Cours : " + new Date().toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+    renderAll();
+    refreshHist();
   }
 
-  function exportCsv() {
-    const lines = ["type,side,asset_id,symbol,quantity,price_usd,fee_usd,venue,executed_at,currency,amount,kind"];
-    for (const tx of state.txs) {
-      lines.push(["tx", tx.side, tx.assetId, tx.symbol, tx.quantity, tx.priceUsd, tx.feeUsd, tx.venue || "", tx.executedAt, "", "", ""].join(","));
+  async function refreshHist() {
+    const assets = allAssets();
+    for (const a of assets) {
+      if (a.cg) {
+        try {
+          const raw = await fetch("https://api.coingecko.com/api/v3/coins/" + a.cg + "/market_chart?vs_currency=usd&days=365").then((r) => r.json());
+          if (raw.prices) {
+            hist[a.id + ":365"] = { at: Date.now(), points: raw.prices };
+            hist[a.id + ":30"] = { at: Date.now(), points: raw.prices.slice(-30) };
+            hist[a.id + ":7"] = { at: Date.now(), points: raw.prices.slice(-7) };
+          }
+        } catch {}
+      }
     }
-    for (const c of state.liquidity) {
-      lines.push(["cash","","","","","","",c.venue || "","",c.currency,c.amount,c.kind].join(","));
-    }
-    downloadBlob(lines.join("\n"), "vela-export.csv", "text/csv");
-    markExport();
+    localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+    if (view === "home") renderHome();
   }
-  function exportJson() {
-    downloadBlob(JSON.stringify({ exportedAt: new Date().toISOString(), app: "vela-local", state, prices }, null, 2), "vela-backup.json", "application/json");
-    markExport();
-  }
-  function markExport() {
-    state.lastExportAt = new Date().toISOString();
-    saveState(); toast("Export téléchargé");
-  }
-  function downloadBlob(text, name, type) {
-    const url = URL.createObjectURL(new Blob([text], { type }));
-    const a = document.createElement("a"); a.href = url; a.download = name; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 800);
-  }
-  function importJson(file) {
+
+  document.querySelectorAll(".nav button").forEach((b) => b.onclick = () => {
+    setView(b.dataset.view); renderAll();
+  });
+  document.getElementById("sheetBg").onclick = closeSheet;
+  document.getElementById("btnAddCash").onclick = openCashForm;
+  document.getElementById("btnAddTx").onclick = () => openTxForm(null);
+  document.getElementById("btnAddTxAsset").onclick = () => openTxForm(null, openAssetId);
+  document.getElementById("btnBackHome").onclick = () => { setView("home"); renderHome(); };
+  document.getElementById("btnRefreshPrices").onclick = refreshPrices;
+  document.getElementById("btnRefreshMkt").onclick = refreshPrices;
+  document.getElementById("view-home").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-open-asset]")?.dataset?.openAsset;
+    if (id) { openAssetId = id; setView("asset"); renderAsset(); }
+    const del = e.target.closest("[data-del-cash]")?.dataset?.delCash;
+    if (del) { state.liquidity = state.liquidity.filter((c) => c.id !== del); saveState(); renderAll(); }
+  });
+  document.getElementById("txTimeline").addEventListener("click", (e) => {
+    const y = e.target.closest("[data-tog]")?.dataset?.tog;
+    if (y) document.getElementById(y)?.classList.toggle("collapsed");
+    const id = e.target.closest("[data-edit-tx]")?.dataset?.editTx;
+    if (id) openTxForm(state.txs.find((t) => t.id === id));
+  });
+  document.getElementById("assetTxs").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-edit-tx]")?.dataset?.editTx;
+    if (id) openTxForm(state.txs.find((t) => t.id === id));
+  });
+  document.getElementById("mktCard").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-set-price]")?.dataset?.setPrice;
+    if (!id) return;
+    const a = findAsset(id);
+    openSheet("Prix " + a.symbol, `
+      <p class="hint">Pour un ticker sans API, ce prix devient le dernier connu — il valorise positions, accueil et plateformes.</p>
+      <div class="field"><label>Prix USD</label><input id="mPx" inputmode="decimal" value="${priceUsd(id) || ""}" /></div>
+      <div class="actions"><button type="button" class="btn secondary" id="mCancel">Annuler</button>
+        <button type="button" class="btn primary" id="mSave">Enregistrer</button></div>`);
+    document.getElementById("mCancel").onclick = closeSheet;
+    document.getElementById("mSave").onclick = () => {
+      const px = n(document.getElementById("mPx").value);
+      if (!(px > 0)) return toast("Prix invalide");
+      prices[id] = { usd: px, at: Date.now(), src: "manual" };
+      localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
+      closeSheet(); renderAll(); toast("Prix mis à jour");
+    };
+  });
+  document.getElementById("btnExport").onclick = () => {
+    const blob = new Blob([JSON.stringify({ state, prices }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "vela-backup.json";
+    a.click();
+  };
+  document.getElementById("btnImport").onclick = () => document.getElementById("importFile").click();
+  document.getElementById("importFile").onchange = (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const data = JSON.parse(String(reader.result));
-        const s = data.state || data;
-        if (!Array.isArray(s.txs)) throw 0;
+        const data = JSON.parse(reader.result);
+        const src = data.state || data;
         state = {
-          version: 1, currency: "usd", txs: s.txs,
-          liquidity: s.liquidity || [], customAssets: s.customAssets || [],
-          lastExportAt: s.lastExportAt || null,
+          version: 1, currency: "usd",
+          txs: src.txs || [],
+          liquidity: src.liquidity || [],
+          customAssets: src.customAssets || [],
+          lastExportAt: null,
         };
-        if (data.prices) { prices = data.prices; savePrices(); }
-        saveState(); renderAll(); toast("Import OK");
-      } catch { toast("JSON invalide"); }
+        if (data.prices) prices = data.prices;
+        saveState();
+        localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
+        renderAll(); toast("Import OK");
+      } catch { toast("Fichier invalide"); }
     };
     reader.readAsText(file);
-  }
-
-  document.querySelectorAll(".nav button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
-  document.getElementById("btnRefreshPrices").onclick = () => refreshPrices(true);
-  document.getElementById("btnAddCash").onclick = openCashForm;
-  document.getElementById("btnAddTxTop").onclick = () => openTxForm();
-  document.getElementById("btnAddTxAsset").onclick = () => openTxForm({ assetId: openAssetId });
-  document.getElementById("btnBackAsset").onclick = () => setView("home");
-  document.getElementById("sheetBg").onclick = closeSheet;
-  document.getElementById("btnExport").onclick = exportCsv;
-  document.getElementById("btnExportJson").onclick = exportJson;
-  document.getElementById("importJson").addEventListener("change", (e) => {
-    const f = e.target.files?.[0]; if (f) importJson(f); e.target.value = "";
-  });
-  document.getElementById("btnWipe").onclick = () => {
-    if (!confirm("Effacer toutes les données de cet appareil ?")) return;
-    state = { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], lastExportAt: null };
-    saveState(); renderAll(); toast("Effacé");
   };
-  document.getElementById("holdingsCard").addEventListener("click", (e) => {
-    const id = e.target.closest("[data-open-asset]")?.dataset?.openAsset;
-    if (id) openAsset(id);
-  });
-  document.getElementById("cashCard").addEventListener("click", (e) => {
-    const id = e.target.closest("[data-del-cash]")?.dataset?.delCash;
-    if (!id) return;
-    if (!confirm("Supprimer cette liquidité ?")) return;
-    state.liquidity = state.liquidity.filter((c) => c.id !== id);
-    saveState(); renderAll();
-  });
-  function onTxClick(e) {
-    const fold = e.target.closest("[data-tl]")?.dataset?.tl;
-    if (fold) {
-      document.getElementById(fold)?.classList.toggle("collapsed");
-      return;
-    }
-    const del = e.target.closest("[data-del-tx]")?.dataset?.delTx;
-    const ed = e.target.closest("[data-edit-tx]")?.dataset?.editTx;
-    if (del) {
-      if (!confirm("Supprimer ce mouvement ?")) return;
-      state.txs = state.txs.filter((t) => t.id !== del);
-      saveState(); renderAll();
-    } else if (ed) openTxForm({ id: ed });
-  }
-  document.getElementById("txCard").addEventListener("click", onTxClick);
-  document.getElementById("assetTxs").addEventListener("click", onTxClick);
-  document.getElementById("marketsCard").addEventListener("click", (e) => {
-    const id = e.target.closest("[data-edit-price]")?.dataset?.editPrice;
-    if (id) openManualPrice(id);
-  });
+  document.getElementById("btnReset").onclick = () => {
+    if (!confirm("Effacer toutes les données locales ?")) return;
+    state = { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], lastExportAt: null };
+    prices = {}; hist = {};
+    saveState();
+    localStorage.removeItem(PRICE_KEY); localStorage.removeItem(HIST_KEY);
+    renderAll(); toast("Réinitialisé");
+  };
 
+  setView("home");
   renderAll();
-  refreshPrices(false);
+  refreshPrices();
 })();
 </script>
 </body>
