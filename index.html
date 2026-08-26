@@ -40,7 +40,15 @@
     .brand svg { width: 1.4rem; height: 1.4rem; }
     .usd-tag { font-size: .68rem; font-weight: 600; color: var(--muted); letter-spacing: .08em; }
     section { margin-top: 1.15rem; }
-    .hero { font-size: clamp(2.1rem, 8.4vw, 2.7rem); font-weight: 650; letter-spacing: -.04em; margin: .15rem 0 0; font-variant-numeric: tabular-nums; }
+    .hero { font-size: clamp(2.1rem, 8.4vw, 2.7rem); font-weight: 650; letter-spacing: -.04em; margin: .15rem 0 0; font-variant-numeric: tabular-nums; cursor: pointer; }
+    .gate {
+      position: fixed; inset: 0; z-index: 80; background: var(--bg);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 1.5rem; padding-top: calc(1.5rem + var(--safe-t));
+    }
+    .gate.on { display: flex; }
+    .gate h2 { margin: .8rem 0 .3rem; font-size: 1.25rem; }
+    .gate .field { width: min(20rem, 100%); }
     .subrow { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-top: .4rem; font-size: .82rem; color: var(--muted); }
     .chg { display: inline-flex; align-items: center; padding: .12rem .45rem; border-radius: 999px; font-size: .72rem; font-weight: 650; font-variant-numeric: tabular-nums; }
     .chg.up { background: color-mix(in oklab, var(--up) 16%, transparent); color: var(--up); }
@@ -216,6 +224,17 @@
           <button type="button" class="btn secondary" id="btnImport">Importer</button>
         </div>
         <input type="file" id="importFile" accept="application/json" class="hidden" />
+        <h2 style="margin:1.4rem 0 .4rem;font-size:.92rem">Confidentialité</h2>
+        <p class="hint">Code demandé à chaque ouverture (et si l’app reste en arrière-plan). Indépendant de tes transactions.</p>
+        <p class="hint" id="lockStatus"></p>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="btnSetLock">Définir / changer le code</button>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn danger" id="btnClearLock">Retirer le code</button>
+        </div>
+        <p class="hint">Astuce : tape le patrimoine en haut de l’accueil pour masquer montants et quantités (il reste les %).</p>
+        <h2 style="margin:1.6rem 0 .4rem;font-size:.92rem">Zone danger</h2>
         <div class="actions"><button type="button" class="btn danger" id="btnReset">Tout effacer</button></div>
       </section>
     </main>
@@ -240,6 +259,16 @@
     </button>
   </nav>
 
+  <div class="gate" id="gate">
+    <svg width="36" height="36" viewBox="0 0 32 32"><path d="M7 18.5c3.2-6 14.8-6 18 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M7 22h18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".4"/></svg>
+    <h2>VELA</h2>
+    <p class="hint" style="text-align:center;margin:0 0 .8rem">Entre ton code pour ouvrir l’app</p>
+    <div class="field"><input id="gatePin" type="password" inputmode="numeric" autocomplete="off" placeholder="Code" /></div>
+    <div class="actions" style="width:min(20rem,100%)">
+      <button type="button" class="btn primary" id="gateGo">Ouvrir</button>
+    </div>
+    <p class="hint" id="gateErr" style="color:var(--down)"></p>
+  </div>
   <div class="sheet-bg" id="sheetBg"></div>
   <div class="sheet" id="sheet"></div>
   <div class="toast" id="toast"></div>
@@ -249,8 +278,10 @@
   const STORAGE_KEY = "vela.local.v1";
   const PRICE_KEY = "vela.local.prices.v1";
   const HIST_KEY = "vela.local.hist.v1";
-  const APP_VERSION = "003.2";
-  const APP_BUILT = "26.08.2026 16:30";
+  const APP_VERSION = "003.3";
+  const APP_BUILT = "26.08.2026 16:50";
+  const LOCK_KEY = "vela.local.lock.v1";
+  const UNLOCK_KEY = "vela.session.unlock";
   const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
   const VENUES = ["Ledger","MetaMask","Coinbase","Binance","Kraken","Swissquote","IBKR","Revolut","Bitstamp","Autre"];
   const PERIODS = [{ id: "1d", label: "1J", days: 1 }, { id: "1w", label: "1S", days: 7 }, { id: "1m", label: "1M", days: 30 }, { id: "1y", label: "1A", days: 365 }];
@@ -302,6 +333,66 @@
     const el = document.getElementById("toast");
     el.textContent = msg; el.classList.add("on");
     clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove("on"), 2200);
+  }
+
+  let veil = false;
+  try { veil = sessionStorage.getItem("vela.veil") === "1"; } catch (e) {}
+  function $m(v) { return veil ? "•••" : formatMoney(v); }
+  function $q(v) { return veil ? "••" : formatQty(v); }
+  function $u(v) { return veil ? "•••" : formatUnit(v); }
+  function $s(v) { return veil ? "—" : shortMoney(v); }
+  function toggleVeil() {
+    veil = !veil;
+    try { sessionStorage.setItem("vela.veil", veil ? "1" : "0"); } catch (e) {}
+    renderAll();
+    toast(veil ? "Montants masqués" : "Montants visibles");
+  }
+
+  async function sha256hex(text) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(function (b) {
+      const h = b.toString(16);
+      return h.length < 2 ? "0" + h : h;
+    }).join("");
+  }
+  function getLock() {
+    try { return JSON.parse(localStorage.getItem(LOCK_KEY) || "null"); } catch (e) { return null; }
+  }
+  function setLockRecord(rec) {
+    if (!rec) localStorage.removeItem(LOCK_KEY);
+    else localStorage.setItem(LOCK_KEY, JSON.stringify(rec));
+  }
+  function isUnlocked() {
+    try { return sessionStorage.getItem(UNLOCK_KEY) === "1"; } catch (e) { return false; }
+  }
+  function markUnlocked() {
+    try { sessionStorage.setItem(UNLOCK_KEY, "1"); } catch (e) {}
+  }
+  function markLocked() {
+    try { sessionStorage.removeItem(UNLOCK_KEY); } catch (e) {}
+  }
+  function showGate(on) {
+    document.getElementById("gate").classList.toggle("on", on);
+  }
+  function refreshLockStatus() {
+    const el = document.getElementById("lockStatus");
+    if (el) el.textContent = getLock() ? "Un code est actif." : "Aucun code pour le moment.";
+  }
+  async function verifyPin(pin) {
+    const rec = getLock();
+    if (!rec || !rec.hash || !rec.salt) return false;
+    const hex = await sha256hex(rec.salt + "|" + pin);
+    return hex === rec.hash;
+  }
+  async function savePin(pin) {
+    const salt = uid();
+    const hash = await sha256hex(salt + "|" + pin);
+    setLockRecord({ salt: salt, hash: hash, at: Date.now() });
+  }
+  function applyGate() {
+    const need = Boolean(getLock()) && !isUnlocked();
+    showGate(need);
+    return !need;
   }
 
   function loadState() {
@@ -480,9 +571,11 @@
     const valueUsd = holdings.reduce((s, h) => s + h.valueUsd, 0);
     const costUsd = holdings.reduce((s, h) => s + h.costUsd, 0);
     const cashUsd = state.liquidity.reduce((s, c) => s + cashToUsd(n(c.amount)), 0);
+    const totalUsd = valueUsd + cashUsd;
+    for (const h of holdings) h.allocation = totalUsd > 0 ? (h.valueUsd / totalUsd) * 100 : 0;
     return {
       holdings, valueUsd, costUsd, cashUsd,
-      totalUsd: valueUsd + cashUsd,
+      totalUsd,
       pnlUsd: valueUsd - costUsd,
       pnlPct: costUsd > 0 ? ((valueUsd - costUsd) / costUsd) * 100 : 0,
       realized,
@@ -589,7 +682,7 @@
     const levels = [max, mid, min].map((lv) => {
       const y = yAt(lv);
       return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" stroke="#26262b" stroke-width="1"/>
-        <text x="${padL - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#5a5a56" font-size="9" font-family="Inter,sans-serif">${shortMoney(lv)}</text>`;
+        <text x="${padL - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end" fill="#5a5a56" font-size="9" font-family="Inter,sans-serif">${$s(lv)}</text>`;
     }).join("");
     const maxIdx = ys.indexOf(Math.max(...ys));
     const minIdx = ys.indexOf(Math.min(...ys));
@@ -615,9 +708,9 @@
       <text x="${w - padR}" y="${h - 4}" text-anchor="end" fill="#5a5a56" font-size="9">${fmtT(t1)}</text>
     </svg>`;
     if (metaEl) {
-      metaEl.innerHTML = `<span>Bas <strong>${formatMoney(Math.min(...ys))}</strong></span>
-        <span>Haut <strong>${formatMoney(Math.max(...ys))}</strong></span>
-        <span>Début <strong>${formatMoney(start)}</strong></span>`;
+      metaEl.innerHTML = `<span>Bas <strong>${$m(Math.min(...ys))}</strong></span>
+        <span>Haut <strong>${$m(Math.max(...ys))}</strong></span>
+        <span>Début <strong>${$m(start)}</strong></span>`;
     }
   }
   function renderPeriods(boxId, current, onPick) {
@@ -647,7 +740,7 @@
     </div>`).join("");
     return `<div class="donut-row"><svg class="donut-svg" viewBox="0 0 100 100">
       <circle cx="50" cy="50" r="42" fill="none" stroke="#1c1c1f" stroke-width="14"/>${arcs}
-      <text x="50" y="48" text-anchor="middle" fill="#f5f5f4" font-size="11" font-weight="700">${shortMoney(total)}</text>
+      <text x="50" y="48" text-anchor="middle" fill="#f5f5f4" font-size="11" font-weight="700">${veil ? "%" : $s(total)}</text>
       <text x="50" y="60" text-anchor="middle" fill="#8b8b86" font-size="7">TOTAL</text>
     </svg><div class="donut-leg">${legend}</div></div>`;
   }
@@ -672,7 +765,7 @@
 
   function renderHome() {
     const t = portfolioTotals();
-    document.getElementById("netWorth").textContent = formatMoney(t.totalUsd);
+    document.getElementById("netWorth").textContent = veil ? "Confidentiel" : formatMoney(t.totalUsd);
     const pts = buildPortfolioPoints(PERIODS.find((p) => p.id === homePeriod).days);
     const first = pts[0]?.[1] || t.totalUsd;
     const last = pts.at(-1)?.[1] || t.totalUsd;
@@ -681,18 +774,22 @@
     const up = d >= 0;
     const pill = document.getElementById("pnlPill");
     pill.className = "chg " + (Math.abs(d) < 0.5 ? "flat" : up ? "up" : "down");
-    pill.textContent = formatPct(dp) + " · " + formatMoney(d);
-    document.getElementById("periodDelta").textContent = "sur la période · latent " + formatPct(t.pnlPct);
+    pill.textContent = veil ? formatPct(dp) : formatPct(dp) + " · " + formatMoney(d);
+    document.getElementById("periodDelta").textContent = veil
+      ? "montants masqués · tape ici pour réafficher"
+      : "sur la période · latent " + formatPct(t.pnlPct);
     drawChart(document.getElementById("homeChart"), pts, up, document.getElementById("chartMeta"));
     renderPeriods("homePeriods", homePeriod, (id) => { homePeriod = id; renderHome(); });
     document.getElementById("dashStats").innerHTML = `
-      <div class="stat"><div class="k">Investi</div><div class="n">${formatMoney(t.costUsd)}</div></div>
-      <div class="stat"><div class="k">Latent</div><div class="n">${formatMoney(t.pnlUsd)}</div></div>
-      <div class="stat"><div class="k">Réalisé</div><div class="n">${formatMoney(t.realized)}</div></div>`;
+      <div class="stat"><div class="k">Investi</div><div class="n">${$m(t.costUsd)}</div></div>
+      <div class="stat"><div class="k">Latent</div><div class="n">${veil ? formatPct(t.pnlPct) : $m(t.pnlUsd)}</div></div>
+      <div class="stat"><div class="k">Réalisé</div><div class="n">${$m(t.realized)}</div></div>`;
+    const posPct = t.totalUsd > 0 ? (t.valueUsd / t.totalUsd) * 100 : 0;
+    const cashPct = t.totalUsd > 0 ? (t.cashUsd / t.totalUsd) * 100 : 0;
     document.getElementById("splitStats").innerHTML = `
-      <div class="stat"><div class="k">Tout</div><div class="n">${formatMoney(t.totalUsd)}</div></div>
-      <div class="stat"><div class="k">Positions</div><div class="n">${formatMoney(t.valueUsd)}</div></div>
-      <div class="stat"><div class="k">Cash USD</div><div class="n">${formatMoney(t.cashUsd)}</div></div>`;
+      <div class="stat"><div class="k">Tout</div><div class="n">${veil ? "100 %" : $m(t.totalUsd)}</div></div>
+      <div class="stat"><div class="k">Positions</div><div class="n">${veil ? posPct.toFixed(0) + " %" : $m(t.valueUsd)}</div></div>
+      <div class="stat"><div class="k">Cash USD</div><div class="n">${veil ? cashPct.toFixed(0) + " %" : $m(t.cashUsd)}</div></div>`;
     const segs = t.holdings.map((h) => ({ label: h.symbol, value: h.valueUsd }));
     if (t.cashUsd > 0.5) segs.push({ label: "Cash", value: t.cashUsd });
     document.getElementById("donutBox").innerHTML = segs.length ? drawDonut(segs) : "";
@@ -706,8 +803,8 @@
         return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}">
           ${assetLogo(asset)}
           <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
-            <div class="sym">${formatQty(h.qty)} · moy. ${formatUnit(h.avgCostUsd)}</div></div>
-          <div class="right"><div class="v">${h.priceUsd > 0 ? formatMoney(h.valueUsd) : "—"}</div>
+            <div class="sym">${veil ? formatPct(h.allocation || h.pnlPct) : ($q(h.qty) + " · moy. " + $u(h.avgCostUsd))}</div></div>
+          <div class="right"><div class="v">${veil ? formatPct(h.pnlPct) : (h.priceUsd > 0 ? $m(h.valueUsd) : "—")}</div>
             <div class="s"><span class="chg ${tone}" style="padding:0">${formatPct(h.pnlPct)}</span></div></div>
         </button>`;
       }).join("");
@@ -719,7 +816,7 @@
         <div class="logo ph">${c.kind === "fiat" ? "$" : "S"}</div>
         <div class="grow"><div class="name">${escapeHtml(c.currency)}</div>
           <div class="sym">${c.venue ? escapeHtml(c.venue) : "cash"}</div></div>
-        <div class="right"><div class="v">${formatMoney(n(c.amount))}</div></div>
+        <div class="right"><div class="v">${$m(n(c.amount))}</div></div>
         <button type="button" class="btn ghost" data-del-cash="${c.id}">✕</button>
       </div>`).join("");
     }
@@ -731,8 +828,8 @@
       vBox.innerHTML = venues.map((v) => `<div class="row">
         <div class="logo ph">${escapeHtml(v.name.slice(0, 2).toUpperCase())}</div>
         <div class="grow"><div class="name">${escapeHtml(v.name)}</div>
-          <div class="sym">${((v.value / sum) * 100).toFixed(0)} % · coût ${formatMoney(v.cost)}</div></div>
-        <div class="right"><div class="v">${formatMoney(v.value)}</div></div>
+          <div class="sym">${((v.value / sum) * 100).toFixed(0)} %${veil ? "" : " · coût " + $m(v.cost)}</div></div>
+        <div class="right"><div class="v">${veil ? ((v.value / sum) * 100).toFixed(0) + " %" : $m(v.value)}</div></div>
       </div>`).join("");
     }
     document.getElementById("appVersion").textContent = "version " + APP_VERSION + " · " + APP_BUILT;
@@ -748,20 +845,20 @@
     const px = priceUsd(id);
     const value = qty * px;
     document.getElementById("assetSym").textContent = asset.name;
-    document.getElementById("assetValue").textContent = px > 0 ? formatMoney(value) : "—";
+    document.getElementById("assetValue").textContent = veil ? formatPct(h?.allocation || 0) : (px > 0 ? $m(value) : "—");
     const pts = buildAssetPoints(id, PERIODS.find((p) => p.id === assetPeriod).days);
     const first = pts[0]?.[1] || value, last = pts.at(-1)?.[1] || value;
     const d = last - first, dp = first > 0 ? (d / first) * 100 : 0, up = d >= 0;
     const pill = document.getElementById("assetPill");
     pill.className = "chg " + (Math.abs(d) < 0.5 ? "flat" : up ? "up" : "down");
-    pill.textContent = formatPct(dp) + " · " + formatMoney(d);
-    document.getElementById("assetSub").textContent = formatQty(qty) + " · moy. " + formatUnit(h?.avgCostUsd || 0);
+    pill.textContent = veil ? formatPct(dp) : formatPct(dp) + " · " + $m(d);
+    document.getElementById("assetSub").textContent = veil ? formatPct(h?.pnlPct || 0) : ($q(qty) + " · moy. " + $u(h?.avgCostUsd || 0));
     drawChart(document.getElementById("assetChart"), pts, up, null);
     renderPeriods("assetPeriods", assetPeriod, (pid) => { assetPeriod = pid; renderAsset(); });
     document.getElementById("assetStats").innerHTML = `
-      <div class="stat"><div class="k">Investi</div><div class="n">${formatMoney(h?.costUsd || 0)}</div></div>
-      <div class="stat"><div class="k">Latent</div><div class="n">${formatMoney(h?.pnlUsd || 0)}</div></div>
-      <div class="stat"><div class="k">Réalisé</div><div class="n">${formatMoney(h?.realized || 0)}</div></div>`;
+      <div class="stat"><div class="k">Investi</div><div class="n">${$m(h?.costUsd || 0)}</div></div>
+      <div class="stat"><div class="k">Latent</div><div class="n">${veil ? formatPct(h?.pnlPct || 0) : $m(h?.pnlUsd || 0)}</div></div>
+      <div class="stat"><div class="k">Réalisé</div><div class="n">${$m(h?.realized || 0)}</div></div>`;
     const txs = state.txs.filter((x) => x.assetId === id).sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
     document.getElementById("assetTxs").innerHTML = txs.length
       ? txs.map((tx) => txRow(tx)).join("")
@@ -780,9 +877,9 @@
       <span class="tl-time">${time}</span>
       <div class="grow">
         <div class="name">${tx.side === "buy" ? "Achat" : "Vente"} ${escapeHtml(asset?.symbol || "")}</div>
-        <div class="sym">${formatQty(n(tx.quantity))} · ${tx.venue || "—"} · ${formatUnit(n(tx.priceUsd))}</div>
+        <div class="sym">${$q(n(tx.quantity))} · ${tx.venue || "—"} · ${veil ? "" : $u(n(tx.priceUsd))}</div>
       </div>
-      <div class="right"><div class="v">${formatMoney(txNet(tx))}</div></div>
+      <div class="right"><div class="v">${$m(txNet(tx))}</div></div>
     </button>`;
   }
 
@@ -809,7 +906,7 @@
     for (const [year, monthsMap] of byYear) {
       const yearTxs = [...monthsMap.values()].flatMap((d) => [...d.values()].flat());
       html += `<button type="button" class="tl-year" data-tog="y${year}"><span>${year}</span>
-        <span class="sym">${yearTxs.length} · ${formatMoney(yearTxs.reduce((s, t) => s + txNet(t), 0))}</span></button>
+        <span class="sym">${yearTxs.length}${veil ? "" : " · " + $m(yearTxs.reduce((s, t) => s + txNet(t), 0))}</span></button>
         <div id="y${year}" class="${year === nowY ? "" : "collapsed"}">`;
       for (const [m, days] of monthsMap) {
         html += `<div class="tl-month">${months[m]}</div>`;
@@ -1060,6 +1157,72 @@
     if (view === "home") renderHome();
   }
 
+  document.getElementById("netWorth").onclick = toggleVeil;
+
+  function openLockForm(mode) {
+    const has = Boolean(getLock());
+    openSheet(has ? "Changer le code" : "Définir un code", `
+      ${has ? '<div class="field"><label>Code actuel</label><input id="pOld" type="password" autocomplete="off" /></div>' : ""}
+      <div class="field"><label>Nouveau code (4 caractères min.)</label><input id="pNew" type="password" autocomplete="off" /></div>
+      <div class="field"><label>Confirmer</label><input id="pNew2" type="password" autocomplete="off" /></div>
+      <div class="actions"><button type="button" class="btn secondary" id="pCancel">Annuler</button>
+        <button type="button" class="btn primary" id="pSave">Enregistrer</button></div>`);
+    document.getElementById("pCancel").onclick = closeSheet;
+    document.getElementById("pSave").onclick = async function () {
+      const nw = document.getElementById("pNew").value;
+      const nw2 = document.getElementById("pNew2").value;
+      if (nw.length < 4) return toast("Code trop court");
+      if (nw !== nw2) return toast("Les codes ne correspondent pas");
+      if (has) {
+        const old = document.getElementById("pOld").value;
+        if (!(await verifyPin(old))) return toast("Code actuel incorrect");
+      }
+      await savePin(nw);
+      markUnlocked();
+      refreshLockStatus();
+      closeSheet();
+      toast("Code enregistré");
+    };
+  }
+  document.getElementById("btnSetLock").onclick = function () { openLockForm(); };
+  document.getElementById("btnClearLock").onclick = async function () {
+    if (!getLock()) return toast("Aucun code");
+    const cur = prompt("Code actuel pour retirer la protection");
+    if (cur == null) return;
+    if (!(await verifyPin(cur))) return toast("Code incorrect");
+    setLockRecord(null);
+    markLocked();
+    refreshLockStatus();
+    toast("Code retiré");
+  };
+
+  async function tryUnlock() {
+    const pin = document.getElementById("gatePin").value;
+    document.getElementById("gateErr").textContent = "";
+    if (!(await verifyPin(pin))) {
+      document.getElementById("gateErr").textContent = "Code incorrect";
+      return;
+    }
+    markUnlocked();
+    showGate(false);
+    document.getElementById("gatePin").value = "";
+    renderAll();
+    refreshPrices();
+  }
+  document.getElementById("gateGo").onclick = tryUnlock;
+  document.getElementById("gatePin").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") tryUnlock();
+  });
+
+  let hiddenAt = 0;
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) hiddenAt = Date.now();
+    else if (getLock() && hiddenAt && Date.now() - hiddenAt > 40000) {
+      markLocked();
+      applyGate();
+    }
+  });
+
   document.querySelectorAll(".nav button").forEach((b) => b.onclick = () => {
     setView(b.dataset.view); renderAll();
   });
@@ -1156,8 +1319,11 @@
   };
 
   setView("home");
-  renderAll();
-  refreshPrices();
+  refreshLockStatus();
+  if (applyGate()) {
+    renderAll();
+    refreshPrices();
+  }
 })();
 </script>
 </body>
