@@ -134,6 +134,41 @@
     .check { display: flex; align-items: center; gap: .55rem; margin-top: .85rem; font-size: .82rem; }
     .check input { width: 1.05rem; height: 1.05rem; }
     .hint { font-size: .72rem; color: var(--muted); margin-top: .35rem; }
+    .braise {
+      position: relative; overflow: hidden; flex-direction: column; align-items: stretch;
+      gap: 0; border: none; border-radius: 1rem; margin: .45rem 0; padding: .85rem .8rem;
+      background: #16140f; text-align: left; width: 100%;
+    }
+    .braise .braise-main { display: flex; align-items: center; gap: .7rem; width: 100%; position: relative; z-index: 2; }
+    .braise-tag { position: relative; z-index: 2; margin-top: .55rem; font-size: .68rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: #f0b429; }
+    .braise-sparks, .braise-glow { pointer-events: none; position: absolute; inset: 0; overflow: hidden; }
+    .braise-glow { z-index: 0; }
+    .spark {
+      position: absolute; bottom: -6px; width: 4px; height: 4px; border-radius: 99px;
+      background: #f0b429; opacity: .85; animation: sparkRise linear infinite;
+    }
+    @keyframes sparkRise {
+      0% { transform: translateY(0) scale(1); opacity: .9; }
+      100% { transform: translateY(-120px) scale(.3); opacity: 0; }
+    }
+    @keyframes emberPulse {
+      0%, 100% { box-shadow: inset 0 0 0 1px #f0b42966, 0 0 12px #f0b42922; }
+      50% { box-shadow: inset 0 0 0 1px #ffd36a, 0 0 22px #f0b42944; }
+    }
+    @keyframes heatWave {
+      0%, 100% { filter: saturate(1); }
+      50% { filter: saturate(1.35); }
+    }
+    .braise-1 { min-height: 5.2rem; animation: emberPulse 2.8s ease-in-out infinite; }
+    .braise-1 .braise-glow { background: radial-gradient(120% 80% at 50% 120%, #f0b42933, transparent 70%); }
+    .braise-2 { min-height: 7rem; animation: emberPulse 2.1s ease-in-out infinite; }
+    .braise-2 .braise-glow { background: radial-gradient(120% 90% at 50% 110%, #f0b42955, transparent 68%); }
+    .braise-3 { min-height: 9.2rem; animation: emberPulse 1.6s ease-in-out infinite, heatWave 3s ease-in-out infinite; }
+    .braise-3 .braise-glow { background: radial-gradient(130% 100% at 50% 100%, #ff8a2a66, #f0b42922 55%, transparent 75%); }
+    .braise-4 { min-height: 12rem; animation: emberPulse 1.2s ease-in-out infinite, heatWave 2.2s ease-in-out infinite; }
+    .braise-4 .braise-glow { background: radial-gradient(140% 120% at 50% 100%, #ff5a1f77, #f0b42933 50%, transparent 78%); }
+    .braise-5 { min-height: 15rem; animation: emberPulse .9s ease-in-out infinite, heatWave 1.6s ease-in-out infinite; }
+    .braise-5 .braise-glow { background: radial-gradient(150% 130% at 50% 90%, #ff3b1f88, #ffb02044 48%, transparent 80%); }
   </style>
 </head>
 <body>
@@ -284,8 +319,8 @@
   const STORAGE_KEY = "vela.local.v1";
   const PRICE_KEY = "vela.local.prices.v1";
   const HIST_KEY = "vela.local.hist.v1";
-  const APP_VERSION = "003.4";
-  const APP_BUILT = "26.08.2026 19:10";
+  const APP_VERSION = "003.5";
+  const APP_BUILT = "26.08.2026 19:15";
   const LOCK_KEY = "vela.local.lock.v1";
   const UNLOCK_KEY = "vela.session.unlock";
   const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
@@ -414,6 +449,34 @@
     try { sessionStorage.setItem("vela.veil", veil ? "1" : "0"); } catch (e) {}
     renderAll();
     toast(veil ? "Montants masqués" : "Montants visibles");
+  }
+
+  let braiseLive = false;
+  let braiseTimer = null;
+  function heatLevel(pct) {
+    if (!(pct >= 25)) return 0;
+    return Math.min(5, Math.floor(pct / 25));
+  }
+  function sparksHtml(level) {
+    const n = 4 + level * 4;
+    let out = "";
+    for (let i = 0; i < n; i++) {
+      const left = (6 + (i * 37 + level * 13) % 88);
+      const delay = ((i * 0.18) % 1.6).toFixed(2);
+      const dur = (1.4 + (i % 5) * 0.25).toFixed(2);
+      const size = 3 + (i % 3);
+      out += '<i class="spark" style="left:' + left + "%;width:" + size + "px;height:" + size + "px;animation-delay:" + delay + "s;animation-duration:" + dur + 's"></i>';
+    }
+    return out;
+  }
+  function startBraiseWindow() {
+    braiseLive = true;
+    if (braiseTimer) clearTimeout(braiseTimer);
+    braiseTimer = setTimeout(function () {
+      braiseLive = false;
+      if (view === "home") renderHome();
+      toast("Braises éteintes");
+    }, 30000);
   }
 
   async function sha256hex(text) {
@@ -914,13 +977,22 @@
         const tone = (unit === "btc" ? h.pnlBtc : h.pnlUsd) > 0.0000001 ? "up"
           : (unit === "btc" ? h.pnlBtc : h.pnlUsd) < -0.0000001 ? "down" : "flat";
         const avgTxt = unit === "btc" ? formatBtc(h.avgCostBtc) : $u(h.avgCostUsd);
-        return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}">
-          ${assetLogo(asset)}
+        const heat = braiseLive ? heatLevel(h.pnlPct) : 0;
+        const inner = `${assetLogo(asset)}
           <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
             <div class="sym">${veil ? formatPct(h.allocation) : ($q(h.qty) + " · moy. " + avgTxt)}</div></div>
           <div class="right"><div class="v">${veil ? $pct(h.pnlPct, h.pnlPctBtc) : $c(h.valueUsd, h.valueBtc)}</div>
-            <div class="s"><span class="chg ${tone}" style="padding:0">${$pct(h.pnlPct, h.pnlPctBtc)}</span></div></div>
-        </button>`;
+            <div class="s"><span class="chg ${tone}" style="padding:0">${$pct(h.pnlPct, h.pnlPctBtc)}</span></div></div>`;
+        if (heat > 0) {
+          const labels = ["", "palier +25 %", "palier +50 %", "palier +75 %", "palier +100 %", "territoire cadeau"];
+          return `<button type="button" class="pos braise braise-${heat}" data-open-asset="${escapeHtml(h.assetId)}">
+            <div class="braise-glow"></div>
+            <div class="braise-sparks">${sparksHtml(heat)}</div>
+            <div class="braise-main">${inner}</div>
+            <div class="braise-tag">${labels[heat]}</div>
+          </button>`;
+        }
+        return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}">${inner}</button>`;
       }).join("");
     }
     const cBox = document.getElementById("cashCard");
@@ -1329,6 +1401,7 @@
     markUnlocked();
     showGate(false);
     document.getElementById("gatePin").value = "";
+    startBraiseWindow();
     renderAll();
     refreshPrices();
   }
@@ -1444,6 +1517,7 @@
   setView("home");
   refreshLockStatus();
   if (applyGate()) {
+    startBraiseWindow();
     renderAll();
     refreshPrices();
   }
