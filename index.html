@@ -39,6 +39,9 @@
     .brand { display: flex; align-items: center; gap: .5rem; font-weight: 650; letter-spacing: -.02em; }
     .brand svg { width: 1.4rem; height: 1.4rem; }
     .usd-tag { font-size: .68rem; font-weight: 600; color: var(--muted); letter-spacing: .08em; }
+    .unit-toggle { display: flex; background: var(--surface); border-radius: 999px; padding: .12rem; gap: .1rem; }
+    .unit-toggle span { min-width: 2.4rem; height: 1.45rem; display: grid; place-items: center; border-radius: 999px; font-size: .62rem; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
+    .unit-toggle span.on { background: var(--fg); color: var(--bg); }
     section { margin-top: 1.15rem; }
     .hero { font-size: clamp(2.1rem, 8.4vw, 2.7rem); font-weight: 650; letter-spacing: -.04em; margin: .15rem 0 0; font-variant-numeric: tabular-nums; cursor: pointer; }
     .gate {
@@ -140,7 +143,10 @@
         <svg viewBox="0 0 32 32"><path d="M7 18.5c3.2-6 14.8-6 18 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M7 22h18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".4"/></svg>
         <span id="hdrTitle">VELA</span>
       </div>
-      <span class="usd-tag">USD</span>
+      <button type="button" class="unit-toggle" id="unitToggle" aria-label="Unité">
+        <span data-u="usd">USD</span>
+        <span data-u="btc">BTC</span>
+      </button>
     </header>
 
     <main id="view-home">
@@ -278,8 +284,8 @@
   const STORAGE_KEY = "vela.local.v1";
   const PRICE_KEY = "vela.local.prices.v1";
   const HIST_KEY = "vela.local.hist.v1";
-  const APP_VERSION = "003.3";
-  const APP_BUILT = "26.08.2026 16:50";
+  const APP_VERSION = "003.4";
+  const APP_BUILT = "26.08.2026 19:10";
   const LOCK_KEY = "vela.local.lock.v1";
   const UNLOCK_KEY = "vela.session.unlock";
   const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
@@ -336,11 +342,73 @@
   }
 
   let veil = false;
+  let unit = "usd";
   try { veil = sessionStorage.getItem("vela.veil") === "1"; } catch (e) {}
-  function $m(v) { return veil ? "•••" : formatMoney(v); }
+  try { unit = localStorage.getItem("vela.unit") === "btc" ? "btc" : "usd"; } catch (e) {}
+  function formatBtc(v) {
+    if (!Number.isFinite(v)) return "—";
+    const sign = v < 0 ? "-" : "";
+    const a = Math.abs(v);
+    if (a >= 10) return sign + "₿ " + a.toFixed(2);
+    if (a >= 0.01) return sign + "₿ " + a.toFixed(4);
+    if (a >= 0.0001) return sign + "₿ " + a.toFixed(6);
+    return sign + Math.round(a * 1e8).toString() + " sats";
+  }
+  function btcNow() {
+    return priceUsd("bitcoin") || priceUsd("btc-bitcoin") || 0;
+  }
+  function btcAt(ts) {
+    const keys = ["bitcoin:365", "btc-bitcoin:365", "bitcoin:30", "btc-bitcoin:30"];
+    let points = [];
+    for (let i = 0; i < keys.length; i++) {
+      if (hist[keys[i]] && hist[keys[i]].points && hist[keys[i]].points.length) {
+        points = hist[keys[i]].points;
+        break;
+      }
+    }
+    const px = lookupPx(points, ts);
+    return px > 0 ? px : btcNow();
+  }
+  function $m(usd) {
+    if (veil) return "•••";
+    if (unit === "btc") {
+      const b = btcNow();
+      return formatBtc(b > 0 ? usd / b : 0);
+    }
+    return formatMoney(usd);
+  }
+  function $c(usd, btc) {
+    if (veil) return "•••";
+    return unit === "btc" ? formatBtc(btc) : formatMoney(usd);
+  }
+  function $pct(usdPct, btcPct) {
+    return formatPct(unit === "btc" ? btcPct : usdPct);
+  }
   function $q(v) { return veil ? "••" : formatQty(v); }
   function $u(v) { return veil ? "•••" : formatUnit(v); }
-  function $s(v) { return veil ? "—" : shortMoney(v); }
+  function $s(v) {
+    if (veil) return "—";
+    if (unit === "btc") {
+      const a = Math.abs(v);
+      if (a >= 1) return (v < 0 ? "-" : "") + a.toFixed(2);
+      if (a >= 0.01) return (v < 0 ? "-" : "") + a.toFixed(3);
+      return (v < 0 ? "-" : "") + a.toFixed(4);
+    }
+    return shortMoney(v);
+  }
+  function syncUnitToggle() {
+    const box = document.getElementById("unitToggle");
+    if (!box) return;
+    box.querySelectorAll("[data-u]").forEach(function (el) {
+      el.classList.toggle("on", el.getAttribute("data-u") === unit);
+    });
+  }
+  function setUnit(next) {
+    unit = next === "btc" ? "btc" : "usd";
+    try { localStorage.setItem("vela.unit", unit); } catch (e) {}
+    syncUnitToggle();
+    renderAll();
+  }
   function toggleVeil() {
     veil = !veil;
     try { sessionStorage.setItem("vela.veil", veil ? "1" : "0"); } catch (e) {}
@@ -513,28 +581,42 @@
     const sorted = [...state.txs].sort((a, b) => Date.parse(a.executedAt) - Date.parse(b.executedAt));
     const byAsset = new Map();
     let realized = 0;
+    let realizedBtc = 0;
     for (const tx of sorted) {
-      const acc = byAsset.get(tx.assetId) || { qty: 0, cost: 0, realized: 0, lots: [] };
+      const acc = byAsset.get(tx.assetId) || { qty: 0, cost: 0, costBtc: 0, realized: 0, realizedBtc: 0, lots: [] };
       const q = n(tx.quantity);
       const px = n(tx.priceUsd);
       const fee = n(tx.feeUsd);
       const venue = (tx.venue || "Autre").trim() || "Autre";
+      const ts = Date.parse(tx.executedAt);
+      const bpx = btcAt(ts) || btcNow();
+      const usdAmt = q * px;
       if (tx.side === "buy") {
+        const cUsd = usdAmt + fee;
+        const cBtc = bpx > 0 ? cUsd / bpx : 0;
         acc.qty += q;
-        acc.cost += q * px + fee;
-        acc.lots.push({ venue, qty: q, cost: q * px + fee });
+        acc.cost += cUsd;
+        acc.costBtc += cBtc;
+        acc.lots.push({ venue: venue, qty: q, cost: cUsd, costBtc: cBtc });
       } else {
         const avg = acc.qty > 0 ? acc.cost / acc.qty : px;
+        const avgBtc = acc.qty > 0 ? acc.costBtc / acc.qty : 0;
         const take = Math.min(q, acc.qty);
+        const proceeds = usdAmt - fee;
+        const proceedsBtc = bpx > 0 ? proceeds / bpx : 0;
         const pnl = take * (px - avg) - fee;
+        const pnlBtc = proceedsBtc - avgBtc * take;
         acc.realized += pnl;
+        acc.realizedBtc += pnlBtc;
         realized += pnl;
+        realizedBtc += pnlBtc;
         acc.qty -= take;
         acc.cost = Math.max(0, acc.cost - avg * take);
+        acc.costBtc = Math.max(0, acc.costBtc - avgBtc * take);
         let left = q;
         const same = acc.lots.filter((l) => l.venue === venue);
         const others = acc.lots.filter((l) => l.venue !== venue);
-        const order = [...same, ...others];
+        const order = same.concat(others);
         acc.lots = [];
         for (const lot of order) {
           if (left <= 1e-12) { acc.lots.push(lot); continue; }
@@ -542,29 +624,38 @@
           const share = lot.qty > 0 ? t / lot.qty : 1;
           lot.qty -= t;
           lot.cost = Math.max(0, lot.cost * (1 - share));
+          lot.costBtc = Math.max(0, (lot.costBtc || 0) * (1 - share));
           left -= t;
           if (lot.qty > 1e-12) acc.lots.push(lot);
         }
       }
       byAsset.set(tx.assetId, acc);
     }
-    return { byAsset, realized };
+    return { byAsset: byAsset, realized: realized, realizedBtc: realizedBtc };
   }
 
   function portfolioTotals() {
-    const { byAsset, realized } = ledger();
+    const { byAsset, realized, realizedBtc } = ledger();
     const holdings = [];
+    const bNow = btcNow();
     for (const [assetId, acc] of byAsset) {
       if (acc.qty <= 1e-12) continue;
       const asset = findAsset(assetId);
       const px = priceUsd(assetId);
       const valueUsd = acc.qty * px;
       const avg = acc.qty > 0 ? acc.cost / acc.qty : 0;
+      const valueBtc = bNow > 0 ? valueUsd / bNow : 0;
+      const costBtc = acc.costBtc || 0;
+      const pnlBtc = valueBtc - costBtc;
       holdings.push({
         assetId, symbol: asset.symbol, name: asset.name, qty: acc.qty,
         avgCostUsd: avg, costUsd: acc.cost, priceUsd: px, valueUsd,
         pnlUsd: valueUsd - acc.cost, pnlPct: acc.cost > 0 ? ((valueUsd - acc.cost) / acc.cost) * 100 : 0,
         realized: acc.realized,
+        valueBtc: valueBtc, costBtc: costBtc, pnlBtc: pnlBtc,
+        pnlPctBtc: costBtc > 0 ? (pnlBtc / costBtc) * 100 : 0,
+        realizedBtc: acc.realizedBtc || 0,
+        avgCostBtc: acc.qty > 0 ? costBtc / acc.qty : 0,
       });
     }
     holdings.sort((a, b) => b.valueUsd - a.valueUsd);
@@ -572,6 +663,11 @@
     const costUsd = holdings.reduce((s, h) => s + h.costUsd, 0);
     const cashUsd = state.liquidity.reduce((s, c) => s + cashToUsd(n(c.amount)), 0);
     const totalUsd = valueUsd + cashUsd;
+    const costBtc = holdings.reduce((s, h) => s + h.costBtc, 0);
+    const valueBtc = holdings.reduce((s, h) => s + h.valueBtc, 0);
+    const cashBtc = bNow > 0 ? cashUsd / bNow : 0;
+    const totalBtc = valueBtc + cashBtc;
+    const pnlBtc = valueBtc - costBtc;
     for (const h of holdings) h.allocation = totalUsd > 0 ? (h.valueUsd / totalUsd) * 100 : 0;
     return {
       holdings, valueUsd, costUsd, cashUsd,
@@ -579,6 +675,9 @@
       pnlUsd: valueUsd - costUsd,
       pnlPct: costUsd > 0 ? ((valueUsd - costUsd) / costUsd) * 100 : 0,
       realized,
+      costBtc: costBtc, valueBtc: valueBtc, cashBtc: cashBtc, totalBtc: totalBtc,
+      pnlBtc: pnlBtc, pnlPctBtc: costBtc > 0 ? (pnlBtc / costBtc) * 100 : 0,
+      realizedBtc: realizedBtc || 0,
     };
   }
 
@@ -586,7 +685,7 @@
     const { byAsset } = ledger();
     const byVenue = new Map();
     const bump = (name) => {
-      const cur = byVenue.get(name) || { value: 0, cost: 0, cash: 0, qtyHint: [] };
+      const cur = byVenue.get(name) || { value: 0, cost: 0, costBtc: 0, cash: 0, qtyHint: [] };
       byVenue.set(name, cur);
       return cur;
     };
@@ -599,6 +698,7 @@
         const row = bump(lot.venue);
         row.value += lot.qty * mark;
         row.cost += lot.cost;
+        row.costBtc = (row.costBtc || 0) + (lot.costBtc || 0);
         row.qtyHint.push(formatQty(lot.qty) + " " + (asset?.symbol || ""));
       }
     }
@@ -659,6 +759,17 @@
     for (let t = from; t <= now; t += step) pts.push([t, qtyAt(assetId, t) * priceUsd(assetId)]);
     return pts;
   }
+  function toUnitPoints(pts) {
+    if (!pts || unit !== "btc") return pts || [];
+    return pts.map(function (p) {
+      const b = btcAt(p[0]);
+      return [p[0], b > 0 ? p[1] / b : 0];
+    });
+  }
+  function $disp(v) {
+    if (veil) return "•••";
+    return unit === "btc" ? formatBtc(v) : formatMoney(v);
+  }
 
   function drawChart(el, points, up, metaEl) {
     if (!el) return;
@@ -708,9 +819,9 @@
       <text x="${w - padR}" y="${h - 4}" text-anchor="end" fill="#5a5a56" font-size="9">${fmtT(t1)}</text>
     </svg>`;
     if (metaEl) {
-      metaEl.innerHTML = `<span>Bas <strong>${$m(Math.min(...ys))}</strong></span>
-        <span>Haut <strong>${$m(Math.max(...ys))}</strong></span>
-        <span>Début <strong>${$m(start)}</strong></span>`;
+      metaEl.innerHTML = `<span>Bas <strong>${$disp(Math.min(...ys))}</strong></span>
+        <span>Haut <strong>${$disp(Math.max(...ys))}</strong></span>
+        <span>Début <strong>${$disp(start)}</strong></span>`;
     }
   }
   function renderPeriods(boxId, current, onPick) {
@@ -740,7 +851,7 @@
     </div>`).join("");
     return `<div class="donut-row"><svg class="donut-svg" viewBox="0 0 100 100">
       <circle cx="50" cy="50" r="42" fill="none" stroke="#1c1c1f" stroke-width="14"/>${arcs}
-      <text x="50" y="48" text-anchor="middle" fill="#f5f5f4" font-size="11" font-weight="700">${veil ? "%" : $s(total)}</text>
+      <text x="50" y="48" text-anchor="middle" fill="#f5f5f4" font-size="11" font-weight="700">${veil ? "%" : $m(total)}</text>
       <text x="50" y="60" text-anchor="middle" fill="#8b8b86" font-size="7">TOTAL</text>
     </svg><div class="donut-leg">${legend}</div></div>`;
   }
@@ -765,31 +876,32 @@
 
   function renderHome() {
     const t = portfolioTotals();
-    document.getElementById("netWorth").textContent = veil ? "Confidentiel" : formatMoney(t.totalUsd);
-    const pts = buildPortfolioPoints(PERIODS.find((p) => p.id === homePeriod).days);
-    const first = pts[0]?.[1] || t.totalUsd;
-    const last = pts.at(-1)?.[1] || t.totalUsd;
+    syncUnitToggle();
+    document.getElementById("netWorth").textContent = veil ? "Confidentiel" : $c(t.totalUsd, t.totalBtc);
+    const pts = toUnitPoints(buildPortfolioPoints(PERIODS.find((p) => p.id === homePeriod).days));
+    const first = pts[0]?.[1] || (unit === "btc" ? t.totalBtc : t.totalUsd);
+    const last = pts.at(-1)?.[1] || (unit === "btc" ? t.totalBtc : t.totalUsd);
     const d = last - first;
     const dp = first > 0 ? (d / first) * 100 : 0;
     const up = d >= 0;
     const pill = document.getElementById("pnlPill");
     pill.className = "chg " + (Math.abs(d) < 0.5 ? "flat" : up ? "up" : "down");
-    pill.textContent = veil ? formatPct(dp) : formatPct(dp) + " · " + formatMoney(d);
+    pill.textContent = veil ? formatPct(dp) : formatPct(dp) + " · " + (unit === "btc" ? formatBtc(d) : formatMoney(d));
     document.getElementById("periodDelta").textContent = veil
       ? "montants masqués · tape ici pour réafficher"
-      : "sur la période · latent " + formatPct(t.pnlPct);
+      : (unit === "btc" ? "contre BTC · latent " : "sur la période · latent ") + $pct(t.pnlPct, t.pnlPctBtc);
     drawChart(document.getElementById("homeChart"), pts, up, document.getElementById("chartMeta"));
     renderPeriods("homePeriods", homePeriod, (id) => { homePeriod = id; renderHome(); });
     document.getElementById("dashStats").innerHTML = `
-      <div class="stat"><div class="k">Investi</div><div class="n">${$m(t.costUsd)}</div></div>
-      <div class="stat"><div class="k">Latent</div><div class="n">${veil ? formatPct(t.pnlPct) : $m(t.pnlUsd)}</div></div>
-      <div class="stat"><div class="k">Réalisé</div><div class="n">${$m(t.realized)}</div></div>`;
+      <div class="stat"><div class="k">Investi</div><div class="n">${$c(t.costUsd, t.costBtc)}</div></div>
+      <div class="stat"><div class="k">Latent</div><div class="n">${veil ? $pct(t.pnlPct, t.pnlPctBtc) : $c(t.pnlUsd, t.pnlBtc)}</div></div>
+      <div class="stat"><div class="k">Réalisé</div><div class="n">${$c(t.realized, t.realizedBtc)}</div></div>`;
     const posPct = t.totalUsd > 0 ? (t.valueUsd / t.totalUsd) * 100 : 0;
     const cashPct = t.totalUsd > 0 ? (t.cashUsd / t.totalUsd) * 100 : 0;
     document.getElementById("splitStats").innerHTML = `
-      <div class="stat"><div class="k">Tout</div><div class="n">${veil ? "100 %" : $m(t.totalUsd)}</div></div>
-      <div class="stat"><div class="k">Positions</div><div class="n">${veil ? posPct.toFixed(0) + " %" : $m(t.valueUsd)}</div></div>
-      <div class="stat"><div class="k">Cash USD</div><div class="n">${veil ? cashPct.toFixed(0) + " %" : $m(t.cashUsd)}</div></div>`;
+      <div class="stat"><div class="k">Tout</div><div class="n">${veil ? "100 %" : $c(t.totalUsd, t.totalBtc)}</div></div>
+      <div class="stat"><div class="k">Positions</div><div class="n">${veil ? posPct.toFixed(0) + " %" : $c(t.valueUsd, t.valueBtc)}</div></div>
+      <div class="stat"><div class="k">Cash USD</div><div class="n">${veil ? cashPct.toFixed(0) + " %" : $c(t.cashUsd, t.cashBtc)}</div></div>`;
     const segs = t.holdings.map((h) => ({ label: h.symbol, value: h.valueUsd }));
     if (t.cashUsd > 0.5) segs.push({ label: "Cash", value: t.cashUsd });
     document.getElementById("donutBox").innerHTML = segs.length ? drawDonut(segs) : "";
@@ -799,13 +911,15 @@
     else {
       hBox.innerHTML = t.holdings.map((h) => {
         const asset = findAsset(h.assetId) || h;
-        const tone = h.pnlUsd > 0.01 ? "up" : h.pnlUsd < -0.01 ? "down" : "flat";
+        const tone = (unit === "btc" ? h.pnlBtc : h.pnlUsd) > 0.0000001 ? "up"
+          : (unit === "btc" ? h.pnlBtc : h.pnlUsd) < -0.0000001 ? "down" : "flat";
+        const avgTxt = unit === "btc" ? formatBtc(h.avgCostBtc) : $u(h.avgCostUsd);
         return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}">
           ${assetLogo(asset)}
           <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
-            <div class="sym">${veil ? formatPct(h.allocation || h.pnlPct) : ($q(h.qty) + " · moy. " + $u(h.avgCostUsd))}</div></div>
-          <div class="right"><div class="v">${veil ? formatPct(h.pnlPct) : (h.priceUsd > 0 ? $m(h.valueUsd) : "—")}</div>
-            <div class="s"><span class="chg ${tone}" style="padding:0">${formatPct(h.pnlPct)}</span></div></div>
+            <div class="sym">${veil ? formatPct(h.allocation) : ($q(h.qty) + " · moy. " + avgTxt)}</div></div>
+          <div class="right"><div class="v">${veil ? $pct(h.pnlPct, h.pnlPctBtc) : $c(h.valueUsd, h.valueBtc)}</div>
+            <div class="s"><span class="chg ${tone}" style="padding:0">${$pct(h.pnlPct, h.pnlPctBtc)}</span></div></div>
         </button>`;
       }).join("");
     }
@@ -845,20 +959,25 @@
     const px = priceUsd(id);
     const value = qty * px;
     document.getElementById("assetSym").textContent = asset.name;
-    document.getElementById("assetValue").textContent = veil ? formatPct(h?.allocation || 0) : (px > 0 ? $m(value) : "—");
-    const pts = buildAssetPoints(id, PERIODS.find((p) => p.id === assetPeriod).days);
-    const first = pts[0]?.[1] || value, last = pts.at(-1)?.[1] || value;
+    document.getElementById("assetValue").textContent = veil
+      ? formatPct(h?.allocation || 0)
+      : $c(value, h?.valueBtc || 0);
+    const pts = toUnitPoints(buildAssetPoints(id, PERIODS.find((p) => p.id === assetPeriod).days));
+    const first = pts[0]?.[1] || (unit === "btc" ? (h?.valueBtc || 0) : value);
+    const last = pts.at(-1)?.[1] || (unit === "btc" ? (h?.valueBtc || 0) : value);
     const d = last - first, dp = first > 0 ? (d / first) * 100 : 0, up = d >= 0;
     const pill = document.getElementById("assetPill");
-    pill.className = "chg " + (Math.abs(d) < 0.5 ? "flat" : up ? "up" : "down");
-    pill.textContent = veil ? formatPct(dp) : formatPct(dp) + " · " + $m(d);
-    document.getElementById("assetSub").textContent = veil ? formatPct(h?.pnlPct || 0) : ($q(qty) + " · moy. " + $u(h?.avgCostUsd || 0));
+    pill.className = "chg " + (Math.abs(dp) < 0.05 ? "flat" : up ? "up" : "down");
+    pill.textContent = veil ? formatPct(dp) : formatPct(dp) + " · " + $disp(d);
+    document.getElementById("assetSub").textContent = veil
+      ? $pct(h?.pnlPct || 0, h?.pnlPctBtc || 0)
+      : ($q(qty) + " · moy. " + (unit === "btc" ? formatBtc(h?.avgCostBtc || 0) : $u(h?.avgCostUsd || 0)));
     drawChart(document.getElementById("assetChart"), pts, up, null);
     renderPeriods("assetPeriods", assetPeriod, (pid) => { assetPeriod = pid; renderAsset(); });
     document.getElementById("assetStats").innerHTML = `
-      <div class="stat"><div class="k">Investi</div><div class="n">${$m(h?.costUsd || 0)}</div></div>
-      <div class="stat"><div class="k">Latent</div><div class="n">${veil ? formatPct(h?.pnlPct || 0) : $m(h?.pnlUsd || 0)}</div></div>
-      <div class="stat"><div class="k">Réalisé</div><div class="n">${$m(h?.realized || 0)}</div></div>`;
+      <div class="stat"><div class="k">Investi</div><div class="n">${$c(h?.costUsd || 0, h?.costBtc || 0)}</div></div>
+      <div class="stat"><div class="k">Latent</div><div class="n">${veil ? $pct(h?.pnlPct || 0, h?.pnlPctBtc || 0) : $c(h?.pnlUsd || 0, h?.pnlBtc || 0)}</div></div>
+      <div class="stat"><div class="k">Réalisé</div><div class="n">${$c(h?.realized || 0, h?.realizedBtc || 0)}</div></div>`;
     const txs = state.txs.filter((x) => x.assetId === id).sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
     document.getElementById("assetTxs").innerHTML = txs.length
       ? txs.map((tx) => txRow(tx)).join("")
@@ -1158,6 +1277,10 @@
   }
 
   document.getElementById("netWorth").onclick = toggleVeil;
+  document.getElementById("unitToggle").onclick = function (e) {
+    const u = e.target.closest("[data-u]");
+    if (u) setUnit(u.getAttribute("data-u"));
+  };
 
   function openLockForm(mode) {
     const has = Boolean(getLock());
