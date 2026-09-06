@@ -319,8 +319,8 @@
   const STORAGE_KEY = "vela.local.v1";
   const PRICE_KEY = "vela.local.prices.v1";
   const HIST_KEY = "vela.local.hist.v1";
-  const APP_VERSION = "003.5";
-  const APP_BUILT = "26.08.2026 19:15";
+  const APP_VERSION = "003.6";
+  const APP_BUILT = "06.09.2026 19:35";
   const LOCK_KEY = "vela.local.lock.v1";
   const UNLOCK_KEY = "vela.session.unlock";
   const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
@@ -330,8 +330,16 @@
     { id: "bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", cg: "bitcoin" },
     { id: "ethereum", symbol: "ETH", name: "Ethereum", kind: "crypto", cg: "ethereum" },
     { id: "ondo-finance", symbol: "ONDO", name: "Ondo", kind: "crypto", cg: "ondo-finance" },
-    { id: "COIN", symbol: "COIN", name: "Coinbase", kind: "equity", yahoo: "COIN" },
-    { id: "CRCL", symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL" },
+    { id: "COIN", symbol: "COIN", name: "Coinbase", kind: "equity", yahoo: "COIN", cg: "coinbase-xstock" },
+    { id: "CRCL", symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL", cg: "circle-xstock" },
+    { id: "the-index", symbol: "INDEX", name: "The Index", kind: "crypto", cg: "the-index", dexChain: "robinhood", dex: "0x56910d4409f3a0c78c64dd8d0545ff0705389870" },
+    { id: "hood10", symbol: "HOOD10", name: "HOOD10", kind: "crypto", dexChain: "robinhood", dex: "0x0d257ca40d40090be60c2d2ed5bb3535392838cc" },
+    { id: "nasdanq", symbol: "NASDANQ", name: "NASDANQ", kind: "crypto", dexChain: "robinhood", dex: "0x51fb76be80ab6daaa345d818f4e06441816b4fea" },
+    { id: "grass", symbol: "GRASS", name: "Grass", kind: "crypto", cg: "grass", dexChain: "solana", dex: "Grass7B4RdKfBCjTKgSqnXkqjwiGvQyFbuSCUJr3XXjs" },
+    { id: "yolo-hood", symbol: "YOLO", name: "YOLO", kind: "crypto", dexChain: "robinhood", dex: "0x62c71cd34a52c30d894419cbcc55db2afa8032ea" },
+    { id: "cash-cat", symbol: "CASHCAT", name: "Cash Cat", kind: "crypto", cg: "cash-cat", dexChain: "robinhood", dex: "0x020bfc650a365f8bb26819deaabf3e21291018b4" },
+    { id: "basestonk", symbol: "BSTONK", name: "BaseStonk", kind: "crypto", cg: "basestonk", dexChain: "base", dex: "0x0f61edbfe6cd86024c0f210c0695b08df55fdfc9" },
+    { id: "stonkex", symbol: "STONKEX", name: "STONKEX", kind: "crypto", dexSearch: "STONKEX" },
   ];
 
   const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
@@ -563,14 +571,44 @@
     COIN: "COIN",
     "eq-CRCL": "CRCL",
     CRCL: "CRCL",
+    INDEX: "the-index",
+    "the-index": "the-index",
+    "custom-index": "the-index",
+    HOOD10: "hood10",
+    hood10: "hood10",
+    "custom-hood10": "hood10",
+    NASDANQ: "nasdanq",
+    nasdanq: "nasdanq",
+    "custom-nasdanq": "nasdanq",
+    GRASS: "grass",
+    grass: "grass",
+    "custom-grass": "grass",
+    YOLO: "yolo-hood",
+    "yolo-hood": "yolo-hood",
+    "custom-yolo": "yolo-hood",
+    CASHCAT: "cash-cat",
+    "cash-cat": "cash-cat",
+    "custom-cashcat": "cash-cat",
+    BSTONK: "basestonk",
+    basestonk: "basestonk",
+    "custom-bstonk": "basestonk",
+    STONKEX: "stonkex",
+    stonkex: "stonkex",
+    "custom-stonkex": "stonkex",
   };
-  const PRETTY = {
-    bitcoin: { symbol: "BTC", name: "Bitcoin", kind: "crypto", cg: "bitcoin" },
-    ethereum: { symbol: "ETH", name: "Ethereum", kind: "crypto", cg: "ethereum" },
-    "ondo-finance": { symbol: "ONDO", name: "Ondo", kind: "crypto", cg: "ondo-finance" },
-    COIN: { symbol: "COIN", name: "Coinbase", kind: "equity", yahoo: "COIN" },
-    CRCL: { symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL" },
-  };
+  const PRETTY = {};
+  CORE.forEach(function (a) { PRETTY[a.id] = a; PRETTY[a.symbol] = a; });
+  function tickerOf(a) {
+    const raw = typeof a === "string" ? a : (a && (a.symbol || a.id)) || "";
+    let s = String(raw);
+    if (s.indexOf("custom-") === 0) s = s.slice(7);
+    if (s.indexOf("eq-") === 0) s = s.slice(3);
+    return s.toUpperCase();
+  }
+  function feedByTicker(tick) {
+    const t = String(tick || "").toUpperCase();
+    return CORE.find(function (a) { return a.symbol.toUpperCase() === t || a.id.toUpperCase() === t; }) || null;
+  }
   function canon(id) {
     return ALIASES[id] || id;
   }
@@ -578,30 +616,40 @@
     const c = canon(id);
     const out = new Set([id, c]);
     for (const [k, v] of Object.entries(ALIASES)) if (v === c) out.add(k);
+    const tick = tickerOf(id);
+    CORE.forEach(function (a) {
+      if (a.symbol.toUpperCase() === tick || a.id === c) {
+        out.add(a.id);
+        out.add(a.symbol);
+        out.add("custom-" + a.symbol.toLowerCase());
+      }
+    });
     return [...out];
   }
   function resolveAsset(id) {
     if (!id) return { id: "", symbol: "?", name: "?", kind: "crypto" };
     const custom = state.customAssets.find((a) => a.id === id || a.symbol === id);
     const c = canon(id);
-    const pretty = PRETTY[c];
-    if (pretty) return { id, ...pretty, cg: pretty.cg, yahoo: pretty.yahoo };
-    if (custom) return { ...custom, custom: true };
+    const pretty = PRETTY[c] || feedByTicker(tickerOf(id)) || feedByTicker(tickerOf(custom || {}));
+    if (pretty) return { id: id, symbol: pretty.symbol, name: pretty.name, kind: pretty.kind, cg: pretty.cg, yahoo: pretty.yahoo, dex: pretty.dex, dexChain: pretty.dexChain, dexSearch: pretty.dexSearch };
+    if (custom) {
+      const f = feedByTicker(custom.symbol);
+      return f ? { ...custom, ...f, id: custom.id, custom: true } : { ...custom, custom: true };
+    }
     const core = CORE.find((a) => a.id === id || a.id === c);
-    if (core) return { ...core, id };
+    if (core) return { ...core, id: id };
     let symbol = String(id);
     let name = String(id);
     if (symbol.startsWith("eq-")) symbol = symbol.slice(3);
     else if (symbol.startsWith("custom-")) symbol = symbol.slice(7).toUpperCase();
     else if (symbol.includes("-")) {
-      const [tick, ...rest] = symbol.split("-");
-      symbol = tick.toUpperCase();
-      name = rest.join(" ").replace(/\b\w/g, (ch) => ch.toUpperCase()) || symbol;
+      const parts = symbol.split("-");
+      symbol = parts[0].toUpperCase();
+      name = parts.slice(1).join(" ").replace(/\b\w/g, (ch) => ch.toUpperCase()) || symbol;
     }
-    if (PRETTY[canon(id)]) name = PRETTY[canon(id)].name;
-    if (symbol === name && symbol.length <= 8) name = symbol;
-    if (name === id && id === symbol.toLowerCase()) name = symbol;
-    return { id, symbol: symbol.toUpperCase().slice(0, 12), name, kind: "crypto", custom: true };
+    const f = feedByTicker(symbol);
+    if (f) return { id: id, symbol: f.symbol, name: f.name, kind: f.kind, cg: f.cg, yahoo: f.yahoo, dex: f.dex, dexChain: f.dexChain, dexSearch: f.dexSearch };
+    return { id: id, symbol: symbol.toUpperCase().slice(0, 12), name: name, kind: "crypto", custom: true };
   }
   function allAssets() {
     const map = new Map();
@@ -1310,22 +1358,96 @@
   }
 
   async function refreshPrices() {
-    document.getElementById("priceStatus").textContent = "Cours : chargement…";
-    try {
-      const ids = CORE.filter((a) => a.cg).map((a) => a.cg).join(",");
-      const cg = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + ids + "&vs_currencies=usd").then((r) => r.json());
-      for (const a of CORE) {
-        if (a.cg && cg[a.cg]?.usd > 0) setLastPrice(a.id, cg[a.cg].usd, { force: true });
-      }
-    } catch {}
-    for (const a of CORE.filter((x) => x.yahoo)) {
-      try {
-        const raw = await fetch("https://query1.finance.yahoo.com/v8/finance/chart/" + a.yahoo + "?interval=1d&range=5d").then((r) => r.json());
-        const px = raw.chart?.result?.[0]?.meta?.regularMarketPrice;
-        if (px > 0) setLastPrice(a.id, px, { force: true });
-      } catch {}
+    const status = document.getElementById("priceStatus");
+    if (status) status.textContent = "Cours : chargement…";
+    const assets = allAssets();
+    function applyPx(assetId, usd) {
+      if (usd > 0) setLastPrice(assetId, usd, { force: true });
     }
-    document.getElementById("priceStatus").textContent = "Cours : " + new Date().toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+    const cgIds = [];
+    assets.forEach(function (a) {
+      const f = resolveAsset(a.id);
+      if (f.cg && cgIds.indexOf(f.cg) < 0) cgIds.push(f.cg);
+    });
+    try {
+      const cg = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + cgIds.join(",") + "&vs_currencies=usd").then(function (r) { return r.json(); });
+      assets.forEach(function (a) {
+        const f = resolveAsset(a.id);
+        if (f.cg && cg[f.cg] && cg[f.cg].usd > 0) applyPx(a.id, cg[f.cg].usd);
+      });
+    } catch (e) {}
+
+    const byChain = {};
+    assets.forEach(function (a) {
+      const f = resolveAsset(a.id);
+      if (f.dex && f.dexChain) {
+        if (!byChain[f.dexChain]) byChain[f.dexChain] = [];
+        byChain[f.dexChain].push({ id: a.id, dex: f.dex });
+      }
+    });
+    const chains = Object.keys(byChain);
+    for (let i = 0; i < chains.length; i++) {
+      const chain = chains[i];
+      const addrs = [];
+      byChain[chain].forEach(function (x) {
+        if (addrs.indexOf(x.dex) < 0) addrs.push(x.dex);
+      });
+      try {
+        const rows = await fetch("https://api.dexscreener.com/tokens/v1/" + chain + "/" + addrs.join(",")).then(function (r) { return r.json(); });
+        const best = {};
+        (rows || []).forEach(function (p) {
+          const addr = ((p.baseToken && p.baseToken.address) || "").toLowerCase();
+          const px = Number(p.priceUsd);
+          const liq = Number((p.liquidity && p.liquidity.usd) || 0);
+          if (!(px > 0) || !addr) return;
+          if (!best[addr] || liq > best[addr].liq) best[addr] = { px: px, liq: liq };
+        });
+        byChain[chain].forEach(function (x) {
+          const hit = best[String(x.dex).toLowerCase()];
+          if (hit) applyPx(x.id, hit.px);
+        });
+      } catch (e) {}
+    }
+
+    for (let i = 0; i < assets.length; i++) {
+      const a = assets[i];
+      const f = resolveAsset(a.id);
+      const already = prices[a.id] && prices[a.id].usd > 0 && prices[a.id].src === "api";
+      if (already && !f.dexSearch) continue;
+      const q = f.dexSearch || f.symbol;
+      if (!q) continue;
+      try {
+        const d = await fetch("https://api.dexscreener.com/latest/dex/search?q=" + encodeURIComponent(q)).then(function (r) { return r.json(); });
+        const want = String(q).toUpperCase();
+        const pairs = (d.pairs || []).filter(function (p) {
+          return ((p.baseToken && p.baseToken.symbol) || "").toUpperCase() === want;
+        });
+        pairs.sort(function (x, y) {
+          return Number((y.liquidity && y.liquidity.usd) || 0) - Number((x.liquidity && x.liquidity.usd) || 0);
+        });
+        const px = Number(pairs[0] && pairs[0].priceUsd);
+        if (px > 0) applyPx(a.id, px);
+      } catch (e) {}
+    }
+
+    const equities = assets.filter(function (a) { return resolveAsset(a.id).yahoo; });
+    for (let i = 0; i < equities.length; i++) {
+      const a = equities[i];
+      const sym = resolveAsset(a.id).yahoo;
+      const urls = [
+        "https://query1.finance.yahoo.com/v8/finance/chart/" + sym + "?interval=1d&range=5d",
+        "https://corsproxy.io/?" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + sym + "?interval=1d&range=5d")
+      ];
+      for (let u = 0; u < urls.length; u++) {
+        try {
+          const raw = await fetch(urls[u]).then(function (r) { return r.json(); });
+          const px = raw.chart && raw.chart.result && raw.chart.result[0] && raw.chart.result[0].meta && raw.chart.result[0].meta.regularMarketPrice;
+          if (px > 0) { applyPx(a.id, px); break; }
+        } catch (e) {}
+      }
+    }
+
+    if (status) status.textContent = "Cours : " + new Date().toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
     renderAll();
     refreshHist();
   }
