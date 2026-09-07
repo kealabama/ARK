@@ -39,8 +39,30 @@
       background: color-mix(in oklab, var(--bg) 92%, transparent);
       backdrop-filter: blur(16px);
     }
-    .brand { display: flex; align-items: center; gap: .5rem; font-weight: 650; letter-spacing: -.02em; }
-    .brand svg { width: 1.5rem; height: 1.5rem; }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: .38rem;
+      height: 1.65rem;
+    }
+    .brand svg {
+      width: 1.65rem;
+      height: 1.65rem;
+      display: block;
+      flex: none;
+    }
+    #hdrTitle {
+      display: flex;
+      align-items: center;
+      height: 1.65rem;
+      margin: 0;
+      padding: 0;
+      line-height: 1;
+      font-size: 1.05rem;
+      font-weight: 650;
+      letter-spacing: .14em;
+      transform: translateY(-0.5px);
+    }
     .logo-pick { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; margin-top: .55rem; }
     .logo-pick button {
       display: flex; flex-direction: column; align-items: center; gap: .4rem;
@@ -327,13 +349,38 @@
 
 <script>
 (function () {
-  const STORAGE_KEY = "vela.local.v1";
-  const PRICE_KEY = "vela.local.prices.v1";
-  const HIST_KEY = "vela.local.hist.v1";
-  const APP_VERSION = "004.2";
-  const APP_BUILT = "07.09.2026 08:16";
-  const LOCK_KEY = "vela.local.lock.v1";
-  const UNLOCK_KEY = "vela.session.unlock";
+  const STORAGE_KEY = "ark.local.v1";
+  const PRICE_KEY = "ark.local.prices.v1";
+  const HIST_KEY = "ark.local.hist.v1";
+  const APP_VERSION = "004.5";
+  const APP_BUILT = "07.09.2026 08:46";
+  const LOCK_KEY = "ark.local.lock.v1";
+  const UNLOCK_KEY = "ark.session.unlock";
+  (function migrateVelaKeys() {
+    const pairs = [
+      [STORAGE_KEY, "vela.local.v1"],
+      [PRICE_KEY, "vela.local.prices.v1"],
+      [HIST_KEY, "vela.local.hist.v1"],
+      [LOCK_KEY, "vela.local.lock.v1"],
+      ["ark.unit", "vela.unit"]
+    ];
+    pairs.forEach(function (p) {
+      try {
+        if (localStorage.getItem(p[0]) == null) {
+          const old = localStorage.getItem(p[1]);
+          if (old != null) localStorage.setItem(p[0], old);
+        }
+      } catch (e) {}
+    });
+    try {
+      if (sessionStorage.getItem(UNLOCK_KEY) == null && sessionStorage.getItem("vela.session.unlock") === "1") {
+        sessionStorage.setItem(UNLOCK_KEY, "1");
+      }
+      if (sessionStorage.getItem("ark.veil") == null && sessionStorage.getItem("vela.veil") != null) {
+        sessionStorage.setItem("ark.veil", sessionStorage.getItem("vela.veil"));
+      }
+    } catch (e) {}
+  })();
   const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
   const VENUES = ["Ledger","MetaMask","Coinbase","Binance","Kraken","Swissquote","IBKR","Revolut","Bitstamp","Autre"];
   const PERIODS = [{ id: "1d", label: "1J", days: 1 }, { id: "1w", label: "1S", days: 7 }, { id: "1m", label: "1M", days: 30 }, { id: "1y", label: "1A", days: 365 }];
@@ -356,14 +403,32 @@
 
   const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+  function unescapeHtml(s) {
+    var amp = "\u0026";
+    return String(s == null ? "" : s)
+      .replace(new RegExp(amp + "nbsp;", "gi"), " ")
+      .replace(new RegExp(amp + "#39;", "g"), "'")
+      .replace(new RegExp(amp + "apos;", "gi"), "'")
+      .replace(new RegExp(amp + "quot;", "gi"), '"')
+      .replace(new RegExp(amp + "lt;", "gi"), "<")
+      .replace(new RegExp(amp + "gt;", "gi"), ">")
+      .replace(new RegExp(amp + "amp;", "gi"), amp);
+  }
   function escapeHtml(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      if (c === "&") return "\u0026amp;";
-      if (c === "<") return "\u0026lt;";
-      if (c === ">") return "\u0026gt;";
-      if (c === '"') return "\u0026quot;";
-      return "\u0026#39;";
+    var amp = "\u0026";
+    return unescapeHtml(s).replace(/[&<>"']/g, function (c) {
+      if (c === "&") return amp + "amp;";
+      if (c === "<") return amp + "lt;";
+      if (c === ">") return amp + "gt;";
+      if (c === '"') return amp + "quot;";
+      return amp + "#39;";
     });
+  }
+  function cleanLabel(s) {
+    let t = unescapeHtml(s).replace(/\u00a0/g, " ");
+    t = t.replace(/^custom-/i, "").replace(/^eq-/i, "");
+    t = t.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
+    return t;
   }
   function formatMoney(v) {
     if (!Number.isFinite(v)) return "—";
@@ -398,8 +463,8 @@
 
   let veil = false;
   let unit = "usd";
-  try { veil = sessionStorage.getItem("vela.veil") === "1"; } catch (e) {}
-  try { unit = localStorage.getItem("vela.unit") === "btc" ? "btc" : "usd"; } catch (e) {}
+  try { veil = sessionStorage.getItem("ark.veil") === "1"; } catch (e) {}
+  try { unit = localStorage.getItem("ark.unit") === "btc" ? "btc" : "usd"; } catch (e) {}
   function formatBtc(v) {
     if (!Number.isFinite(v)) return "—";
     const sign = v < 0 ? "-" : "";
@@ -460,15 +525,15 @@
   }
   function setUnit(next) {
     unit = next === "btc" ? "btc" : "usd";
-    try { localStorage.setItem("vela.unit", unit); } catch (e) {}
+    try { localStorage.setItem("ark.unit", unit); } catch (e) {}
     syncUnitToggle();
     renderAll();
   }
 
-  const ARK_MARK = '<circle cx="16" cy="14" r="10.1" fill="none" stroke="#ffffff" stroke-width="2.15"/>' +
-    '<circle cx="16" cy="14" r="6.85" fill="none" stroke="#ffffff" stroke-width="2.15"/>' +
-    '<circle cx="16" cy="14" r="3.6" fill="none" stroke="#ffffff" stroke-width="2.15"/>' +
-    '<rect x="8.6" y="26.35" width="14.8" height="2.05" rx="0.4" fill="#ffffff"/>';
+  const ARK_MARK = '<circle cx="16" cy="15.35" r="9.55" fill="none" stroke="#ffffff" stroke-width="2.15"/>' +
+    '<circle cx="16" cy="15.35" r="6.45" fill="none" stroke="#ffffff" stroke-width="2.15"/>' +
+    '<circle cx="16" cy="15.35" r="3.35" fill="none" stroke="#ffffff" stroke-width="2.15"/>' +
+    '<rect x="8.9" y="27.15" width="14.2" height="2" rx="0.4" fill="#ffffff"/>';
   function applyLogo() {
     const brand = document.getElementById("brandMark");
     const gate = document.getElementById("gateMark");
@@ -477,7 +542,7 @@
   }
   function toggleVeil() {
     veil = !veil;
-    try { sessionStorage.setItem("vela.veil", veil ? "1" : "0"); } catch (e) {}
+    try { sessionStorage.setItem("ark.veil", veil ? "1" : "0"); } catch (e) {}
     renderAll();
     toast(veil ? "Montants masqués" : "Montants visibles");
   }
@@ -663,44 +728,104 @@
     });
     return [...out];
   }
+  function canonId(id) {
+    if (!id) return id;
+    const f = feedByTicker(id);
+    if (f) return f.id;
+    const aliased = ALIASES[id] || ALIASES[String(id).toUpperCase()] || ALIASES[String(id).toLowerCase()];
+    if (aliased && PRETTY[aliased]) return PRETTY[aliased].id;
+    const key = Object.keys(ALIASES).find(function (k) { return k.toLowerCase() === String(id).toLowerCase(); });
+    if (key && PRETTY[ALIASES[key]]) return PRETTY[ALIASES[key]].id;
+    return id;
+  }
   function resolveAsset(id) {
     if (!id) return { id: "", symbol: "?", name: "?", kind: "crypto" };
-    const custom = state.customAssets.find((a) => a.id === id || a.symbol === id);
-    const c = canon(id);
-    const pretty = PRETTY[c] || feedByTicker(tickerOf(id)) || feedByTicker(tickerOf(custom || {}));
-    if (pretty) return { id: id, symbol: pretty.symbol, name: pretty.name, kind: pretty.kind, cg: pretty.cg, yahoo: pretty.yahoo, dex: pretty.dex, dexChain: pretty.dexChain, dexSearch: pretty.dexSearch };
-    if (custom) {
-      const f = feedByTicker(custom.symbol);
-      return f ? { ...custom, ...f, id: custom.id, custom: true } : { ...custom, custom: true };
+    const cid = canonId(id);
+    const pretty = PRETTY[cid] || feedByTicker(id) || feedByTicker(cid);
+    if (pretty) {
+      return {
+        id: cid,
+        symbol: pretty.symbol,
+        name: pretty.name,
+        kind: pretty.kind,
+        cg: pretty.cg,
+        yahoo: pretty.yahoo,
+        dex: pretty.dex,
+        dexChain: pretty.dexChain,
+        dexSearch: pretty.dexSearch
+      };
     }
-    const core = CORE.find((a) => a.id === id || a.id === c);
-    if (core) return { ...core, id: id };
-    let symbol = String(id);
-    let name = String(id);
-    if (symbol.startsWith("eq-")) symbol = symbol.slice(3);
-    else if (symbol.startsWith("custom-")) symbol = symbol.slice(7).toUpperCase();
-    else if (symbol.includes("-")) {
+    const custom = (state.customAssets || []).find(function (a) {
+      return a.id === id || a.id === cid || tickerOf(a) === tickerOf(id);
+    });
+    if (custom) {
+      const f = feedByTicker(custom.symbol) || feedByTicker(custom.name) || feedByTicker(custom.id);
+      if (f) return { id: f.id, symbol: f.symbol, name: f.name, kind: f.kind, cg: f.cg, yahoo: f.yahoo, dex: f.dex, dexChain: f.dexChain };
+      return {
+        id: custom.id,
+        symbol: cleanLabel(custom.symbol || tickerOf(custom) || "?").toUpperCase().replace(/\s+/g, ""),
+        name: cleanLabel(custom.name || custom.symbol || custom.id),
+        kind: custom.kind || "crypto",
+        custom: true
+      };
+    }
+    let symbol = cleanLabel(id);
+    let name = symbol;
+    if (symbol.includes("-")) {
       const parts = symbol.split("-");
       symbol = parts[0].toUpperCase();
-      name = parts.slice(1).join(" ").replace(/\b\w/g, (ch) => ch.toUpperCase()) || symbol;
+      name = parts.slice(1).join(" ") || symbol;
     }
-    const f = feedByTicker(symbol);
-    if (f) return { id: id, symbol: f.symbol, name: f.name, kind: f.kind, cg: f.cg, yahoo: f.yahoo, dex: f.dex, dexChain: f.dexChain, dexSearch: f.dexSearch };
     return { id: id, symbol: symbol.toUpperCase().slice(0, 12), name: name, kind: "crypto", custom: true };
   }
   function allAssets() {
-    const map = new Map();
-    for (const a of CORE) map.set(a.id, { ...a });
-    for (const tx of state.txs) {
-      if (!map.has(tx.assetId)) map.set(tx.assetId, resolveAsset(tx.assetId));
-    }
-    for (const c of state.customAssets) {
-      if (!map.has(c.id)) map.set(c.id, { ...c, custom: true });
-    }
-    return [...map.values()];
+    const byTick = new Map();
+    CORE.forEach(function (a) { byTick.set(tickerOf(a.symbol), { ...a }); });
+    (state.customAssets || []).forEach(function (c) {
+      const t = tickerOf(c);
+      if (!t || byTick.has(t)) return;
+      byTick.set(t, {
+        id: c.id,
+        symbol: cleanLabel(c.symbol || t).toUpperCase().replace(/\s+/g, "") || t,
+        name: cleanLabel(c.name || c.symbol || t),
+        kind: c.kind || "crypto",
+        custom: true
+      });
+    });
+    (state.txs || []).forEach(function (tx) {
+      const t = tickerOf(tx.assetId);
+      if (!t || byTick.has(t)) return;
+      byTick.set(t, resolveAsset(tx.assetId));
+    });
+    return [...byTick.values()];
   }
   function findAsset(id) {
     return resolveAsset(id);
+  }
+  function normalizePortfolio() {
+    let changed = false;
+    (state.txs || []).forEach(function (tx) {
+      const id = canonId(tx.assetId);
+      if (id && id !== tx.assetId) { tx.assetId = id; changed = true; }
+    });
+    const kept = [];
+    const seen = new Set();
+    (state.customAssets || []).forEach(function (c) {
+      const name = cleanLabel(c.name || c.symbol || "");
+      const symbol = cleanLabel(c.symbol || "").replace(/\s+/g, "").toUpperCase() || c.symbol;
+      if (name !== c.name || symbol !== c.symbol) { c.name = name; c.symbol = symbol; changed = true; }
+      if (feedByTicker(c.symbol) || feedByTicker(c.id) || feedByTicker(c.name)) {
+        changed = true;
+        return;
+      }
+      const t = tickerOf(c);
+      if (!t || seen.has(t)) { changed = true; return; }
+      seen.add(t);
+      kept.push(c);
+    });
+    if (kept.length !== (state.customAssets || []).length) changed = true;
+    state.customAssets = kept;
+    if (changed) saveState();
   }
   function assetBySymbol(sym) {
     const s = String(sym || "").toUpperCase();
@@ -731,7 +856,8 @@
     let realized = 0;
     let realizedBtc = 0;
     for (const tx of sorted) {
-      const acc = byAsset.get(tx.assetId) || { qty: 0, cost: 0, costBtc: 0, realized: 0, realizedBtc: 0, lots: [] };
+      const aid = canonId(tx.assetId);
+      const acc = byAsset.get(aid) || { qty: 0, cost: 0, costBtc: 0, realized: 0, realizedBtc: 0, lots: [] };
       const q = n(tx.quantity);
       const px = n(tx.priceUsd);
       const fee = n(tx.feeUsd);
@@ -777,7 +903,7 @@
           if (lot.qty > 1e-12) acc.lots.push(lot);
         }
       }
-      byAsset.set(tx.assetId, acc);
+      byAsset.set(aid, acc);
     }
     return { byAsset: byAsset, realized: realized, realizedBtc: realizedBtc };
   }
@@ -1207,18 +1333,20 @@
 
   function renderMkt() {
     const box = document.getElementById("mktCard");
-    const hidden = new Set(state.hiddenMarket || []);
-    const rows = allAssets().filter((a) => !hidden.has(a.id)).map((a) => {
-      const px = priceUsd(a.id);
-      const live = relatedIds(a.id).some((k) => prices[k]?.src === "api");
+    const hiddenTicks = new Set((state.hiddenMarket || []).map(function (id) { return tickerOf(id); }));
+    const rows = allAssets().filter(function (a) { return !hiddenTicks.has(tickerOf(a)); }).map(function (a) {
+      const asset = resolveAsset(a.id);
+      const px = priceUsd(asset.id);
+      const live = relatedIds(asset.id).some(function (k) { return prices[k] && prices[k].src === "api"; }) || Boolean(asset.dex || asset.yahoo || asset.cg);
+      const liveTxt = (prices[asset.id] && prices[asset.id].src === "api") || relatedIds(asset.id).some(function (k) { return prices[k] && prices[k].src === "api"; });
       return `<div class="row">
-        <button type="button" class="pos" style="border:0;padding:.2rem 0;flex:1" data-set-price="${escapeHtml(a.id)}">
-          ${assetLogo(a)}
-          <div class="grow"><div class="name">${escapeHtml(a.name)}</div>
-            <div class="sym">${live ? "Cours API" : "Prix saisi / dernier connu"}</div></div>
+        <button type="button" class="pos" style="border:0;padding:.2rem 0;flex:1" data-set-price="${escapeHtml(asset.id)}">
+          ${assetLogo(asset)}
+          <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
+            <div class="sym">${liveTxt ? "Cours API" : (live ? "Cours API en attente" : "Prix saisi / dernier connu")}</div></div>
           <div class="right"><div class="v">${px > 0 ? formatUnit(px) : "—"}</div></div>
         </button>
-        <button type="button" class="btn ghost" data-del-asset="${escapeHtml(a.id)}" aria-label="Retirer">✕</button>
+        <button type="button" class="btn ghost" data-del-asset="${escapeHtml(asset.id)}" aria-label="Retirer">✕</button>
       </div>`;
     });
     box.innerHTML = rows.join("") || '<div class="empty">Aucun actif.</div>';
@@ -1637,8 +1765,9 @@
     const del = e.target.closest("[data-del-asset]")?.dataset?.delAsset;
     if (del) {
       if (!confirm("Retirer cet actif de Marché ? Tes transactions restent en place.")) return;
-      state.hiddenMarket = [...new Set([...(state.hiddenMarket || []), del])];
-      state.customAssets = (state.customAssets || []).filter((c) => c.id !== del);
+      const tick = tickerOf(del);
+      state.hiddenMarket = [...new Set([...(state.hiddenMarket || []), del].concat(relatedIds(del)))];
+      state.customAssets = (state.customAssets || []).filter(function (c) { return tickerOf(c) !== tick; });
       saveState();
       renderAll();
       toast("Ligne retirée");
@@ -1666,7 +1795,7 @@
     const blob = new Blob([JSON.stringify({ state, prices }, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "vela-backup.json";
+    a.download = "ark-backup.json";
     a.click();
   };
   document.getElementById("btnImport").onclick = () => document.getElementById("importFile").click();
@@ -1703,6 +1832,7 @@
   };
 
   applyLogo();
+  normalizePortfolio();
   setView("home");
   refreshLockStatus();
   if (applyGate()) {
