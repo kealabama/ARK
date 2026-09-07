@@ -18,7 +18,7 @@
     :root {
       --bg: #0a0a0b; --surface: #121214; --surface-2: #1c1c1f;
       --fg: #f5f5f4; --muted: #8b8b86; --subtle: #5a5a56; --border: #26262b;
-      --up: #3ecf8e; --down: #eb5757;
+      --up: #3ecf8e; --down: #eb5757; --gold: #d4af6a;
       --safe-b: env(safe-area-inset-bottom, 0px);
       --safe-t: env(safe-area-inset-top, 0px);
       --font: Inter, system-ui, sans-serif;
@@ -44,6 +44,9 @@
       align-items: center;
       gap: .42rem;
       height: 1.9rem;
+      position: relative;
+      overflow: hidden;
+      color: var(--gold);
     }
     .brand svg {
       width: 1.9rem;
@@ -61,7 +64,54 @@
       font-size: 1.9rem;
       font-weight: 650;
       letter-spacing: .12em;
+      color: var(--gold);
     }
+    .brand.shine::after {
+      content: "";
+      position: absolute;
+      top: -20%;
+      bottom: -20%;
+      width: 42%;
+      background: linear-gradient(90deg, transparent, rgba(255,244,214,.55), transparent);
+      transform: skewX(-18deg);
+      animation: goldSweep 3s ease;
+      pointer-events: none;
+    }
+    @keyframes goldSweep {
+      0% { left: -50%; opacity: 0; }
+      15% { opacity: 1; }
+      100% { left: 125%; opacity: 0; }
+    }
+    .intro {
+      position: fixed; inset: 0; z-index: 95;
+      background: #0a0a0b;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity .4s ease;
+    }
+    .intro.gone { opacity: 0; pointer-events: none; }
+    .intro-lockup {
+      display: flex; align-items: center; gap: .75rem;
+      will-change: transform;
+      transition: transform .55s cubic-bezier(.22,.82,.2,1);
+    }
+    .intro-lockup svg { width: 7.4rem; height: 7.4rem; display: block; }
+    .intro-lockup span {
+      font-size: 3.5rem; font-weight: 650; letter-spacing: .14em; color: #d4af6a;
+      opacity: 0; animation: arkName .4s 1.05s ease forwards;
+    }
+    .intro svg circle {
+      fill: none; stroke: #d4af6a; stroke-width: 2.15; stroke-linecap: round;
+      stroke-dasharray: 100; stroke-dashoffset: 100;
+      animation: arkDraw .7s ease forwards;
+    }
+    .intro svg circle:nth-child(1) { animation-delay: .06s; }
+    .intro svg circle:nth-child(2) { animation-delay: .22s; }
+    .intro svg circle:nth-child(3) { animation-delay: .38s; }
+    .intro svg rect { fill: #d4af6a; opacity: 0; animation: arkBar .28s .82s ease forwards; }
+    @keyframes arkDraw { to { stroke-dashoffset: 0; } }
+    @keyframes arkBar { to { opacity: 1; } }
+    @keyframes arkName { to { opacity: 1; } }
+    body.introing header.top { opacity: 0; }
     .logo-pick { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; margin-top: .55rem; }
     .logo-pick button {
       display: flex; flex-direction: column; align-items: center; gap: .4rem;
@@ -82,7 +132,7 @@
       padding: 1.5rem; padding-top: calc(1.5rem + var(--safe-t));
     }
     .gate.on { display: flex; }
-    .gate h2 { margin: .8rem 0 .3rem; font-size: 1.25rem; }
+    .gate h2 { margin: .8rem 0 .3rem; font-size: 1.25rem; color: var(--gold); }
     .gate .field { width: min(20rem, 100%); }
     .subrow { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-top: .4rem; font-size: .82rem; color: var(--muted); }
     .chg { display: inline-flex; align-items: center; padding: .12rem .45rem; border-radius: 999px; font-size: .72rem; font-weight: 650; font-variant-numeric: tabular-nums; }
@@ -100,10 +150,15 @@
     .stat { background: var(--surface); border-radius: .8rem; padding: .65rem .6rem; }
     .stat .k { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
     .stat .n { margin-top: .22rem; font-size: .8rem; font-weight: 650; font-variant-numeric: tabular-nums; }
-    .donut-row { display: grid; grid-template-columns: 7.2rem 1fr; gap: .85rem; align-items: center; margin-top: .85rem; background: var(--surface); border-radius: 1rem; padding: .85rem .9rem; }
-    .donut-svg { width: 7.2rem; height: 7.2rem; }
+    .donut-row { display: grid; grid-template-columns: 7.4rem 1fr; gap: .85rem; align-items: center; margin-top: .85rem; background: var(--surface); border-radius: 1rem; padding: .95rem .9rem 1.05rem; }
+    .donut-stage { width: 7.4rem; perspective: 210px; display: flex; flex-direction: column; align-items: center; }
+    .donut-tilt { transform: rotateX(26deg); transform-origin: 50% 55%; filter: drop-shadow(0 10px 8px rgba(0,0,0,.45)); }
+    .donut-svg { width: 7.4rem; height: 7.4rem; display: block; }
+    .donut-floor { width: 5.4rem; height: .5rem; margin-top: -.15rem; border-radius: 50%; background: radial-gradient(ellipse, rgba(0,0,0,.55), transparent 70%); }
     .donut-leg { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
-    .donut-leg-row { display: flex; align-items: center; gap: .45rem; font-size: .72rem; color: var(--muted); }
+    .donut-leg-row { display: flex; align-items: center; gap: .45rem; font-size: .72rem; color: var(--muted); width: 100%; text-align: left; background: none; padding: 0; height: auto; }
+    .donut-leg-row.click { cursor: pointer; }
+    .donut-leg-row.click .nm { color: var(--gold); }
     .donut-leg-row i { width: .5rem; height: .5rem; border-radius: 99px; flex-shrink: 0; }
     .donut-leg-row .nm { flex: 1; min-width: 0; color: var(--fg); font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .donut-leg-row .pc { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--fg); }
@@ -114,6 +169,7 @@
     .row:last-child, .pos:last-child { border-bottom: none; }
     .logo, .logo.ph { width: 2.15rem; height: 2.15rem; border-radius: 999px; background: var(--surface-2); object-fit: cover; flex-shrink: 0; }
     .logo.ph { display: grid; place-items: center; font-size: .62rem; font-weight: 650; color: var(--muted); }
+    .logo.ph.poche { color: var(--gold); border: 1px solid color-mix(in oklab, var(--gold) 40%, transparent); }
     .logo-box { width: 2.15rem; height: 2.15rem; flex-shrink: 0; position: relative; }
     .logo-box .ph { display: none; }
     .logo-box.is-ph img { display: none; }
@@ -208,6 +264,12 @@
   </style>
 </head>
 <body>
+  <div class="intro" id="intro" hidden>
+    <div class="intro-lockup" id="introLockup">
+      <svg id="introMark" viewBox="0 0 32 32"></svg>
+      <span>ARK</span>
+    </div>
+  </div>
   <div class="app">
     <header class="top">
       <div class="brand">
@@ -355,8 +417,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "004.8";
-  const APP_BUILT = "07.09.2026 09:01";
+  const APP_VERSION = "004.9";
+  const APP_BUILT = "07.09.2026 11:45";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -533,15 +595,45 @@
     renderAll();
   }
 
-  const ARK_MARK = '<circle cx="16" cy="15.35" r="9.55" fill="none" stroke="#ffffff" stroke-width="2.15"/>' +
-    '<circle cx="16" cy="15.35" r="6.45" fill="none" stroke="#ffffff" stroke-width="2.15"/>' +
-    '<circle cx="16" cy="15.35" r="3.35" fill="none" stroke="#ffffff" stroke-width="2.15"/>' +
-    '<rect x="8.9" y="27.15" width="14.2" height="2" rx="0.4" fill="#ffffff"/>';
+  const ARK_MARK = '<circle cx="16" cy="15.35" r="9.55" fill="none" stroke="#d4af6a" stroke-width="2.15" pathLength="100"/>' +
+    '<circle cx="16" cy="15.35" r="6.45" fill="none" stroke="#d4af6a" stroke-width="2.15" pathLength="100"/>' +
+    '<circle cx="16" cy="15.35" r="3.35" fill="none" stroke="#d4af6a" stroke-width="2.15" pathLength="100"/>' +
+    '<rect x="8.9" y="27.15" width="14.2" height="2" rx="0.4" fill="#d4af6a"/>';
   function applyLogo() {
     const brand = document.getElementById("brandMark");
     const gate = document.getElementById("gateMark");
+    const intro = document.getElementById("introMark");
     if (brand) brand.innerHTML = ARK_MARK;
     if (gate) gate.innerHTML = ARK_MARK;
+    if (intro) intro.innerHTML = ARK_MARK;
+  }
+  function playIntro() {
+    const intro = document.getElementById("intro");
+    const lockup = document.getElementById("introLockup");
+    const brand = document.querySelector(".brand");
+    if (!intro || !lockup || !brand) return;
+    applyLogo();
+    intro.hidden = false;
+    intro.classList.remove("gone");
+    document.body.classList.add("introing");
+    lockup.style.transform = "";
+    setTimeout(function () {
+      const from = lockup.getBoundingClientRect();
+      const to = brand.getBoundingClientRect();
+      const s = Math.min(to.width / Math.max(from.width, 1), to.height / Math.max(from.height, 1));
+      const dx = (to.left + to.width / 2) - (from.left + from.width / 2);
+      const dy = (to.top + to.height / 2) - (from.top + from.height / 2);
+      lockup.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + s + ")";
+      setTimeout(function () {
+        intro.classList.add("gone");
+        document.body.classList.remove("introing");
+        brand.classList.add("shine");
+        setTimeout(function () {
+          intro.hidden = true;
+          brand.classList.remove("shine");
+        }, 3000);
+      }, 560);
+    }, 1600);
   }
   function toggleVeil() {
     veil = !veil;
@@ -1108,30 +1200,76 @@
     box.innerHTML = PERIODS.map((p) => `<button type="button" class="${p.id === current ? "on" : ""}" data-p="${p.id}">${p.label}</button>`).join("");
     box.onclick = (e) => { const id = e.target.closest("[data-p]")?.dataset?.p; if (id) onPick(id); };
   }
+  const POCHE_MIN = 5000;
+  function splitPoche(holdings) {
+    const main = [];
+    const poche = [];
+    (holdings || []).forEach(function (h) {
+      if (h.valueUsd >= POCHE_MIN) main.push(h);
+      else poche.push(h);
+    });
+    const pocheVal = poche.reduce(function (s, h) { return s + h.valueUsd; }, 0);
+    const pocheBtc = poche.reduce(function (s, h) { return s + (h.valueBtc || 0); }, 0);
+    return { main: main, poche: poche, pocheVal: pocheVal, pocheBtc: pocheBtc };
+  }
+  function holdingBtn(h) {
+    const asset = findAsset(h.assetId) || h;
+    const tone = (unit === "btc" ? h.pnlBtc : h.pnlUsd) > 0.0000001 ? "up"
+      : (unit === "btc" ? h.pnlBtc : h.pnlUsd) < -0.0000001 ? "down" : "flat";
+    const avgTxt = unit === "btc" ? formatBtc(h.avgCostBtc) : $u(h.avgCostUsd);
+    const heat = braiseLive ? heatLevel(h.pnlPct) : 0;
+    const inner = `${assetLogo(asset)}
+      <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
+        <div class="sym">${veil ? formatPct(h.allocation) : ($q(h.qty) + " · moy. " + avgTxt)}</div></div>
+      <div class="right"><div class="v">${veil ? $pct(h.pnlPct, h.pnlPctBtc) : $c(h.valueUsd, h.valueBtc)}</div>
+        <div class="s"><span class="chg ${tone}" style="padding:0">${$pct(h.pnlPct, h.pnlPctBtc)}</span></div></div>`;
+    if (heat > 0) {
+      const labels = ["", "palier +25 %", "palier +50 %", "palier +75 %", "palier +100 %", "territoire cadeau"];
+      return `<button type="button" class="pos braise braise-${heat}" data-open-asset="${escapeHtml(h.assetId)}">
+        <div class="braise-glow"></div>
+        <div class="braise-sparks">${sparksHtml(heat)}</div>
+        <div class="braise-main">${inner}</div>
+        <div class="braise-tag">${labels[heat]}</div>
+      </button>`;
+    }
+    return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}">${inner}</button>`;
+  }
+  function openPocheSheet(poche) {
+    const n = poche.length;
+    openSheet("Poche",
+      '<p class="hint">Lignes sous 5 000 USD. Dès qu’une ligne dépasse ce seuil, elle revient dans Positions.</p>' +
+      (n ? poche.map(holdingBtn).join("") : '<div class="empty">Vide.</div>'));
+  }
   function drawDonut(segments) {
     const total = segments.reduce((s, x) => s + x.value, 0);
     if (!(total > 0)) return "";
-    const r = 42, c = 2 * Math.PI * r;
+    const r = 40, c = 2 * Math.PI * r;
     let offset = 0;
     const arcs = segments.map((seg, i) => {
       const len = (seg.value / total) * c;
-      const color = DONUT_COLORS[i % DONUT_COLORS.length];
-      const arc = `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="14"
+      const color = seg.color || DONUT_COLORS[i % DONUT_COLORS.length];
+      const arc = `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="15"
         stroke-dasharray="${len.toFixed(2)} ${(c - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"
         transform="rotate(-90 50 50)"/>`;
       offset += len;
       return arc;
     }).join("");
-    const legend = segments.map((seg, i) => `<div class="donut-leg-row">
-      <i style="background:${DONUT_COLORS[i % DONUT_COLORS.length]}"></i>
+    const legend = segments.map((seg, i) => {
+      const color = seg.color || DONUT_COLORS[i % DONUT_COLORS.length];
+      const click = seg.poche ? ' click" data-open-poche="1' : "";
+      const tag = seg.poche ? "button type=\"button\"" : "div";
+      return `<${tag} class="donut-leg-row${click}">
+      <i style="background:${color}"></i>
       <span class="nm">${escapeHtml(seg.label)}</span>
       <span class="pc">${((seg.value / total) * 100).toFixed(0)} %</span>
-    </div>`).join("");
-    return `<div class="donut-row"><svg class="donut-svg" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r="42" fill="none" stroke="#1c1c1f" stroke-width="14"/>${arcs}
+    </${tag}>`;
+    }).join("");
+    return `<div class="donut-row"><div class="donut-stage"><div class="donut-tilt"><svg class="donut-svg" viewBox="0 0 100 100">
+      <ellipse cx="50" cy="54" rx="41" ry="37" fill="none" stroke="#0a0a0b" stroke-width="17" opacity=".35"/>
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#1c1c1f" stroke-width="15"/>${arcs}
       <text x="50" y="48" text-anchor="middle" fill="#f5f5f4" font-size="11" font-weight="700">${veil ? "%" : $m(total)}</text>
       <text x="50" y="60" text-anchor="middle" fill="#8b8b86" font-size="7">TOTAL</text>
-    </svg><div class="donut-leg">${legend}</div></div>`;
+    </svg></div><div class="donut-floor"></div></div><div class="donut-leg">${legend}</div></div>`;
   }
   function assetLogo(asset) {
     const a = resolveAsset((asset && asset.id) || (asset && asset.symbol) || "");
@@ -1198,35 +1336,24 @@
       <div class="stat"><div class="k">Tout</div><div class="n">${veil ? "100 %" : $c(t.totalUsd, t.totalBtc)}</div></div>
       <div class="stat"><div class="k">Positions</div><div class="n">${veil ? posPct.toFixed(0) + " %" : $c(t.valueUsd, t.valueBtc)}</div></div>
       <div class="stat"><div class="k">Cash USD</div><div class="n">${veil ? cashPct.toFixed(0) + " %" : $c(t.cashUsd, t.cashBtc)}</div></div>`;
-    const segs = t.holdings.map((h) => ({ label: h.symbol, value: h.valueUsd }));
-    if (t.cashUsd > 0.5) segs.push({ label: "Cash", value: t.cashUsd });
+    const pack = splitPoche(t.holdings);
+    const segs = pack.main.map((h) => ({ label: h.symbol, value: h.valueUsd }));
+    if (pack.poche.length) segs.push({ label: "Poche", value: pack.pocheVal, poche: true, color: "#c4a574" });
+    if (t.cashUsd > 0.5) segs.push({ label: "Cash", value: t.cashUsd, color: "#2dd4bf" });
     document.getElementById("donutBox").innerHTML = segs.length ? drawDonut(segs) : "";
 
     const hBox = document.getElementById("holdingsCard");
     if (!t.holdings.length) hBox.innerHTML = '<div class="empty">Aucune position. Ajoute un mouvement.</div>';
     else {
-      hBox.innerHTML = t.holdings.map((h) => {
-        const asset = findAsset(h.assetId) || h;
-        const tone = (unit === "btc" ? h.pnlBtc : h.pnlUsd) > 0.0000001 ? "up"
-          : (unit === "btc" ? h.pnlBtc : h.pnlUsd) < -0.0000001 ? "down" : "flat";
-        const avgTxt = unit === "btc" ? formatBtc(h.avgCostBtc) : $u(h.avgCostUsd);
-        const heat = braiseLive ? heatLevel(h.pnlPct) : 0;
-        const inner = `${assetLogo(asset)}
-          <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
-            <div class="sym">${veil ? formatPct(h.allocation) : ($q(h.qty) + " · moy. " + avgTxt)}</div></div>
-          <div class="right"><div class="v">${veil ? $pct(h.pnlPct, h.pnlPctBtc) : $c(h.valueUsd, h.valueBtc)}</div>
-            <div class="s"><span class="chg ${tone}" style="padding:0">${$pct(h.pnlPct, h.pnlPctBtc)}</span></div></div>`;
-        if (heat > 0) {
-          const labels = ["", "palier +25 %", "palier +50 %", "palier +75 %", "palier +100 %", "territoire cadeau"];
-          return `<button type="button" class="pos braise braise-${heat}" data-open-asset="${escapeHtml(h.assetId)}">
-            <div class="braise-glow"></div>
-            <div class="braise-sparks">${sparksHtml(heat)}</div>
-            <div class="braise-main">${inner}</div>
-            <div class="braise-tag">${labels[heat]}</div>
-          </button>`;
-        }
-        return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}">${inner}</button>`;
-      }).join("");
+      const pochePct = t.totalUsd > 0 ? (pack.pocheVal / t.totalUsd) * 100 : 0;
+      const pocheRow = pack.poche.length ? `<button type="button" class="pos" data-open-poche="1">
+        <div class="logo ph poche">P</div>
+        <div class="grow"><div class="name">Poche</div>
+          <div class="sym">${pack.poche.length} ligne${pack.poche.length > 1 ? "s" : ""} sous 5 000 USD</div></div>
+        <div class="right"><div class="v">${veil ? pochePct.toFixed(0) + " %" : $c(pack.pocheVal, pack.pocheBtc)}</div>
+          <div class="s">${pochePct.toFixed(0)} %</div></div>
+      </button>` : "";
+      hBox.innerHTML = pack.main.map(holdingBtn).join("") + pocheRow;
     }
     const cBox = document.getElementById("cashCard");
     if (!state.liquidity.length) cBox.innerHTML = '<div class="empty">Aucune liquidité USD / stablecoin.</div>';
@@ -1405,7 +1532,8 @@
         <button type="button" class="${edit?.side === "sell" ? "on-sell" : ""}" data-side="sell">Vente</button>
       </div>
       <div class="field"><label>Actif</label>
-        <select id="fAsset">${opts}</select></div>
+        <select id="fAsset">${opts}</select>
+        <p class="hint" id="fHold"></p></div>
       <div id="newAssetBox" class="hidden">
         <div class="field"><label>Nouveau symbole</label><input id="fNewSym" placeholder="ex. HYPE, PEPE" /></div>
         <div class="field"><label>Nom (optionnel)</label><input id="fNewName" placeholder="ex. Hyperliquid" /></div>
@@ -1432,6 +1560,29 @@
       </div>`);
 
     let side = edit?.side || "buy";
+    const sel = document.getElementById("fAsset");
+    const newBox = document.getElementById("newAssetBox");
+    const heldOf = function (assetId) {
+      if (!assetId || assetId === "__new__") return null;
+      const ids = relatedIds(assetId);
+      const cid = canonId(assetId);
+      return portfolioTotals().holdings.find(function (x) {
+        return x.assetId === assetId || x.assetId === cid || ids.indexOf(x.assetId) >= 0;
+      }) || null;
+    };
+    const syncHold = function () {
+      const el = document.getElementById("fHold");
+      if (!el) return;
+      const id = sel.value;
+      if (id === "__new__") { el.textContent = ""; return; }
+      const a = resolveAsset(id);
+      const h = heldOf(id);
+      if (!h) {
+        el.textContent = side === "sell" ? ("Pas de position sur " + a.symbol) : "";
+        return;
+      }
+      el.textContent = "En portefeuille : " + formatQty(h.qty) + " " + a.symbol + (veil ? "" : "  ·  " + formatMoney(h.valueUsd));
+    };
     const syncSide = () => {
       document.querySelectorAll("[data-side]").forEach((b) => {
         b.classList.toggle("on-buy", b.dataset.side === "buy" && side === "buy");
@@ -1439,12 +1590,11 @@
       });
       document.getElementById("buyCashBox").classList.toggle("hidden", side !== "buy");
       document.getElementById("sellCashBox").classList.toggle("hidden", side !== "sell");
+      syncHold();
     };
     syncSide();
     document.querySelectorAll("[data-side]").forEach((b) => b.onclick = () => { side = b.dataset.side; syncSide(); });
-    const sel = document.getElementById("fAsset");
-    const newBox = document.getElementById("newAssetBox");
-    const syncNew = () => newBox.classList.toggle("hidden", sel.value !== "__new__");
+    const syncNew = () => { newBox.classList.toggle("hidden", sel.value !== "__new__"); syncHold(); };
     sel.onchange = syncNew; syncNew();
     document.getElementById("venueChips").onclick = (e) => {
       const v = e.target.closest("[data-venue]")?.dataset?.venue;
@@ -1750,6 +1900,7 @@
     document.getElementById("gatePin").value = "";
     startBraiseWindow();
     renderAll();
+    playIntro();
     refreshPrices();
   }
   document.getElementById("gateGo").onclick = tryUnlock;
@@ -1777,10 +1928,22 @@
   document.getElementById("btnRefreshPrices").onclick = refreshPrices;
   document.getElementById("btnRefreshMkt").onclick = refreshPrices;
   document.getElementById("view-home").addEventListener("click", (e) => {
+    if (e.target.closest("[data-open-poche]")) {
+      openPocheSheet(splitPoche(portfolioTotals().holdings).poche);
+      return;
+    }
     const id = e.target.closest("[data-open-asset]")?.dataset?.openAsset;
     if (id) { openAssetId = id; setView("asset"); renderAsset(); }
     const del = e.target.closest("[data-del-cash]")?.dataset?.delCash;
     if (del) { state.liquidity = state.liquidity.filter((c) => c.id !== del); saveState(); renderAll(); }
+  });
+  document.getElementById("sheet").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-open-asset]")?.dataset?.openAsset;
+    if (!id) return;
+    closeSheet();
+    openAssetId = id;
+    setView("asset");
+    renderAsset();
   });
   document.getElementById("txTimeline").addEventListener("click", (e) => {
     const y = e.target.closest("[data-tog]")?.dataset?.tog;
@@ -1869,6 +2032,7 @@
   if (applyGate()) {
     startBraiseWindow();
     renderAll();
+    playIntro();
     refreshPrices();
   }
 })();
