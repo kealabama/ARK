@@ -42,26 +42,25 @@
     .brand {
       display: inline-flex;
       align-items: center;
-      gap: .38rem;
-      height: 1.65rem;
+      gap: .42rem;
+      height: 1.9rem;
     }
     .brand svg {
-      width: 1.65rem;
-      height: 1.65rem;
+      width: 1.9rem;
+      height: 1.9rem;
       display: block;
       flex: none;
     }
     #hdrTitle {
       display: flex;
       align-items: center;
-      height: 1.65rem;
+      height: 1.9rem;
       margin: 0;
       padding: 0;
       line-height: 1;
-      font-size: 1.05rem;
+      font-size: 1.9rem;
       font-weight: 650;
-      letter-spacing: .14em;
-      transform: translateY(-0.5px);
+      letter-spacing: .12em;
     }
     .logo-pick { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; margin-top: .55rem; }
     .logo-pick button {
@@ -115,6 +114,10 @@
     .row:last-child, .pos:last-child { border-bottom: none; }
     .logo, .logo.ph { width: 2.15rem; height: 2.15rem; border-radius: 999px; background: var(--surface-2); object-fit: cover; flex-shrink: 0; }
     .logo.ph { display: grid; place-items: center; font-size: .62rem; font-weight: 650; color: var(--muted); }
+    .logo-box { width: 2.15rem; height: 2.15rem; flex-shrink: 0; position: relative; }
+    .logo-box .ph { display: none; }
+    .logo-box.is-ph img { display: none; }
+    .logo-box.is-ph .ph { display: grid; }
     .grow { flex: 1; min-width: 0; }
     .name { font-weight: 600; font-size: .92rem; }
     .sym { font-size: .72rem; color: var(--muted); margin-top: .08rem; }
@@ -352,8 +355,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "004.5";
-  const APP_BUILT = "07.09.2026 08:46";
+  const APP_VERSION = "004.8";
+  const APP_BUILT = "07.09.2026 09:01";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -385,9 +388,9 @@
   const VENUES = ["Ledger","MetaMask","Coinbase","Binance","Kraken","Swissquote","IBKR","Revolut","Bitstamp","Autre"];
   const PERIODS = [{ id: "1d", label: "1J", days: 1 }, { id: "1w", label: "1S", days: 7 }, { id: "1m", label: "1M", days: 30 }, { id: "1y", label: "1A", days: 365 }];
   const CORE = [
-    { id: "bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", cg: "bitcoin" },
-    { id: "ethereum", symbol: "ETH", name: "Ethereum", kind: "crypto", cg: "ethereum" },
-    { id: "ondo-finance", symbol: "ONDO", name: "Ondo", kind: "crypto", cg: "ondo-finance" },
+    { id: "bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", cg: "bitcoin", cb: "BTC" },
+    { id: "ethereum", symbol: "ETH", name: "Ethereum", kind: "crypto", cg: "ethereum", cb: "ETH" },
+    { id: "ondo-finance", symbol: "ONDO", name: "Ondo", kind: "crypto", cg: "ondo-finance", cb: "ONDO", dexChain: "ethereum", dex: "0x0F5D2fB29fb7d3CFeE444a200298f468908cC942" },
     { id: "COIN", symbol: "COIN", name: "Coinbase", kind: "equity", yahoo: "COIN", cg: "coinbase-xstock" },
     { id: "CRCL", symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL", cg: "circle-xstock" },
     { id: "the-index", symbol: "INDEX", name: "The Index", kind: "crypto", dexChain: "robinhood", dex: "0x56910d4409f3a0c78c64dd8d0545ff0705389870" },
@@ -752,7 +755,8 @@
         yahoo: pretty.yahoo,
         dex: pretty.dex,
         dexChain: pretty.dexChain,
-        dexSearch: pretty.dexSearch
+        dexSearch: pretty.dexSearch,
+        cb: pretty.cb
       };
     }
     const custom = (state.customAssets || []).find(function (a) {
@@ -1132,7 +1136,7 @@
   function assetLogo(asset) {
     const a = resolveAsset((asset && asset.id) || (asset && asset.symbol) || "");
     const sym = (a.symbol || "?").slice(0, 2);
-    const ph = "<div class='logo ph'>" + escapeHtml(sym) + "</div>";
+    const ph = '<div class="logo ph">' + escapeHtml(sym) + "</div>";
     const urls = [];
     if (a.kind === "equity") {
       if (a.symbol === "COIN") urls.push("https://www.google.com/s2/favicons?domain=coinbase.com&sz=128");
@@ -1145,8 +1149,17 @@
       urls.push("https://dd.dexscreener.com/ds-data/tokens/" + a.dexChain + "/" + String(a.dex).toLowerCase() + ".png?size=lg");
     }
     if (!urls.length) return ph;
-    return "<img class=\"logo\" alt=\"\" src=\"" + urls[0] + "\" data-fall=\"" + escapeHtml(urls.slice(1).join("|")) + "\" onerror=\"(function(el){var n=(el.getAttribute('data-fall')||'').split('|').filter(Boolean); if(n[0]){el.setAttribute('data-fall', n.slice(1).join('|')); el.src=n[0];} else el.outerHTML=" + JSON.stringify(ph) + ";})(this)\" />";
+    return '<span class="logo-box"><img class="logo" alt="" src="' + urls[0] + '" data-fall="' + urls.slice(1).join(" ") + '" onerror="window.arkLogoFail&&window.arkLogoFail(this)">' + ph + "</span>";
   }
+  window.arkLogoFail = function (el) {
+    var next = (el.getAttribute("data-fall") || "").split(" ").filter(Boolean);
+    if (next[0]) {
+      el.setAttribute("data-fall", next.slice(1).join(" "));
+      el.src = next[0];
+      return;
+    }
+    if (el.parentNode) el.parentNode.classList.add("is-ph");
+  };
 
   function setView(id) {
     view = id;
@@ -1337,13 +1350,10 @@
     const rows = allAssets().filter(function (a) { return !hiddenTicks.has(tickerOf(a)); }).map(function (a) {
       const asset = resolveAsset(a.id);
       const px = priceUsd(asset.id);
-      const live = relatedIds(asset.id).some(function (k) { return prices[k] && prices[k].src === "api"; }) || Boolean(asset.dex || asset.yahoo || asset.cg);
-      const liveTxt = (prices[asset.id] && prices[asset.id].src === "api") || relatedIds(asset.id).some(function (k) { return prices[k] && prices[k].src === "api"; });
       return `<div class="row">
         <button type="button" class="pos" style="border:0;padding:.2rem 0;flex:1" data-set-price="${escapeHtml(asset.id)}">
           ${assetLogo(asset)}
-          <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
-            <div class="sym">${liveTxt ? "Cours API" : (live ? "Cours API en attente" : "Prix saisi / dernier connu")}</div></div>
+          <div class="grow"><div class="name">${escapeHtml(asset.name)}</div></div>
           <div class="right"><div class="v">${px > 0 ? formatUnit(px) : "—"}</div></div>
         </button>
         <button type="button" class="btn ghost" data-del-asset="${escapeHtml(asset.id)}" aria-label="Retirer">✕</button>
@@ -1532,9 +1542,12 @@
     };
   }
 
+  let pricesLoading = false;
   async function refreshPrices() {
     const status = document.getElementById("priceStatus");
     if (status) status.textContent = "Cours : chargement…";
+    pricesLoading = true;
+    renderMkt();
     const assets = allAssets();
     function applyPx(assetId, usd) {
       if (!(usd > 0)) return;
@@ -1581,6 +1594,23 @@
           const hit = best[String(x.dex).toLowerCase()];
           if (hit) applyPx(x.id, hit.px);
         });
+      } catch (e) {}
+    }
+
+    const spots = [];
+    assets.forEach(function (a) {
+      const f = resolveAsset(a.id);
+      if (f.cb && spots.indexOf(f.cb) < 0) spots.push(f.cb);
+    });
+    CORE.forEach(function (a) { if (a.cb && spots.indexOf(a.cb) < 0) spots.push(a.cb); });
+    for (let i = 0; i < spots.length; i++) {
+      try {
+        const j = await fetch("https://api.coinbase.com/v2/prices/" + spots[i] + "-USD/spot").then(function (r) { return r.json(); });
+        const px = Number(j && j.data && j.data.amount);
+        if (px > 0) {
+          const hit = CORE.find(function (a) { return a.cb === spots[i]; });
+          if (hit) applyPx(hit.id, px);
+        }
       } catch (e) {}
     }
 
@@ -1641,6 +1671,7 @@
       }
     }
 
+    pricesLoading = false;
     if (status) status.textContent = "Cours : " + new Date().toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
     renderAll();
     refreshHist();
