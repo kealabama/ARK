@@ -472,8 +472,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "005.2";
-  const APP_BUILT = "07.09.2026 12:25";
+  const APP_VERSION = "005.3";
+  const APP_BUILT = "11.09.2026 09:06";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -519,6 +519,9 @@
     { id: "basestonk", symbol: "BSTONK", name: "BaseStonk", kind: "crypto", cg: "basestonk", dexChain: "base", dex: "0x0f61edbfe6cd86024c0f210c0695b08df55fdfc9" },
     { id: "stonkex", symbol: "STONKEX", name: "The Stonks Exchange", kind: "crypto", dexChain: "base", dex: "0x5ab000ff9B9FfE0349CE5ffA5fD86f217C3680F5" },
     { id: "pongo", symbol: "PONGO", name: "Pongo", kind: "crypto", dexChain: "robinhood", dex: "0xedAee44320107CAa714BaAEc486261A87F27022d" },
+    { id: "sibyl", symbol: "SIBYL", name: "Sibyl", kind: "crypto", dexChain: "base", dex: "0x797f214a2CD64a4963A91Fa21c8C55Ec3EBa4714" },
+    { id: "raxol", symbol: "RAXOL", name: "Raxol", kind: "crypto", dexChain: "robinhood", dex: "0xf44702b17d9abD53815F703e772F35E9c71A53af" },
+    { id: "harmonic", symbol: "HARMONIC", name: "Harmonic", kind: "crypto", dexChain: "robinhood", dex: "0xdEe52F2ab639b6942B0d0F0565400b93b7a0fbe5" },
   ];
 
   const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
@@ -866,6 +869,15 @@
     PONGO: "pongo",
     pongo: "pongo",
     "custom-pongo": "pongo",
+    SIBYL: "sibyl",
+    sibyl: "sibyl",
+    "custom-sibyl": "sibyl",
+    RAXOL: "raxol",
+    raxol: "raxol",
+    "custom-raxol": "raxol",
+    HARMONIC: "harmonic",
+    harmonic: "harmonic",
+    "custom-harmonic": "harmonic",
   };
   const PRETTY = {};
   CORE.forEach(function (a) { PRETTY[a.id] = a; PRETTY[a.symbol] = a; });
