@@ -312,13 +312,79 @@
     .braise-2 .braise-glow { background: radial-gradient(120% 90% at 50% 110%, #f0b42955, transparent 68%); }
     .braise-3 { min-height: 9.2rem; animation: emberPulse 1.6s ease-in-out infinite, heatWave 3s ease-in-out infinite; }
     .braise-3 .braise-glow { background: radial-gradient(130% 100% at 50% 100%, #ff8a2a66, #f0b42922 55%, transparent 75%); }
-    .braise-4 { min-height: 12rem; animation: emberPulse 1.2s ease-in-out infinite, heatWave 2.2s ease-in-out infinite; }
+    .braise-4 { min-height: 12rem; margin-left: -.55rem; margin-right: -.55rem; width: calc(100% + 1.1rem); z-index: 3; animation: emberPulse 1.2s ease-in-out infinite, heatWave 2.2s ease-in-out infinite; }
     .braise-4 .braise-glow { background: radial-gradient(140% 120% at 50% 100%, #ff5a1f77, #f0b42933 50%, transparent 78%); }
-    .braise-5 { min-height: 15rem; animation: emberPulse .9s ease-in-out infinite, heatWave 1.6s ease-in-out infinite; }
-    .braise-5 .braise-glow { background: radial-gradient(150% 130% at 50% 90%, #ff3b1f88, #ffb02044 48%, transparent 80%); }
+    .libre {
+      display: flex; flex-direction: column; align-items: flex-start;
+      gap: 0; border: none; background: transparent;
+      padding: 1.15rem .15rem 1.25rem; margin: .15rem 0 .35rem;
+      text-align: left; width: 100%;
+      animation: libreIn .75s cubic-bezier(.22,1,.28,1) both;
+      z-index: 4;
+    }
+    .libre-top { display: flex; align-items: center; gap: .55rem; margin-bottom: .55rem; width: 100%; background: none; padding: 0; border: none; color: inherit; }
+    .libre-top .name { font-size: .82rem; font-weight: 550; color: var(--muted); }
+    .libre-amt {
+      display: block; width: 100%; background: none; border: none; padding: 0;
+      font-size: clamp(1.85rem, 8.2vw, 2.6rem);
+      font-weight: 650; letter-spacing: -.045em; line-height: 1.05;
+      color: var(--fg); font-variant-numeric: tabular-nums; text-align: left;
+      animation: libreAmt .9s cubic-bezier(.22,1,.28,1) both;
+    }
+    .libre-kicker,
+    .libre-hint { display: none; }
+    @keyframes libreIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes libreAmt {
+      0% { opacity: 0; transform: translateY(18px) scale(.94); filter: blur(6px); }
+      60% { opacity: 1; filter: blur(0); }
+      100% { opacity: 1; transform: none; filter: none; }
+    }
+    #holdingsCard.libre-n2 .pos:not(.libre) { opacity: .48; transition: opacity .8s ease; }
+    #holdingsCard.libre-n3 .pos:not(.libre) { opacity: .38; transition: opacity .8s ease; }
+    #holdingsCard.libre-n4 .pos:not(.libre) { opacity: .3; transition: opacity .8s ease; }
+    #holdingsCard.libre-n5 .pos:not(.libre) { opacity: .22; transition: opacity .8s ease; }
+    #holdingsCard.libre-n6 .pos:not(.libre) { opacity: .16; transition: opacity .8s ease; }
+    #holdingsCard.libre-n7 .pos:not(.libre) { opacity: .1; transition: opacity .8s ease; }
+    #holdingsCard.libre-n8 .pos:not(.libre) { opacity: .07; transition: opacity .8s ease; }
+    #holdingsCard.libre-n9 .pos:not(.libre),
+    #holdingsCard.libre-n10 .pos:not(.libre) { opacity: .05; transition: opacity .8s ease; }
+    #view-home.libre-deep #donutBox,
+    #view-home.libre-deep #dashStats,
+    #view-home.libre-deep #splitStats,
+    #view-home.libre-deep .chart-wrap,
+    #view-home.libre-deep .chart-meta,
+    #view-home.libre-deep .periods { opacity: .18; transition: opacity .9s ease; pointer-events: none; }
+    .neo {
+      position: fixed; inset: 0; z-index: 96; background: #000;
+      transition: opacity .5s ease;
+    }
+    .neo.gone { opacity: 0; pointer-events: none; }
+    .neo canvas { width: 100%; height: 100%; display: block; transition: opacity .45s ease; }
+    .neo-wake {
+      position: absolute; inset: 0; display: grid; place-items: center;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: clamp(1.8rem, 8vw, 3.2rem);
+      font-weight: 500;
+      letter-spacing: .42em;
+      color: #00ff6a;
+      opacity: 0;
+      text-indent: .42em;
+    }
+    .neo-wake.on { animation: wakeIn 1.1s ease forwards; }
+    @keyframes wakeIn {
+      from { opacity: 0; letter-spacing: .8em; }
+      to { opacity: 1; letter-spacing: .42em; }
+    }
   </style>
 </head>
 <body>
+  <div class="neo" id="neo" hidden>
+    <canvas id="neoRain"></canvas>
+    <div class="neo-wake" id="neoWake">WAKE UP</div>
+  </div>
   <div class="intro" id="intro" hidden>
     <div class="intro-lockup" id="introLockup">
       <svg id="introMark" viewBox="0 0 32 32"></svg>
@@ -472,8 +538,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "005.3";
-  const APP_BUILT = "11.09.2026 09:06";
+  const APP_VERSION = "005.8";
+  const APP_BUILT = "12.09.2026 11:42";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -720,6 +786,73 @@
       }, 560);
     }, 1600);
   }
+  function playNeo(done) {
+    const neo = document.getElementById("neo");
+    const canvas = document.getElementById("neoRain");
+    const wake = document.getElementById("neoWake");
+    if (!neo || !canvas) { if (done) done(); return; }
+    neo.hidden = false;
+    neo.classList.remove("gone");
+    canvas.style.opacity = "1";
+    wake.classList.remove("on");
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const gap = 16;
+    const cols = Math.max(8, Math.floor(w / gap));
+    const ys = [];
+    for (let i = 0; i < cols; i++) ys[i] = Math.random() * -40;
+    let rain = true;
+    let raf = 0;
+    const tick = function () {
+      if (!rain) return;
+      ctx.fillStyle = "rgba(0,0,0,0.14)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = (13 * dpr) + "px ui-monospace, SF Mono, Menlo, monospace";
+      for (let i = 0; i < cols; i++) {
+        const ch = Math.random() > 0.5 ? "1" : "0";
+        ctx.fillStyle = i % 7 === 0 ? "#c8ffd8" : "#00ff6a";
+        ctx.fillText(ch, i * gap * dpr, ys[i] * gap * dpr);
+        if (ys[i] * gap > h && Math.random() > 0.975) ys[i] = 0;
+        else ys[i] += 0.95 + (i % 3) * 0.15;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    setTimeout(function () {
+      rain = false;
+      if (raf) cancelAnimationFrame(raf);
+      canvas.style.opacity = "0";
+      wake.classList.add("on");
+    }, 10000);
+    setTimeout(function () {
+      neo.classList.add("gone");
+      setTimeout(function () {
+        neo.hidden = true;
+        neo.classList.remove("gone");
+        wake.classList.remove("on");
+        if (done) done();
+      }, 480);
+    }, 13500);
+  }
+  function bootAfterGate() {
+    renderAll();
+    refreshPrices();
+    if (maxPnlPct() >= 1000) {
+      playNeo(function () {
+        startBraiseWindow();
+        renderHome();
+      });
+    } else {
+      startBraiseWindow();
+      playIntro();
+    }
+  }
   function toggleVeil() {
     veil = !veil;
     try { sessionStorage.setItem("ark.veil", veil ? "1" : "0"); } catch (e) {}
@@ -729,9 +862,21 @@
 
   let braiseLive = false;
   let braiseTimer = null;
-  function heatLevel(pct) {
-    if (!(pct >= 25)) return 0;
-    return Math.min(5, Math.floor(pct / 25));
+  function palierOf(pct) {
+    if (!(pct >= 25)) return { kind: null, n: 0 };
+    if (pct >= 1000) return { kind: "neo", n: 10 };
+    if (pct >= 200) return { kind: "libre", n: Math.min(9, Math.floor(pct / 100)) };
+    if (pct >= 100) return { kind: "braise", n: 4 };
+    if (pct >= 75) return { kind: "braise", n: 3 };
+    if (pct >= 50) return { kind: "braise", n: 2 };
+    return { kind: "braise", n: 1 };
+  }
+  function maxPnlPct() {
+    try {
+      return (portfolioTotals().holdings || []).reduce(function (m, h) {
+        return Math.max(m, h.pnlPct || 0);
+      }, 0);
+    } catch (e) { return 0; }
   }
   function sparksHtml(level) {
     const n = 4 + level * 4;
@@ -1311,20 +1456,33 @@
     const tone = (unit === "btc" ? h.pnlBtc : h.pnlUsd) > 0.0000001 ? "up"
       : (unit === "btc" ? h.pnlBtc : h.pnlUsd) < -0.0000001 ? "down" : "flat";
     const avgTxt = unit === "btc" ? formatBtc(h.avgCostBtc) : $u(h.avgCostUsd);
-    const heat = braiseLive ? heatLevel(h.pnlPct) : 0;
+    const pal = braiseLive ? palierOf(h.pnlPct) : { kind: null, n: 0 };
     const inner = `${assetLogo(asset)}
       <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
         <div class="sym">${veil ? formatPct(h.allocation) : ($q(h.qty) + " · moy. " + avgTxt)}</div></div>
       <div class="right"><div class="v">${veil ? $pct(h.pnlPct, h.pnlPctBtc) : $c(h.valueUsd, h.valueBtc)}</div>
         <div class="s"><span class="chg ${tone}" style="padding:0">${$pct(h.pnlPct, h.pnlPctBtc)}</span></div></div>`;
-    if (heat > 0) {
-      const labels = ["", "palier +25 %", "palier +50 %", "palier +75 %", "palier +100 %", "territoire cadeau"];
-      return `<button type="button" class="pos braise braise-${heat}" data-open-asset="${escapeHtml(h.assetId)}">
+    if (pal.kind === "braise") {
+      const labels = ["", "palier +25 %", "palier +50 %", "palier +75 %", "palier +100 % · double"];
+      return `<button type="button" class="pos braise braise-${pal.n}" data-open-asset="${escapeHtml(h.assetId)}">
         <div class="braise-glow"></div>
-        <div class="braise-sparks">${sparksHtml(heat)}</div>
+        <div class="braise-sparks">${sparksHtml(pal.n)}</div>
         <div class="braise-main">${inner}</div>
-        <div class="braise-tag">${labels[heat]}</div>
+        <div class="braise-tag">${labels[pal.n]}</div>
       </button>`;
+    }
+    if (pal.kind === "libre" || pal.kind === "neo") {
+      const freeUsd = Math.max(0, (h.pnlUsd || 0));
+      const freeBtc = Math.max(0, (h.pnlBtc || 0));
+      const amt = veil ? $pct(h.pnlPct, h.pnlPctBtc) : $c(freeUsd, freeBtc);
+      const delay = Math.min(0.28, pal.n * 0.03);
+      return `<div class="libre" style="animation-delay:${delay}s">
+        <button type="button" class="libre-top" data-open-asset="${escapeHtml(h.assetId)}">
+          ${assetLogo(asset)}
+          <div class="name">${escapeHtml(asset.name)}</div>
+        </button>
+        <button type="button" class="libre-amt" data-open-asset="${escapeHtml(h.assetId)}">${amt}</button>
+      </div>`;
     }
     return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}">${inner}</button>`;
   }
@@ -1437,6 +1595,16 @@
     document.getElementById("donutBox").innerHTML = segs.length ? drawDonut(segs) : "";
 
     const hBox = document.getElementById("holdingsCard");
+    const homeView = document.getElementById("view-home");
+    let libreN = 0;
+    if (braiseLive) {
+      (pack.main || []).forEach(function (h) {
+        const p = palierOf(h.pnlPct);
+        if ((p.kind === "libre" || p.kind === "neo") && p.n > libreN) libreN = p.n;
+      });
+    }
+    hBox.className = "card" + (libreN ? (" libre-n" + libreN) : "");
+    if (homeView) homeView.classList.toggle("libre-deep", !!(braiseLive && libreN >= 7));
     if (!t.holdings.length) hBox.innerHTML = '<div class="empty">Aucune position. Ajoute un mouvement.</div>';
     else {
       const pochePct = t.totalUsd > 0 ? (pack.pocheVal / t.totalUsd) * 100 : 0;
@@ -1608,7 +1776,8 @@
       <input id="fVenue" value="${escapeHtml(current || "")}" placeholder="Ou saisis une plateforme" />`;
   }
 
-  function openTxForm(edit, presetAssetId) {
+  function openTxForm(edit, presetAssetId, preset) {
+    preset = preset || {};
     const assets = allAssets();
     const pre = presetAssetId || edit?.assetId || assets[0]?.id || "";
     const isNewOpt = "__new__";
@@ -1632,8 +1801,8 @@
         <div class="field"><label>Nouveau symbole</label><input id="fNewSym" placeholder="ex. HYPE, PEPE" /></div>
         <div class="field"><label>Nom (optionnel)</label><input id="fNewName" placeholder="ex. Hyperliquid" /></div>
       </div>
-      <div class="field"><label>Quantité</label><input id="fQty" inputmode="decimal" value="${edit ? edit.quantity : ""}" /></div>
-      <div class="field"><label>Prix USD</label><input id="fPx" inputmode="decimal" value="${edit ? edit.priceUsd : ""}" /></div>
+      <div class="field"><label>Quantité</label><input id="fQty" inputmode="decimal" value="${edit ? edit.quantity : (preset.qty || "")}" /></div>
+      <div class="field"><label>Prix USD</label><input id="fPx" inputmode="decimal" value="${edit ? edit.priceUsd : (preset.px || "")}" /></div>
       <div class="field"><label>Date et heure</label><input id="fWhen" type="datetime-local" value="${local}" /></div>
       <div class="field"><label>Plateforme</label>${venueChips(edit?.venue || "")}</div>
       <div class="field"><label>Frais USD</label><input id="fFee" inputmode="decimal" value="${edit?.feeUsd || ""}" /></div>
@@ -1653,7 +1822,7 @@
         <button type="button" class="btn primary" id="fSave">Enregistrer</button>
       </div>`);
 
-    let side = edit?.side || "buy";
+    let side = edit?.side || preset.side || "buy";
     const sel = document.getElementById("fAsset");
     const newBox = document.getElementById("newAssetBox");
     const heldOf = function (assetId) {
@@ -1992,10 +2161,7 @@
     markUnlocked();
     showGate(false);
     document.getElementById("gatePin").value = "";
-    startBraiseWindow();
-    renderAll();
-    playIntro();
-    refreshPrices();
+    bootAfterGate();
   }
   document.getElementById("gateGo").onclick = tryUnlock;
   document.getElementById("gatePin").addEventListener("keydown", function (e) {
@@ -2124,10 +2290,7 @@
   setView("home");
   refreshLockStatus();
   if (applyGate()) {
-    startBraiseWindow();
-    renderAll();
-    playIntro();
-    refreshPrices();
+    bootAfterGate();
   }
 })();
 </script>
