@@ -284,39 +284,111 @@
     .check { display: flex; align-items: center; gap: .55rem; margin-top: .85rem; font-size: .82rem; }
     .check input { width: 1.05rem; height: 1.05rem; }
     .hint { font-size: .72rem; color: var(--muted); margin-top: .35rem; }
-    .braise {
-      position: relative; overflow: hidden; flex-direction: column; align-items: stretch;
-      gap: 0; border: none; border-radius: 1rem; margin: .45rem 0; padding: .85rem .8rem;
-      background: #16140f; text-align: left; width: 100%;
+    .braise-main { display: flex; align-items: center; gap: .7rem; width: 100%; position: relative; z-index: 2; }
+    .seal {
+      position: relative; overflow: hidden; align-items: center;
+      gap: .7rem; border: none; border-radius: 1rem; margin: .38rem 0;
+      padding: .82rem .8rem; text-align: left; width: 100%;
+      background: #12110e;
     }
-    .braise .braise-main { display: flex; align-items: center; gap: .7rem; width: 100%; position: relative; z-index: 2; }
-    .braise-tag { position: relative; z-index: 2; margin-top: .55rem; font-size: .68rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: #f0b429; }
-    .braise-sparks, .braise-glow { pointer-events: none; position: absolute; inset: 0; overflow: hidden; }
-    .braise-glow { z-index: 0; }
-    .spark {
-      position: absolute; bottom: -6px; width: 4px; height: 4px; border-radius: 99px;
-      background: #f0b429; opacity: .85; animation: sparkRise linear infinite;
+    .seal-25 { min-height: 4.4rem; }
+    .seal-50 { min-height: calc(4.4rem + 10px); }
+    .seal-100 { min-height: calc(4.4rem + 30px); }
+    .seal-wash, .seal-foil, .seal-dust, .seal-stroke {
+      pointer-events: none; position: absolute; inset: 0; border-radius: inherit;
     }
-    @keyframes sparkRise {
-      0% { transform: translateY(0) scale(1); opacity: .9; }
-      100% { transform: translateY(-120px) scale(.3); opacity: 0; }
+    .seal-wash { z-index: 0; opacity: .9; }
+    .seal-25 .seal-wash { background: linear-gradient(180deg, rgba(232,200,114,.22), transparent 55%); }
+    .seal-50 .seal-wash { background: linear-gradient(180deg, rgba(232,200,114,.32), rgba(232,200,114,.08) 75%); }
+    .seal-100 .seal-wash {
+      background: linear-gradient(180deg, rgba(232,200,114,.38), rgba(212,134,42,.22) 45%, rgba(180,83,18,.10));
     }
-    @keyframes emberPulse {
-      0%, 100% { box-shadow: inset 0 0 0 1px #f0b42966, 0 0 12px #f0b42922; }
-      50% { box-shadow: inset 0 0 0 1px #ffd36a, 0 0 22px #f0b42944; }
+    .seal-stroke { z-index: 3; }
+    .seal-stroke svg { width: 100%; height: 100%; display: block; }
+    .seal-stroke rect {
+      fill: none; stroke: #E8C872; stroke-width: 1.15;
+      stroke-linejoin: round; vector-effect: non-scaling-stroke;
+      stroke-dasharray: 100; stroke-dashoffset: 0;
     }
-    @keyframes heatWave {
-      0%, 100% { filter: saturate(1); }
-      50% { filter: saturate(1.35); }
+    .seal-25 .seal-stroke rect { stroke-width: 1; }
+    .seal-50 .seal-stroke rect { stroke-width: 1.25; }
+    .seal-100 .seal-stroke rect { stroke-width: 1.5; }
+    .seal-100 .seal-halo {
+      pointer-events: none; position: absolute; inset: -2px; border-radius: 1.05rem;
+      box-shadow: 0 0 8px 2px rgba(232,200,114,.08); z-index: 0;
     }
-    .braise-1 { min-height: 5.2rem; animation: emberPulse 2.8s ease-in-out infinite; }
-    .braise-1 .braise-glow { background: radial-gradient(120% 80% at 50% 120%, #f0b42933, transparent 70%); }
-    .braise-2 { min-height: 7rem; animation: emberPulse 2.1s ease-in-out infinite; }
-    .braise-2 .braise-glow { background: radial-gradient(120% 90% at 50% 110%, #f0b42955, transparent 68%); }
-    .braise-3 { min-height: 9.2rem; animation: emberPulse 1.6s ease-in-out infinite, heatWave 3s ease-in-out infinite; }
-    .braise-3 .braise-glow { background: radial-gradient(130% 100% at 50% 100%, #ff8a2a66, #f0b42922 55%, transparent 75%); }
-    .braise-4 { min-height: 12rem; margin-left: -.55rem; margin-right: -.55rem; width: calc(100% + 1.1rem); z-index: 3; animation: emberPulse 1.2s ease-in-out infinite, heatWave 2.2s ease-in-out infinite; }
-    .braise-4 .braise-glow { background: radial-gradient(140% 120% at 50% 100%, #ff5a1f77, #f0b42933 50%, transparent 78%); }
+    .seal-run { animation: sealImpact 1.4s cubic-bezier(.22,.61,.36,1) both; }
+    .seal-run .seal-stroke rect { stroke-dashoffset: 100; animation: sealEngrave .32s .08s cubic-bezier(.22,.61,.36,1) forwards; }
+    .seal-run .seal-wash { clip-path: inset(0 0 100% 0); animation: sealWash .5s .2s ease-in-out forwards; }
+    .seal-short { animation: sealImpact .7s cubic-bezier(.22,.61,.36,1) both; }
+    .seal-short .seal-stroke rect { stroke-dashoffset: 100; animation: sealEngrave .28s .08s cubic-bezier(.22,.61,.36,1) forwards; }
+    .seal-queued .seal-stroke rect { opacity: .35; }
+    .seal-queued .seal-wash { opacity: .35; }
+    .seal-foil { z-index: 4; overflow: hidden; }
+    .seal-idle .seal-foil::after {
+      content: ""; position: absolute; top: 0; bottom: 0; width: 40px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+      transform: translateX(-120%);
+      animation: sealFoil 9.2s linear infinite;
+    }
+    .seal-100.seal-idle .seal-foil::after { opacity: 1; background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent); }
+    .seal-dust { z-index: 4; overflow: hidden; }
+    .speck {
+      position: absolute; width: 3px; height: 3px; border-radius: 99px;
+      background: #F3D789; opacity: 0; bottom: 28%; left: 18%;
+    }
+    .seal-run .speck { animation: sealDust 900ms ease-out forwards; }
+    .seal-idle .speck { opacity: .45; animation: sealDrift 6s ease-in-out infinite; }
+    .seal-100 .speck:nth-child(3n) { background: #E8C872; }
+    .seal-100 .speck:nth-child(3n+1) { background: #B8860B; }
+    @keyframes sealImpact {
+      0% { transform: scale(1); }
+      9% { transform: scale(1.03); }
+      22% { transform: scale(1); }
+      100% { transform: scale(1); }
+    }
+    @keyframes sealEngrave { to { stroke-dashoffset: 0; } }
+    @keyframes sealWash { to { clip-path: inset(0 0 0 0); } }
+    @keyframes sealFoil {
+      0%, 78% { transform: translateX(-120%); }
+      88% { transform: translateX(320%); }
+      100% { transform: translateX(320%); }
+    }
+    @keyframes sealDust {
+      0% { opacity: .9; transform: translate(0, 0) scale(1); }
+      70% { opacity: .5; }
+      100% { opacity: 0; transform: translate(var(--dx, 12px), var(--dy, -28px)) scale(.4); }
+    }
+    @keyframes sealDrift {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .seal .chg { transition: color 80ms ease; }
+    .seal-run .chg { color: #E8C872 !important; }
+    .approach {
+      position: relative; overflow: hidden;
+    }
+    .approach-bar {
+      position: absolute; left: 3.1rem; right: 4.5rem; bottom: .42rem; height: 2px;
+      background: color-mix(in oklab, #E8C872 55%, transparent);
+      transform-origin: left center; z-index: 2; pointer-events: none; border-radius: 99px;
+    }
+    .approach::after {
+      content: ""; position: absolute; inset: 0; border-radius: .2rem;
+      box-shadow: inset 0 0 0 1px rgba(232,200,114,.22);
+      animation: approachPulse 3.2s ease-in-out infinite; pointer-events: none;
+    }
+    @keyframes approachPulse {
+      0%, 100% { box-shadow: inset 0 0 0 1px rgba(232,200,114,.18); }
+      50% { box-shadow: inset 0 0 0 1px rgba(232,200,114,.32); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .seal-run, .seal-short, .seal-idle .seal-foil::after, .seal-run .speck, .seal-idle .speck, .approach::after {
+        animation: none !important;
+      }
+      .seal-run .seal-stroke rect, .seal-short .seal-stroke rect { stroke-dashoffset: 0; }
+      .seal-run .seal-wash { clip-path: none; }
+    }
     .libre {
       display: flex; flex-direction: column; align-items: flex-start;
       gap: 0; border: none; background: transparent;
@@ -543,8 +615,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "006.0";
-  const APP_BUILT = "12.09.2026 11:58";
+  const APP_VERSION = "006.1";
+  const APP_BUILT = "12.09.2026 13:05";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -897,14 +969,110 @@
   let braiseLive = false;
   let braiseTimer = null;
   let holdingsAnimKey = "";
+  const PALIER_SEEN_KEY = "ark.palier.seen.v1";
+  let palierSeen = {};
+  try { palierSeen = JSON.parse(localStorage.getItem(PALIER_SEEN_KEY) || "{}") || {}; } catch (e) { palierSeen = {}; }
+  const palierWas = {};
+  let sealBusy = false;
+  let sealTimer = null;
+  let sealSlotTaken = false;
+  function savePalierSeen() {
+    try { localStorage.setItem(PALIER_SEEN_KEY, JSON.stringify(palierSeen)); } catch (e) {}
+  }
   function palierOf(pct) {
-    if (!(pct >= 25)) return { kind: null, n: 0 };
     if (pct >= 1000) return { kind: "neo", n: 10 };
-    if (pct >= 200) return { kind: "libre", n: Math.min(9, Math.floor(pct / 100)) };
-    if (pct >= 100) return { kind: "braise", n: 4 };
-    if (pct >= 75) return { kind: "braise", n: 3 };
-    if (pct >= 50) return { kind: "braise", n: 2 };
-    return { kind: "braise", n: 1 };
+    if (pct >= 200) return { kind: "libre", n: Math.min(9, Math.max(2, Math.floor(pct / 100))) };
+    return { kind: null, n: 0 };
+  }
+  function currentTier(pct) {
+    if (pct >= 100) return 100;
+    if (pct >= 50) return 50;
+    if (pct >= 25) return 25;
+    return 0;
+  }
+  function nextThreshold(pct) {
+    if (pct < 25) return 25;
+    if (pct < 50) return 50;
+    if (pct < 100) return 100;
+    return null;
+  }
+  function approachProgress(pct) {
+    const next = nextThreshold(pct);
+    if (next == null) return null;
+    const prev = next === 25 ? 0 : next === 50 ? 25 : 50;
+    return (pct - prev) / (next - prev);
+  }
+  function dropCheck(id, pct) {
+    const t = currentTier(pct);
+    const was = palierWas[id] || 0;
+    palierWas[id] = t;
+    if (!(t < was)) return;
+    const rec = palierSeen[id];
+    if (!rec) return;
+    [25, 50, 100].forEach(function (th) {
+      if (th > t && rec[th]) rec[th] = { ever: true };
+    });
+    savePalierSeen();
+  }
+  function sealPlan(id, pct) {
+    dropCheck(id, pct);
+    const tier = currentTier(pct);
+    if (!tier) return null;
+    const rec = (palierSeen[id] || {})[String(tier)];
+    if (!rec) return { tier: tier, play: "full" };
+    if (rec.at) return { tier: tier, play: "idle" };
+    if (rec.ever) return { tier: tier, play: "short" };
+    return { tier: tier, play: "full" };
+  }
+  function persistSeal(id, tier) {
+    if (!id || !tier) return;
+    palierSeen[id] = palierSeen[id] || {};
+    palierSeen[id][String(tier)] = { at: Date.now(), ever: true };
+    savePalierSeen();
+  }
+  function reduceMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  function dustHtml(tier) {
+    const n = tier >= 100 ? 28 : tier >= 50 ? 16 : 8;
+    let out = "";
+    for (let i = 0; i < n; i++) {
+      const left = 10 + (i * 29 + tier) % 72;
+      const delay = ((i * 0.04) % 0.55).toFixed(2);
+      const dx = (6 + (i * 13) % 22) * (i % 2 ? 1 : -0.4);
+      const dy = -(18 + (i * 7) % 22);
+      out += '<i class="speck" style="left:' + left + "%;animation-delay:" + delay + "s;--dx:" + dx + "px;--dy:" + dy + 'px"></i>';
+    }
+    return out;
+  }
+  function kickSeals() {
+    if (sealBusy) return;
+    const next = document.querySelector("#holdingsCard .seal-run, #holdingsCard .seal-short");
+    if (!next) {
+      const queued = document.querySelector("#holdingsCard .seal-queued");
+      if (!queued) return;
+      queued.classList.remove("seal-queued");
+      queued.classList.add(queued.dataset.sealPlay === "short" ? "seal-short" : "seal-run");
+      kickSeals();
+      return;
+    }
+    if (reduceMotion()) {
+      next.classList.remove("seal-run", "seal-short", "seal-queued");
+      next.classList.add("seal-idle");
+      persistSeal(next.getAttribute("data-hid"), Number(next.getAttribute("data-seal-tier")));
+      kickSeals();
+      return;
+    }
+    sealBusy = true;
+    const ms = next.classList.contains("seal-short") ? 700 : 1400;
+    if (sealTimer) clearTimeout(sealTimer);
+    sealTimer = setTimeout(function () {
+      next.classList.remove("seal-run", "seal-short");
+      next.classList.add("seal-idle");
+      persistSeal(next.getAttribute("data-hid"), Number(next.getAttribute("data-seal-tier")));
+      sealBusy = false;
+      kickSeals();
+    }, ms);
   }
   function maxPnlPct() {
     try {
@@ -913,25 +1081,12 @@
       }, 0);
     } catch (e) { return 0; }
   }
-  function sparksHtml(level) {
-    const n = 4 + level * 4;
-    let out = "";
-    for (let i = 0; i < n; i++) {
-      const left = (6 + (i * 37 + level * 13) % 88);
-      const delay = ((i * 0.18) % 1.6).toFixed(2);
-      const dur = (1.4 + (i % 5) * 0.25).toFixed(2);
-      const size = 3 + (i % 3);
-      out += '<i class="spark" style="left:' + left + "%;width:" + size + "px;height:" + size + "px;animation-delay:" + delay + "s;animation-duration:" + dur + 's"></i>';
-    }
-    return out;
-  }
   function startBraiseWindow() {
     braiseLive = true;
     if (braiseTimer) clearTimeout(braiseTimer);
     braiseTimer = setTimeout(function () {
       braiseLive = false;
       if (view === "home") renderHome();
-      toast("Braises éteintes");
     }, 30000);
   }
 
@@ -1491,22 +1646,13 @@
     const tone = (unit === "btc" ? h.pnlBtc : h.pnlUsd) > 0.0000001 ? "up"
       : (unit === "btc" ? h.pnlBtc : h.pnlUsd) < -0.0000001 ? "down" : "flat";
     const avgTxt = unit === "btc" ? formatBtc(h.avgCostBtc) : $u(h.avgCostUsd);
-    const pal = braiseLive ? palierOf(h.pnlPct) : { kind: null, n: 0 };
+    const pal = palierOf(h.pnlPct);
     const inner = `${assetLogo(asset)}
       <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
         <div class="sym">${veil ? formatPct(h.allocation) : ($q(h.qty) + " · moy. " + avgTxt)}</div></div>
       <div class="right"><div class="v">${veil ? $pct(h.pnlPct, h.pnlPctBtc) : $c(h.valueUsd, h.valueBtc)}</div>
         <div class="s"><span class="chg ${tone}" style="padding:0">${$pct(h.pnlPct, h.pnlPctBtc)}</span></div></div>`;
-    if (pal.kind === "braise") {
-      const labels = ["", "palier +25 %", "palier +50 %", "palier +75 %", "palier +100 % · double"];
-      return `<button type="button" class="pos braise braise-${pal.n}" data-open-asset="${escapeHtml(h.assetId)}" data-hid="${escapeHtml(h.assetId)}">
-        <div class="braise-glow"></div>
-        <div class="braise-sparks">${sparksHtml(pal.n)}</div>
-        <div class="braise-main">${inner}</div>
-        <div class="braise-tag">${labels[pal.n]}</div>
-      </button>`;
-    }
-    if (pal.kind === "libre" || pal.kind === "neo") {
+    if (braiseLive && (pal.kind === "libre" || pal.kind === "neo")) {
       const freeUsd = Math.max(0, (h.pnlUsd || 0));
       const freeBtc = Math.max(0, (h.pnlBtc || 0));
       const amt = veil ? $pct(h.pnlPct, h.pnlPctBtc) : $c(freeUsd, freeBtc);
@@ -1519,12 +1665,42 @@
         <button type="button" class="libre-amt" data-open-asset="${escapeHtml(h.assetId)}">${amt}</button>
       </div>`;
     }
+    const plan = sealPlan(h.assetId, h.pnlPct);
+    if (plan) {
+      let playClass = "seal-idle";
+      if (plan.play === "full" || plan.play === "short") {
+        if (!sealSlotTaken) {
+          playClass = plan.play === "short" ? "seal-short" : "seal-run";
+          sealSlotTaken = true;
+        } else playClass = "seal-queued";
+      }
+      const halo = plan.tier >= 100 ? '<span class="seal-halo"></span>' : "";
+      return `<button type="button" class="pos seal seal-${plan.tier} ${playClass}" data-open-asset="${escapeHtml(h.assetId)}" data-hid="${escapeHtml(h.assetId)}" data-seal-tier="${plan.tier}" data-seal-play="${plan.play}">
+        ${halo}<span class="seal-wash"></span>
+        <span class="seal-stroke"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><rect x="1.4" y="1.4" width="97.2" height="97.2" rx="8" pathLength="100"/></svg></span>
+        <span class="seal-foil"></span>
+        <span class="seal-dust">${dustHtml(plan.tier)}</span>
+        ${inner}
+      </button>`;
+    }
+    const ap = approachProgress(h.pnlPct);
+    if (ap != null && ap >= 0.8) {
+      return `<button type="button" class="pos approach" data-open-asset="${escapeHtml(h.assetId)}" data-hid="${escapeHtml(h.assetId)}">
+        <span class="approach-bar" style="width:${Math.min(100, ap * 100).toFixed(0)}%"></span>
+        ${inner}
+      </button>`;
+    }
     return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}" data-hid="${escapeHtml(h.assetId)}">${inner}</button>`;
   }
   function holdingsAnimSig(pack) {
     return (braiseLive ? "on" : "off") + "|" + (pack.main || []).map(function (h) {
       const p = palierOf(h.pnlPct);
-      return h.assetId + ":" + (p.kind || "-") + String(p.n || 0);
+      if (braiseLive && (p.kind === "libre" || p.kind === "neo")) return h.assetId + ":L" + p.n;
+      const t = currentTier(h.pnlPct);
+      if (t) return h.assetId + ":s" + t;
+      const ap = approachProgress(h.pnlPct);
+      if (ap != null && ap >= 0.8) return h.assetId + ":a";
+      return h.assetId + ":x";
     }).join(",") + "|p" + String((pack.poche || []).length);
   }
   function patchHoldingRow(h) {
@@ -1675,7 +1851,9 @@
         pack.main.forEach(patchHoldingRow);
       } else {
         holdingsAnimKey = sig;
+        sealSlotTaken = false;
         hBox.innerHTML = pack.main.map(holdingBtn).join("") + pocheRow;
+        kickSeals();
       }
     }
     const cBox = document.getElementById("cashCard");
