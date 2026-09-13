@@ -294,6 +294,39 @@
     .braise-sparks, .braise-glow, .fx { pointer-events: none; position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
     .braise-glow { z-index: 0; }
     .fx { z-index: 1; }
+    .fx-ink { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .fx-flash {
+      position: absolute; inset: 0; background: #fff; mix-blend-mode: overlay;
+      animation: mangaFlash 1.05s steps(1) infinite; pointer-events: none;
+    }
+    .fx-tone {
+      position: absolute; inset: 0; opacity: .22; pointer-events: none;
+      background: radial-gradient(#000 0.7px, transparent 0.8px);
+      background-size: 5px 5px;
+    }
+    @keyframes mangaFlash {
+      0%, 82%, 100% { opacity: 0; }
+      84% { opacity: .5; }
+      88% { opacity: 0; }
+      91% { opacity: .28; }
+    }
+    @keyframes tongueLick {
+      0%, 100% { transform: translateY(6%) scaleY(.92); }
+      50% { transform: translateY(-8%) scaleY(1.08); }
+    }
+    @keyframes boltJolt {
+      0%, 72%, 100% { opacity: 0; }
+      74% { opacity: 1; }
+      80% { opacity: .2; }
+      84% { opacity: 1; }
+    }
+    @keyframes shardSpin {
+      from { transform: rotate(0deg) translateY(0); }
+      to { transform: rotate(25deg) translateY(-8px); }
+    }
+    .cel-fire { transform-origin: 50% 100%; animation: tongueLick .55s ease-in-out infinite; }
+    .cel-bolt { animation: boltJolt 1.15s steps(1) infinite; }
+    .cel-shard { animation: shardSpin 2s ease-in-out infinite alternate; }
     .spark {
       position: absolute; bottom: -6px; width: 4px; height: 4px; border-radius: 99px;
       opacity: .9; animation: sparkRise linear infinite;
@@ -689,8 +722,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "006.6";
-  const APP_BUILT = "13.09.2026 10:08";
+  const APP_VERSION = "006.7";
+  const APP_BUILT = "13.09.2026 10:12";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -1072,17 +1105,106 @@
     return out;
   }
   function palFx(key) {
-    if (key === 25) return '<div class="braise-sparks">' + sparksHtml(4) + "</div>";
-    if (key === 50) return '<svg class="fx-crack" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M8 38 L18 22 L16 18 L28 8"/><path d="M70 36 L62 20 L74 14 L80 4"/><path d="M40 40 L44 28 L40 24"/></svg>';
-    if (key === 75) return '<svg class="fx-vine" viewBox="0 0 100 48" preserveAspectRatio="none" aria-hidden="true"><path d="M2 46 C 12 32, 10 20, 22 16 S 38 28, 48 18 S 70 8, 96 12"/></svg>';
-    if (key === 100) return '<div class="fx-wave"></div>';
-    if (key === 200) return '<div class="fx-bolt"></div>';
-    if (key === 300) return '<div class="fx-wind"></div><div class="fx-wind b"></div><div class="fx-wind c"></div>';
-    if (key === 400) return '<div class="fx-vein"></div><div class="fx-vein b"></div>';
-    if (key === 500) return '<i class="fx-ice" style="left:12%;top:18%"></i><i class="fx-ice" style="left:78%;top:28%;animation-delay:.4s"></i><i class="fx-ice" style="left:52%;top:62%;animation-delay:.8s"></i>';
-    if (key === 600) return '<i class="fx-orb" style="left:18%;bottom:10%"></i><i class="fx-orb" style="left:62%;bottom:16%;animation-delay:.5s"></i><i class="fx-orb" style="left:84%;bottom:8%;animation-delay:1s"></i>';
-    if (key === 700) return '<div class="fx-ki"></div><div class="fx-ki b"></div>';
-    if (key === 900) return '<div class="fx-flare"></div>';
+    const svg = function (inner) {
+      return '<svg class="fx-ink" viewBox="0 0 200 80" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + inner + "</svg>";
+    };
+    if (key === 25) {
+      return svg(
+        '<g class="cel-fire" fill="#ff5a1f" stroke="#1a0500" stroke-width="1.6" stroke-linejoin="round">' +
+        '<polygon points="18,80 30,28 42,80"/><polygon points="34,80 48,18 58,80" fill="#ffb020"/>' +
+        '<polygon points="54,80 68,34 80,80"/><polygon points="88,80 102,22 114,80" fill="#ffb020"/>' +
+        '<polygon points="120,80 136,30 148,80"/></g>'
+      ) + '<div class="braise-sparks">' + sparksHtml(5) + "</div>";
+    }
+    if (key === 50) {
+      return svg(
+        '<g fill="#8b7355" stroke="#1c1410" stroke-width="1.8" stroke-linejoin="round">' +
+        '<polygon points="12,70 28,48 48,62 40,80 16,80"/><polygon points="118,72 138,42 168,58 160,80 122,80"/>' +
+        '<polygon points="70,78 86,52 102,78"/></g>' +
+        '<path d="M40 78 L52 40 L48 36 L70 8" fill="none" stroke="#e7d5b8" stroke-width="1.4"/>'
+      );
+    }
+    if (key === 75) {
+      return svg(
+        '<path d="M6 76 C 24 50, 18 28, 42 22 S 70 44, 92 28 S 130 8, 196 18" fill="none" stroke="#14532d" stroke-width="5" stroke-linecap="round"/>' +
+        '<path d="M6 76 C 24 50, 18 28, 42 22 S 70 44, 92 28 S 130 8, 196 18" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linecap="round"/>' +
+        '<polygon points="42,22 50,8 54,24" fill="#22c55e" stroke="#052e16" stroke-width="1.2"/>' +
+        '<polygon points="92,28 108,10 110,32" fill="#86efac" stroke="#052e16" stroke-width="1.2"/>'
+      );
+    }
+    if (key === 100) {
+      return svg(
+        '<path d="M-10 62 Q 30 48 60 62 T 130 62 T 210 62 L 210 80 L -10 80 Z" fill="#0891b2" stroke="#082f49" stroke-width="1.5"/>' +
+        '<path d="M-10 70 Q 40 58 80 70 T 210 68" fill="none" stroke="#a5f3fc" stroke-width="2"/>' +
+        '<circle cx="46" cy="44" r="3.5" fill="#e0f2fe" stroke="#082f49" stroke-width="1"/>' +
+        '<circle cx="118" cy="36" r="5" fill="#e0f2fe" stroke="#082f49" stroke-width="1"/>' +
+        '<circle cx="168" cy="50" r="2.5" fill="#fff"/>'
+      ) + '<div class="fx-wave"></div>';
+    }
+    if (key === 200) {
+      return svg(
+        '<g class="cel-bolt" fill="#fde047" stroke="#111" stroke-width="2.2" stroke-linejoin="miter">' +
+        '<polygon points="92,4 70,34 88,34 60,76 118,28 96,28 124,4"/>' +
+        '<polygon points="150,10 138,30 152,30 128,62 172,26 158,26 178,10" fill="#fff"/>' +
+        "</g>"
+      ) + '<div class="fx-flash"></div>';
+    }
+    if (key === 300) {
+      return svg(
+        '<g stroke="#e2e8f0" stroke-linecap="round">' +
+        '<line x1="-5" y1="18" x2="210" y2="12" stroke-width="1.2" opacity=".9"/>' +
+        '<line x1="-5" y1="28" x2="170" y2="24" stroke-width="2.4"/>' +
+        '<line x1="20" y1="40" x2="210" y2="36" stroke-width="1"/>' +
+        '<line x1="-5" y1="52" x2="200" y2="48" stroke-width="3"/>' +
+        '<line x1="40" y1="66" x2="210" y2="62" stroke-width="1.4"/>' +
+        "</g>"
+      );
+    }
+    if (key === 400) {
+      return svg(
+        '<path d="M30 0 L38 28 L28 32 L48 80" fill="none" stroke="#7c2d12" stroke-width="6"/>' +
+        '<path d="M30 0 L38 28 L28 32 L48 80" fill="none" stroke="#fb923c" stroke-width="2.4"/>' +
+        '<path d="M150 0 L142 22 L156 30 L138 80" fill="none" stroke="#ea580c" stroke-width="5"/>' +
+        '<polygon points="70,80 90,20 108,80" fill="#ef4444" stroke="#1c0704" stroke-width="1.5" class="cel-fire"/>'
+      );
+    }
+    if (key === 500) {
+      return svg(
+        '<g class="cel-shard" fill="#e0f2fe" stroke="#0c4a6e" stroke-width="1.4" stroke-linejoin="round">' +
+        '<polygon points="24,18 36,8 40,24 28,30"/><polygon points="160,12 178,4 182,22 166,28"/>' +
+        '<polygon points="96,8 112,0 118,18 100,24"/><polygon points="70,50 82,40 86,58 72,62"/>' +
+        "</g>"
+      );
+    }
+    if (key === 600) {
+      return svg(
+        '<g fill="#a855f7" stroke="#3b0764" stroke-width="1.4" opacity=".9">' +
+        '<ellipse cx="36" cy="58" rx="16" ry="10"/><ellipse cx="90" cy="40" rx="22" ry="13"/>' +
+        '<ellipse cx="160" cy="56" rx="18" ry="11"/></g>' +
+        '<g fill="#e9d5ff" opacity=".5"><circle cx="40" cy="52" r="3"/><circle cx="96" cy="34" r="4"/><circle cx="154" cy="50" r="2.5"/></g>'
+      );
+    }
+    if (key === 700) {
+      return svg(
+        '<ellipse cx="100" cy="40" rx="70" ry="28" fill="none" stroke="#fbbf24" stroke-width="2.2"/>' +
+        '<ellipse cx="100" cy="40" rx="88" ry="36" fill="none" stroke="#fff7ed" stroke-width="1" opacity=".7"/>' +
+        '<polygon points="100,6 106,22 122,22 110,32 114,48 100,38 86,48 90,32 78,22 94,22" fill="#fde68a" stroke="#78350f" stroke-width="1.3"/>'
+      ) + '<div class="fx-ki"></div>';
+    }
+    if (key === 800) {
+      return svg(
+        '<polygon points="100,8 108,32 132,32 114,46 122,70 100,54 78,70 86,46 68,32 92,32" fill="#0a0010" stroke="#c084fc" stroke-width="1.6"/>'
+      ) + '<div class="fx-tone"></div>';
+    }
+    if (key === 900) {
+      return svg(
+        '<polygon points="100,0 108,28 140,28 114,44 124,76 100,56 76,76 86,44 60,28 92,28" fill="#fffbeb" stroke="#78350f" stroke-width="1.8"/>' +
+        '<polygon points="100,18 104,32 120,32 108,40 112,54 100,46 88,54 92,40 80,32 96,32" fill="#fbbf24"/>'
+      ) + '<div class="fx-flare"></div><div class="fx-flash"></div>';
+    }
+    if (key === 1000) {
+      return '<div class="fx-tone" style="background:repeating-linear-gradient(180deg,transparent 0 2px,#00ff6a22 2px 3px)"></div>';
+    }
     return "";
   }
   function startBraiseWindow() {
