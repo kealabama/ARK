@@ -735,8 +735,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "007.1";
-  const APP_BUILT = "13.09.2026 10:50";
+  const APP_VERSION = "007.2";
+  const APP_BUILT = "13.09.2026 10:58";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -2113,7 +2113,7 @@
       }
       const pocheHi = pocheKey >= 200 ? " pal-hi" : "";
       const pocheCls = pocheKey ? ("pos pal pal-" + pocheKey + pocheHi) : "pos";
-      const pocheSparks = (pocheKey === 25 || pocheKey === 75 || pocheKey === 100) ? `<div class="braise-glow"></div><div class="braise-sparks">${sparksHtml(2)}</div>` : (pocheKey ? '<div class="braise-glow"></div>' : "");
+      const pocheSparks = pocheKey ? '<div class="braise-glow"></div>' : "";
       const pocheRow = pack.poche.length ? `<button type="button" class="${pocheCls}" data-open-poche="1"${pocheKey ? ' data-pal="' + pocheKey + '"' : ""}>
         ${pocheKey ? '<canvas class="pal-fx" aria-hidden="true"></canvas>' : ""}
         ${pocheSparks}
@@ -2124,13 +2124,28 @@
           <div class="s">${pochePct.toFixed(0)} %</div></div>
       </button>` : "";
       const sig = holdingsAnimSig(pack);
-      if (sig === holdingsAnimKey && hBox.querySelector("[data-hid]")) {
-        pack.main.forEach(patchHoldingRow);
-      } else {
-        holdingsAnimKey = sig;
-        hBox.innerHTML = pack.main.map(holdingBtn).join("") + pocheRow;
+      try {
+        if (sig === holdingsAnimKey && hBox.querySelector("[data-hid]")) {
+          pack.main.forEach(patchHoldingRow);
+        } else {
+          holdingsAnimKey = sig;
+          hBox.innerHTML = pack.main.map(function (h) {
+            try { return holdingBtn(h); } catch (e) {
+              return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}" data-hid="${escapeHtml(h.assetId)}">${escapeHtml(h.name || h.symbol || h.assetId)}</button>`;
+            }
+          }).join("") + pocheRow;
+        }
+        if (braiseLive) vfxBind();
+      } catch (e) {
+        holdingsAnimKey = "";
+        hBox.innerHTML = pack.main.map(function (h) {
+          return `<button type="button" class="pos" data-open-asset="${escapeHtml(h.assetId)}" data-hid="${escapeHtml(h.assetId)}">
+            <div class="grow"><div class="name">${escapeHtml(h.name || h.symbol || "")}</div>
+            <div class="sym">${$q(h.qty)}</div></div>
+            <div class="right"><div class="v">${$c(h.valueUsd, h.valueBtc)}</div></div>
+          </button>`;
+        }).join("") + pocheRow;
       }
-      if (braiseLive) vfxBind();
     }
     const cBox = document.getElementById("cashCard");
     if (!state.liquidity.length) cBox.innerHTML = '<div class="empty">Aucune liquidité USD / stablecoin.</div>';
@@ -2156,6 +2171,15 @@
       </div>`).join("");
     }
     document.getElementById("appVersion").textContent = "version " + APP_VERSION + " · " + APP_BUILT;
+    const statusEl = document.getElementById("priceStatus");
+    if (statusEl && !pricesLoading) {
+      let latest = 0;
+      Object.keys(prices || {}).forEach(function (k) {
+        const at = prices[k] && prices[k].at;
+        if (at > latest) latest = at;
+      });
+      if (latest) statusEl.textContent = "Cours : " + new Date(latest).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+    }
   }
 
   function renderAsset() {
