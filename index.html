@@ -290,11 +290,17 @@
     .check { display: flex; align-items: center; gap: .55rem; margin-top: .85rem; font-size: .82rem; }
     .check input { width: 1.05rem; height: 1.05rem; }
     .hint { font-size: .72rem; color: var(--muted); margin-top: .35rem; }
+    .vfx-layer { display: none !important; }
     .pal {
       position: relative; overflow: hidden; flex-direction: column; align-items: stretch;
       gap: 0; border: none; border-radius: 1rem; margin: .42rem 0; padding: .82rem .8rem;
-      text-align: left; width: 100%; min-height: 5.6rem;
+      text-align: left; width: 100%; min-height: 5.6rem; isolation: isolate;
     }
+    .pal-fx {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      z-index: 1; pointer-events: none; border-radius: inherit;
+    }
+    .pal > *:not(.pal-fx):not(.braise-glow) { position: relative; z-index: 2; }
     .pal .braise-main { display: flex; align-items: center; gap: .7rem; width: 100%; position: relative; z-index: 2; }
     .braise-tag { position: relative; z-index: 2; margin-top: .5rem; font-size: .66rem; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; }
     .braise-sparks, .braise-glow, .fx { pointer-events: none; position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
@@ -729,8 +735,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "007.0";
-  const APP_BUILT = "13.09.2026 10:32";
+  const APP_VERSION = "007.1";
+  const APP_BUILT = "13.09.2026 10:50";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -1099,297 +1105,269 @@
       }, 0);
     } catch (e) { return 0; }
   }
-  const VFX_THREE = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js";
-  let vfx = { on: false, raf: 0, three: null, last: 0, emitters: [], bolts: [] };
-  function loadThree(done) {
-    if (window.THREE) { done(true); return; }
-    const s = document.createElement("script");
-    s.src = VFX_THREE;
-    s.async = true;
-    s.onload = function () { done(!!window.THREE); };
-    s.onerror = function () { done(false); };
-    document.head.appendChild(s);
-  }
-  function vfxSprite() {
+  const VFX_SPRITE = (function () {
     const c = document.createElement("canvas");
     c.width = 64; c.height = 64;
     const g = c.getContext("2d");
     const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-    grd.addColorStop(0, "rgba(255,255,255,1)");
-    grd.addColorStop(0.18, "rgba(255,255,255,.85)");
-    grd.addColorStop(0.45, "rgba(255,255,255,.25)");
+    grd.addColorStop(0, "rgba(255,255,255,0.92)");
+    grd.addColorStop(0.28, "rgba(255,255,255,0.28)");
     grd.addColorStop(1, "rgba(255,255,255,0)");
     g.fillStyle = grd;
     g.fillRect(0, 0, 64, 64);
-    const t = new THREE.CanvasTexture(c);
-    t.needsUpdate = true;
-    return t;
+    return c;
+  })();
+  let vfx = { on: false, raf: 0, last: 0, emitters: [] };
+  function vfxRgb(hex) {
+    return { r: (hex >> 16) & 255, g: (hex >> 8) & 255, b: hex & 255 };
   }
-  function vfxMakeEngine() {
-    const canvas = document.getElementById("vfx");
-    const w = window.innerWidth, h = window.innerHeight;
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true, premultipliedAlpha: false });
-    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-    renderer.setSize(w, h, false);
-    renderer.setClearColor(0x000000, 0);
-    renderer.autoClear = true;
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(0, w, h, 0, -50, 50);
-    camera.position.z = 10;
-    const tex = vfxSprite();
-    const MAX = 900;
-    const pos = new Float32Array(MAX * 3);
-    const col = new Float32Array(MAX * 3);
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
-    const mat = new THREE.PointsMaterial({
-      size: 18, map: tex, vertexColors: true, transparent: true,
-      blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
-      sizeAttenuation: false,
-    });
-    const points = new THREE.Points(geo, mat);
-    scene.add(points);
-    const particles = [];
-    for (let i = 0; i < MAX; i++) particles.push({
-      live: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, life: 0, max: 1, size: 12,
-      r: 1, g: 1, b: 1, drag: 0.98, grav: 0,
-    });
-    return { canvas: canvas, renderer: renderer, scene: scene, camera: camera, geo: geo, pos: pos, col: col, mat: mat, points: points, particles: particles, MAX: MAX, boltLines: [] };
+  function vfxPick(arr) { return arr[(Math.random() * arr.length) | 0]; }
+  function vfxFit(em) {
+    const cv = em.canvas;
+    if (!cv || !em.el.isConnected) return false;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.max(1, em.el.clientWidth);
+    const h = Math.max(1, em.el.clientHeight);
+    if (cv.width !== (w * dpr | 0) || cv.height !== (h * dpr | 0)) {
+      cv.width = w * dpr | 0;
+      cv.height = h * dpr | 0;
+      cv.style.width = w + "px";
+      cv.style.height = h + "px";
+    }
+    em.ctx = cv.getContext("2d");
+    em.w = w; em.h = h; em.dpr = dpr;
+    return true;
   }
-  function vfxResize() {
-    if (!vfx.three) return;
-    const w = window.innerWidth, h = window.innerHeight;
-    vfx.three.renderer.setSize(w, h, false);
-    vfx.three.camera.left = 0; vfx.three.camera.right = w;
-    vfx.three.camera.top = h; vfx.three.camera.bottom = 0;
-    vfx.three.camera.updateProjectionMatrix();
-  }
-  function vfxSpawn(n, setup) {
-    if (!vfx.three) return;
-    const ps = vfx.three.particles;
+  function vfxEmit(em, n, setup) {
     let left = n;
-    for (let i = 0; i < ps.length && left > 0; i++) {
+    const ps = em.particles;
+    for (let i = 0; i < ps.length && left; i++) {
       if (ps[i].live) continue;
       setup(ps[i]);
       ps[i].live = true;
       left--;
     }
+    while (left--) {
+      const p = { live: true };
+      setup(p);
+      ps.push(p);
+    }
   }
-  function hexRgb(hex) {
-    return { r: ((hex >> 16) & 255) / 255, g: ((hex >> 8) & 255) / 255, b: (hex & 255) / 255 };
-  }
-  function vfxSpec(key, rect) {
-    const x0 = rect.left, y0 = window.innerHeight - rect.bottom;
-    const x1 = rect.right, y1 = window.innerHeight - rect.top;
-    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    const w = x1 - x0, h = y1 - y0;
-    const pick = function (arr) { return arr[(Math.random() * arr.length) | 0]; };
+  function vfxPulse(em) {
+    const w = em.w, h = em.h, key = em.key;
+    const cols = {
+      25: [0xff6a1a, 0xffb020, 0xffd27a],
+      50: [0x8b7355, 0xc4b49a, 0x6b5644],
+      75: [0x22c55e, 0x86efac, 0x4ade80],
+      100: [0x22d3ee, 0x67e8f9, 0x9ae6f5],
+      200: [0xfde047, 0xfff7cc, 0xffffff],
+      300: [0xcbd5e1, 0xf1f5f9, 0x94a3b8],
+      400: [0xea580c, 0xfb923c, 0x7c2d12],
+      500: [0xe0f2fe, 0x7dd3fc, 0xffffff],
+      600: [0xa855f7, 0xd8b4fe, 0x7e22ce],
+      700: [0xfbbf24, 0xfde68a, 0xfff7ed],
+      800: [0xc084fc, 0x6b21a8, 0xe9d5ff],
+      900: [0xfffbeb, 0xfbbf24, 0xffffff],
+      1000: [0x00ff6a, 0x86efac, 0xbbf7d0],
+    }[key] || [0xfbbf24];
     if (key === 25 || key === 400) {
-      const cols = key === 25 ? [0xff4d12, 0xff9a1f, 0xffe7a0] : [0x7c2d12, 0xea580c, 0xfb923c];
-      const n = key === 25 ? 14 : 18;
-      vfxSpawn(n, function (p) {
-        const c = hexRgb(pick(cols));
-        p.x = x0 + Math.random() * w; p.y = y0 + Math.random() * 8; p.z = 0;
-        p.vx = (Math.random() - 0.5) * 40; p.vy = 70 + Math.random() * (key === 25 ? 140 : 90);
-        p.life = 0; p.max = 0.45 + Math.random() * 0.7; p.size = key === 25 ? 16 + Math.random() * 22 : 18 + Math.random() * 26;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.96; p.grav = key === 400 ? -30 : 20;
+      vfxEmit(em, key === 400 ? 2 : 2, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        p.x = 8 + Math.random() * (w - 16); p.y = h - 3 - Math.random() * 8;
+        p.vx = (Math.random() - 0.5) * 18; p.vy = -(22 + Math.random() * 38);
+        p.life = 0; p.max = 0.55 + Math.random() * 0.45; p.size = 5 + Math.random() * 6;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.97; p.grav = -8; p.a = 0.55;
       });
     } else if (key === 50) {
-      vfxSpawn(10, function (p) {
-        const c = hexRgb(pick([0x8b7355, 0xc4b49a, 0x5c4a3a]));
-        p.x = x0 + Math.random() * w; p.y = cy; p.z = 0;
-        p.vx = (Math.random() - 0.5) * 160; p.vy = 40 + Math.random() * 120;
-        p.life = 0; p.max = 0.5 + Math.random() * 0.5; p.size = 8 + Math.random() * 14;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.94; p.grav = -420;
+      vfxEmit(em, 1, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        p.x = 10 + Math.random() * (w - 20); p.y = h - 4;
+        p.vx = (Math.random() - 0.5) * 28; p.vy = -(8 + Math.random() * 18);
+        p.life = 0; p.max = 0.5 + Math.random() * 0.35; p.size = 3.5 + Math.random() * 3;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.94; p.grav = 80; p.a = 0.45;
       });
     } else if (key === 75) {
-      vfxSpawn(8, function (p) {
-        const c = hexRgb(pick([0x22c55e, 0x4ade80, 0xbbf7d0]));
-        p.x = x0 + Math.random() * w; p.y = y0 + Math.random() * h * 0.4; p.z = 0;
-        p.vx = (Math.random() - 0.5) * 20; p.vy = 30 + Math.random() * 50;
-        p.life = 0; p.max = 0.8 + Math.random() * 0.6; p.size = 10 + Math.random() * 12;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.98; p.grav = 10;
+      vfxEmit(em, 1, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        p.x = 6 + Math.random() * 18; p.y = h - 6;
+        p.vx = 6 + Math.random() * 10; p.vy = -(12 + Math.random() * 20);
+        p.life = 0; p.max = 0.8 + Math.random() * 0.5; p.size = 4 + Math.random() * 4;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.99; p.grav = -6; p.a = 0.5;
       });
     } else if (key === 100) {
-      vfxSpawn(12, function (p) {
-        const c = hexRgb(pick([0x22d3ee, 0x67e8f9, 0xe0f2fe]));
-        p.x = x0 + Math.random() * w; p.y = y0 + 6; p.z = 0;
-        p.vx = (Math.random() - 0.5) * 80; p.vy = 90 + Math.random() * 160;
-        p.life = 0; p.max = 0.5 + Math.random() * 0.45; p.size = 10 + Math.random() * 16;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.97; p.grav = -260;
+      vfxEmit(em, 1, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        p.x = 8 + Math.random() * (w - 16); p.y = h - 2;
+        p.vx = (Math.random() - 0.5) * 22; p.vy = -(10 + Math.random() * 16);
+        p.life = 0; p.max = 0.6 + Math.random() * 0.4; p.size = 4 + Math.random() * 5;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.98; p.grav = 28; p.a = 0.42;
       });
     } else if (key === 200) {
-      vfxBolt(cx, y1 - 8, cx + (Math.random() - 0.5) * w * 0.6, y0 + 8);
-      vfxSpawn(20, function (p) {
-        const c = hexRgb(pick([0xfde047, 0xffffff, 0xfacc15]));
-        p.x = cx + (Math.random() - 0.5) * 24; p.y = cy + (Math.random() - 0.5) * h * 0.4; p.z = 0;
-        p.vx = (Math.random() - 0.5) * 40; p.vy = (Math.random() - 0.5) * 40;
-        p.life = 0; p.max = 0.12 + Math.random() * 0.18; p.size = 10 + Math.random() * 18;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.9; p.grav = 0;
+      if (Math.random() < 0.45) em.bolts.push({ t: 0, pts: vfxBoltPts(w, h) });
+      vfxEmit(em, 2, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        p.x = 4 + Math.random() * 16; p.y = 8 + Math.random() * (h - 16);
+        p.vx = (Math.random() - 0.5) * 10; p.vy = (Math.random() - 0.5) * 10;
+        p.life = 0; p.max = 0.18 + Math.random() * 0.12; p.size = 3 + Math.random() * 3;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.9; p.grav = 0; p.a = 0.7;
       });
     } else if (key === 300) {
-      vfxSpawn(16, function (p) {
-        const c = hexRgb(0xe2e8f0);
-        p.x = x0 - 10; p.y = y0 + Math.random() * h; p.z = 0;
-        p.vx = 220 + Math.random() * 280; p.vy = (Math.random() - 0.5) * 30;
-        p.life = 0; p.max = 0.35 + Math.random() * 0.25; p.size = 6 + Math.random() * 10;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.99; p.grav = 0;
+      vfxEmit(em, 2, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        p.x = -4; p.y = (Math.random() < 0.5 ? 6 : h - 8) + Math.random() * 4;
+        p.vx = 90 + Math.random() * 70; p.vy = 0;
+        p.life = 0; p.max = 0.35 + Math.random() * 0.15; p.size = 2.5 + Math.random() * 2;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 1; p.grav = 0; p.a = 0.35;
       });
     } else if (key === 500) {
-      vfxSpawn(8, function (p) {
-        const c = hexRgb(pick([0xe0f2fe, 0x7dd3fc, 0xffffff]));
-        p.x = x0 + Math.random() * w; p.y = y1; p.z = 0;
-        p.vx = (Math.random() - 0.5) * 20; p.vy = -20 - Math.random() * 40;
-        p.life = 0; p.max = 0.9 + Math.random() * 0.7; p.size = 7 + Math.random() * 10;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.99; p.grav = -40;
+      vfxEmit(em, 1, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        const corner = vfxPick([{ x: 10, y: 10 }, { x: w - 10, y: 10 }, { x: 12, y: h - 10 }, { x: w - 12, y: h - 10 }]);
+        p.x = corner.x; p.y = corner.y;
+        p.vx = (Math.random() - 0.5) * 8; p.vy = (Math.random() - 0.5) * 8;
+        p.life = 0; p.max = 0.7 + Math.random() * 0.5; p.size = 3 + Math.random() * 3;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.99; p.grav = 4; p.a = 0.5;
       });
     } else if (key === 600) {
-      vfxSpawn(9, function (p) {
-        const c = hexRgb(pick([0xa855f7, 0xd8b4fe, 0x7e22ce]));
-        p.x = x0 + Math.random() * w; p.y = y0 + Math.random() * 16; p.z = 0;
-        p.vx = (Math.random() - 0.5) * 24; p.vy = 20 + Math.random() * 36;
-        p.life = 0; p.max = 1 + Math.random() * 0.8; p.size = 14 + Math.random() * 20;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.99; p.grav = 8;
+      vfxEmit(em, 1, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        p.x = 10 + Math.random() * (w - 20); p.y = h - 4;
+        p.vx = (Math.random() - 0.5) * 8; p.vy = -(6 + Math.random() * 12);
+        p.life = 0; p.max = 1.1 + Math.random() * 0.5; p.size = 6 + Math.random() * 5;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.995; p.grav = -4; p.a = 0.28;
       });
     } else if (key === 700 || key === 900) {
-      const cols = key === 700 ? [0xfbbf24, 0xfde68a, 0xfff7ed] : [0xfffbeb, 0xfbbf24, 0xffffff];
-      vfxSpawn(key === 900 ? 28 : 16, function (p) {
-        const c = hexRgb(pick(cols));
-        const a = Math.random() * Math.PI * 2, sp = (key === 900 ? 80 : 40) + Math.random() * 90;
-        p.x = cx; p.y = cy; p.z = 0;
-        p.vx = Math.cos(a) * sp; p.vy = Math.sin(a) * sp;
-        p.life = 0; p.max = 0.4 + Math.random() * 0.5; p.size = 12 + Math.random() * 20;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.96; p.grav = 0;
+      vfxEmit(em, 1, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        const a = Math.random() * Math.PI * 2;
+        p.x = w * 0.5 + Math.cos(a) * (w * 0.42); p.y = h * 0.5 + Math.sin(a) * (h * 0.38);
+        p.vx = Math.cos(a) * 8; p.vy = Math.sin(a) * 8;
+        p.life = 0; p.max = 0.5 + Math.random() * 0.3; p.size = 4 + Math.random() * 4;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.97; p.grav = 0; p.a = 0.4;
       });
     } else if (key === 800) {
-      vfxSpawn(14, function (p) {
-        const c = hexRgb(pick([0xc084fc, 0x3b0764, 0xe9d5ff]));
-        const a = Math.random() * Math.PI * 2, rad = 40 + Math.random() * 50;
-        p.x = cx + Math.cos(a) * rad; p.y = cy + Math.sin(a) * rad; p.z = 0;
-        p.vx = (cx - p.x) * 2; p.vy = (cy - p.y) * 2;
-        p.life = 0; p.max = 0.55 + Math.random() * 0.4; p.size = 10 + Math.random() * 14;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.97; p.grav = 0;
+      vfxEmit(em, 1, function (p) {
+        const c = vfxRgb(vfxPick(cols));
+        const a = Math.random() * Math.PI * 2;
+        p.x = w * 0.5 + Math.cos(a) * (w * 0.48); p.y = h * 0.5 + Math.sin(a) * (h * 0.42);
+        p.vx = (w * 0.5 - p.x) * 0.9; p.vy = (h * 0.5 - p.y) * 0.9;
+        p.life = 0; p.max = 0.55; p.size = 3.5 + Math.random() * 3;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 0.96; p.grav = 0; p.a = 0.4;
       });
     } else if (key === 1000) {
-      vfxSpawn(10, function (p) {
-        const c = hexRgb(0x00ff6a);
-        p.x = x0 + Math.random() * w; p.y = y1; p.z = 0;
-        p.vx = 0; p.vy = -80 - Math.random() * 80;
-        p.life = 0; p.max = 0.6 + Math.random() * 0.4; p.size = 6 + Math.random() * 8;
-        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 1; p.grav = 0;
+      vfxEmit(em, 1, function (p) {
+        const c = vfxRgb(0x00ff6a);
+        p.x = 6 + Math.random() * (w - 12); p.y = 2;
+        p.vx = 0; p.vy = 28 + Math.random() * 24;
+        p.life = 0; p.max = 0.5; p.size = 2 + Math.random() * 2;
+        p.r = c.r; p.g = c.g; p.b = c.b; p.drag = 1; p.grav = 0; p.a = 0.35;
       });
     }
   }
-  function vfxBolt(x0, y0, x1, y1) {
-    if (!vfx.three) return;
+  function vfxBoltPts(w, h) {
+    const x0 = 10 + Math.random() * 12, y0 = 6;
+    const x1 = 10 + Math.random() * 18, y1 = h - 6;
     const pts = [{ x: x0, y: y0 }];
-    const segs = 8;
-    for (let i = 1; i < segs; i++) {
-      const t = i / segs;
-      pts.push({
-        x: x0 + (x1 - x0) * t + (Math.random() - 0.5) * 28,
-        y: y0 + (y1 - y0) * t + (Math.random() - 0.5) * 18,
-      });
+    const n = 6;
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      pts.push({ x: x0 + (x1 - x0) * t + (Math.random() - 0.5) * 10, y: y0 + (y1 - y0) * t });
     }
     pts.push({ x: x1, y: y1 });
-    const arr = [];
-    pts.forEach(function (p) { arr.push(p.x, p.y, 0); });
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.Float32BufferAttribute(arr, 3));
-    const core = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
-    const glow = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }));
-    vfx.three.scene.add(core); vfx.three.scene.add(glow);
-    vfx.bolts.push({ core: core, glow: glow, geo: geo, t: 0 });
+    return pts;
+  }
+  function vfxDrawBolt(ctx, bolt, dpr) {
+    const o = Math.max(0, 1 - bolt.t / 0.14);
+    if (o <= 0) return;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    bolt.pts.forEach(function (p, i) { if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); });
+    ctx.strokeStyle = "rgba(255,247,204," + (0.28 * o) + ")";
+    ctx.lineWidth = 3.2;
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255," + (0.75 * o) + ")";
+    ctx.lineWidth = 1.05;
+    ctx.stroke();
+    ctx.restore();
   }
   function vfxBind() {
     vfx.emitters = [];
     document.querySelectorAll("[data-pal]").forEach(function (el) {
       const key = Number(el.getAttribute("data-pal"));
-      if (key) vfx.emitters.push({ el: el, key: key, acc: 0 });
+      if (!key) return;
+      let canvas = el.querySelector("canvas.pal-fx");
+      if (!canvas) {
+        canvas = document.createElement("canvas");
+        canvas.className = "pal-fx";
+        canvas.setAttribute("aria-hidden", "true");
+        el.insertBefore(canvas, el.firstChild);
+      }
+      const em = { el: el, key: key, canvas: canvas, ctx: null, w: 0, h: 0, dpr: 1, particles: [], bolts: [], acc: 0 };
+      vfxFit(em);
+      vfx.emitters.push(em);
     });
   }
   function vfxTick(now) {
-    if (!vfx.on || !vfx.three) return;
+    if (!vfx.on) return;
     const dt = Math.min(0.033, (now - (vfx.last || now)) / 1000);
     vfx.last = now;
     vfx.emitters.forEach(function (em) {
       if (!em.el.isConnected) return;
+      if (!vfxFit(em) || !em.ctx) return;
       em.acc += dt;
-      const rate = em.key === 200 ? 0.09 : em.key === 900 ? 0.08 : 0.05;
-      if (em.acc >= rate) {
-        em.acc = 0;
-        vfxSpec(em.key, em.el.getBoundingClientRect());
+      const rate = em.key === 200 ? 0.12 : em.key === 25 || em.key === 400 ? 0.055 : 0.09;
+      if (em.acc >= rate) { em.acc = 0; vfxPulse(em); }
+      const ctx = em.ctx, dpr = em.dpr, w = em.w, h = em.h;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(0, 0, w, h, 16);
+      else ctx.rect(0, 0, w, h);
+      ctx.clip();
+      ctx.globalCompositeOperation = "lighter";
+      const ps = em.particles;
+      for (let i = 0; i < ps.length; i++) {
+        const p = ps[i];
+        if (!p.live) continue;
+        p.life += dt;
+        if (p.life >= p.max) { p.live = false; continue; }
+        p.vy += (p.grav || 0) * dt;
+        p.vx *= p.drag; p.vy *= p.drag;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        const t = p.life / p.max;
+        const fade = t < 0.12 ? t / 0.12 : (1 - t);
+        const a = Math.max(0, fade) * (p.a || 0.5);
+        const s = p.size * (1 + t * 0.35);
+        ctx.globalAlpha = a;
+        ctx.drawImage(VFX_SPRITE, p.x - s, p.y - s, s * 2, s * 2);
       }
+      em.bolts = em.bolts.filter(function (b) { b.t += dt; return b.t < 0.14; });
+      em.bolts.forEach(function (b) { vfxDrawBolt(ctx, b, dpr); });
+      ctx.restore();
     });
-    const ps = vfx.three.particles, pos = vfx.three.pos, col = vfx.three.col;
-    let live = 0, maxSize = 8;
-    for (let i = 0; i < ps.length; i++) {
-      const p = ps[i];
-      if (!p.live) continue;
-      p.life += dt;
-      if (p.life >= p.max) { p.live = false; continue; }
-      p.vy += p.grav * dt;
-      p.vx *= p.drag; p.vy *= p.drag;
-      p.x += p.vx * dt; p.y += p.vy * dt;
-      const t = p.life / p.max;
-      const fade = t < 0.15 ? t / 0.15 : (1 - t);
-      const k = Math.max(0, fade);
-      pos[live * 3] = p.x; pos[live * 3 + 1] = p.y; pos[live * 3 + 2] = 0;
-      col[live * 3] = p.r * k; col[live * 3 + 1] = p.g * k; col[live * 3 + 2] = p.b * k;
-      if (p.size > maxSize) maxSize = p.size;
-      live++;
-    }
-    vfx.three.geo.setDrawRange(0, live);
-    vfx.three.geo.attributes.position.needsUpdate = true;
-    vfx.three.geo.attributes.color.needsUpdate = true;
-    vfx.three.mat.size = maxSize;
-    for (let i = vfx.bolts.length - 1; i >= 0; i--) {
-      const b = vfx.bolts[i];
-      b.t += dt;
-      const o = Math.max(0, 1 - b.t / 0.16);
-      b.core.material.opacity = 0.95 * o;
-      b.glow.material.opacity = 0.45 * o;
-      if (b.t > 0.16) {
-        vfx.three.scene.remove(b.core); vfx.three.scene.remove(b.glow);
-        b.geo.dispose();
-        vfx.bolts.splice(i, 1);
-      }
-    }
-    vfx.three.renderer.render(vfx.three.scene, vfx.three.camera);
     vfx.raf = requestAnimationFrame(vfxTick);
   }
   function vfxStart() {
-    loadThree(function (ok) {
-      if (!ok || !braiseLive) return;
-      const canvas = document.getElementById("vfx");
-      if (!canvas) return;
-      if (!vfx.three) vfx.three = vfxMakeEngine();
-      vfxResize();
-      vfxBind();
-      vfx.on = true;
-      canvas.classList.add("on");
-      vfx.last = performance.now();
-      if (vfx.raf) cancelAnimationFrame(vfx.raf);
-      vfx.raf = requestAnimationFrame(vfxTick);
-    });
+    vfxBind();
+    vfx.on = true;
+    vfx.last = performance.now();
+    if (vfx.raf) cancelAnimationFrame(vfx.raf);
+    vfx.raf = requestAnimationFrame(vfxTick);
   }
   function vfxStop() {
     vfx.on = false;
     if (vfx.raf) cancelAnimationFrame(vfx.raf);
     vfx.raf = 0;
+    vfx.emitters.forEach(function (em) {
+      if (em.ctx) em.ctx.setTransform(1, 0, 0, 1, 0, 0), em.ctx.clearRect(0, 0, em.canvas.width, em.canvas.height);
+    });
     vfx.emitters = [];
-    const canvas = document.getElementById("vfx");
-    if (canvas) canvas.classList.remove("on");
-    if (vfx.three) {
-      vfx.bolts.forEach(function (b) {
-        vfx.three.scene.remove(b.core); vfx.three.scene.remove(b.glow); b.geo.dispose();
-      });
-      vfx.bolts = [];
-      vfx.three.particles.forEach(function (p) { p.live = false; });
-      vfx.three.renderer.clear();
-    }
   }
+  function vfxResize() { if (vfx.on) vfx.emitters.forEach(vfxFit); }
   function startBraiseWindow() {
     braiseLive = true;
     if (braiseTimer) clearTimeout(braiseTimer);
@@ -1974,6 +1952,7 @@
       };
       const hi = key >= 200 ? " pal-hi" : "";
       return `<button type="button" class="pos pal pal-${key}${hi}" data-open-asset="${escapeHtml(h.assetId)}" data-hid="${escapeHtml(h.assetId)}" data-pal="${key}">
+        <canvas class="pal-fx" aria-hidden="true"></canvas>
         <div class="braise-glow"></div>
         <div class="braise-main">${inner}</div>
         <div class="braise-tag">${tags[key] || ""}</div>
@@ -2136,6 +2115,7 @@
       const pocheCls = pocheKey ? ("pos pal pal-" + pocheKey + pocheHi) : "pos";
       const pocheSparks = (pocheKey === 25 || pocheKey === 75 || pocheKey === 100) ? `<div class="braise-glow"></div><div class="braise-sparks">${sparksHtml(2)}</div>` : (pocheKey ? '<div class="braise-glow"></div>' : "");
       const pocheRow = pack.poche.length ? `<button type="button" class="${pocheCls}" data-open-poche="1"${pocheKey ? ' data-pal="' + pocheKey + '"' : ""}>
+        ${pocheKey ? '<canvas class="pal-fx" aria-hidden="true"></canvas>' : ""}
         ${pocheSparks}
         <div class="logo ph poche">P</div>
         <div class="grow"><div class="name">Poche</div>
