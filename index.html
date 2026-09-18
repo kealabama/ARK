@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "007.3";
-  const APP_BUILT = "13.09.2026 11:24";
+  const APP_VERSION = "007.5";
+  const APP_BUILT = "18.09.2026 14:28";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -786,9 +786,30 @@
     { id: "sibyl", symbol: "SIBYL", name: "Sibyl", kind: "crypto", dexChain: "base", dex: "0x797f214a2CD64a4963A91Fa21c8C55Ec3EBa4714" },
     { id: "raxol", symbol: "RAXOL", name: "Raxol", kind: "crypto", dexChain: "robinhood", dex: "0xf44702b17d9abD53815F703e772F35E9c71A53af" },
     { id: "harmonic", symbol: "HARMONIC", name: "Harmonic", kind: "crypto", dexChain: "robinhood", dex: "0xdEe52F2ab639b6942B0d0F0565400b93b7a0fbe5" },
+    { id: "link-hood", symbol: "LINK", name: "Link", kind: "crypto", dexChain: "robinhood", dex: "0xe6864e4630D4d7A0cAd2E61f6BC2C0dcAD777712" },
   ];
 
-  const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
+  function n(v) {
+    if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+    if (v == null) return 0;
+    let s = String(v).trim().replace(/[\s\u00a0\u202f\u2009'’`ʼ]/g, "");
+    if (!s) return 0;
+    if (/^[+-]?\d+(?:\.\d+)?e[+-]?\d+$/i.test(s)) {
+      const x = Number(s);
+      return Number.isFinite(x) ? x : 0;
+    }
+    const dot = s.lastIndexOf(".");
+    const com = s.lastIndexOf(",");
+    if (dot >= 0 && com >= 0) {
+      if (com > dot) s = s.replace(/\./g, "").replace(",", ".");
+      else s = s.replace(/,/g, "");
+    } else if (com >= 0) {
+      const parts = s.split(",");
+      s = (parts.length === 2 && parts[1].length <= 12) ? parts[0] + "." + parts[1] : s.replace(/,/g, "");
+    }
+    const x = Number(s);
+    return Number.isFinite(x) ? x : 0;
+  }
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
   function unescapeHtml(s) {
     var amp = "\u0026";
@@ -827,8 +848,9 @@
     return new Intl.NumberFormat("fr-CH", { maximumFractionDigits: d }).format(v);
   }
   function formatUnit(v) {
-    if (!(v > 0)) return "—";
-    const d = v >= 1000 ? 0 : v >= 1 ? 2 : 6;
+    if (!Number.isFinite(v)) return "—";
+    const a = Math.abs(v);
+    const d = a >= 1 ? 2 : a >= 0.01 ? 6 : a >= 0.000001 ? 10 : 12;
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: d }).format(v);
   }
   function formatPct(v) {
@@ -1468,6 +1490,10 @@
     HARMONIC: "harmonic",
     harmonic: "harmonic",
     "custom-harmonic": "harmonic",
+    LINK: "link-hood",
+    "link-hood": "link-hood",
+    "custom-link": "link-hood",
+    "custom-link-hood": "link-hood",
   };
   const PRETTY = {};
   CORE.forEach(function (a) { PRETTY[a.id] = a; PRETTY[a.symbol] = a; });
@@ -2308,6 +2334,7 @@
       </div>
       <div class="field"><label>Quantité</label><input id="fQty" inputmode="decimal" value="${edit ? edit.quantity : (preset.qty || "")}" /></div>
       <div class="field"><label>Prix USD</label><input id="fPx" inputmode="decimal" value="${edit ? edit.priceUsd : (preset.px || "")}" /></div>
+      <p class="hint">1 000 000 et 0,0004 (virgule ou point) sont acceptés.</p>
       <div class="field"><label>Date et heure</label><input id="fWhen" type="datetime-local" value="${local}" /></div>
       <div class="field"><label>Plateforme</label>${venueChips(edit?.venue || "")}</div>
       <div class="field"><label>Frais USD</label><input id="fFee" inputmode="decimal" value="${edit?.feeUsd || ""}" /></div>
@@ -2398,7 +2425,8 @@
       }
       const qty = n(document.getElementById("fQty").value);
       const px = n(document.getElementById("fPx").value);
-      if (!(qty > 0) || !(px >= 0)) return toast("Quantité / prix invalides");
+      if (!(qty > 0)) return toast("Quantité invalide");
+      if (!(px > 0)) return toast("Prix invalide — ex. 0,0004");
       const when = document.getElementById("fWhen").value;
       const executedAt = when ? new Date(when).toISOString() : new Date().toISOString();
       const venue = document.getElementById("fVenue").value.trim() || "Autre";
