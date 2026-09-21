@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "007.5";
-  const APP_BUILT = "18.09.2026 14:28";
+  const APP_VERSION = "007.6";
+  const APP_BUILT = "21.09.2026 20:54";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -787,6 +787,8 @@
     { id: "raxol", symbol: "RAXOL", name: "Raxol", kind: "crypto", dexChain: "robinhood", dex: "0xf44702b17d9abD53815F703e772F35E9c71A53af" },
     { id: "harmonic", symbol: "HARMONIC", name: "Harmonic", kind: "crypto", dexChain: "robinhood", dex: "0xdEe52F2ab639b6942B0d0F0565400b93b7a0fbe5" },
     { id: "link-hood", symbol: "LINK", name: "Link", kind: "crypto", dexChain: "robinhood", dex: "0xe6864e4630D4d7A0cAd2E61f6BC2C0dcAD777712" },
+    { id: "prologue", symbol: "PROLOGUE", name: "Prologue", kind: "crypto", dexChain: "robinhood", dex: "0xb9972CA7188e511174947E3936a5315ac7073277" },
+    { id: "zzz", symbol: "ZZZ", name: "ZZZ", kind: "crypto", dexChain: "robinhood", dex: "0x7dbf38976f6D3b9c529e7D9484A71898B409eE6a" },
   ];
 
   function n(v) {
@@ -1494,6 +1496,12 @@
     "link-hood": "link-hood",
     "custom-link": "link-hood",
     "custom-link-hood": "link-hood",
+    PROLOGUE: "prologue",
+    prologue: "prologue",
+    "custom-prologue": "prologue",
+    ZZZ: "zzz",
+    zzz: "zzz",
+    "custom-zzz": "zzz",
   };
   const PRETTY = {};
   CORE.forEach(function (a) { PRETTY[a.id] = a; PRETTY[a.symbol] = a; });
