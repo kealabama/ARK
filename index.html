@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "008.0";
-  const APP_BUILT = "27.09.2026 11:25";
+  const APP_VERSION = "008.1";
+  const APP_BUILT = "27.09.2026 12:30";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -782,7 +782,7 @@
     { id: "stonkex", symbol: "STONKEX", name: "The Stonks Exchange", kind: "crypto", dexChain: "base", dex: "0x5ab000ff9B9FfE0349CE5ffA5fD86f217C3680F5" },
     { id: "raxol", symbol: "RAXOL", name: "Raxol", kind: "crypto", dexChain: "robinhood", dex: "0xf44702b17d9abD53815F703e772F35E9c71A53af" },
     { id: "zzz", symbol: "ZZZ", name: "ZZZ", kind: "crypto", dexChain: "robinhood", dex: "0x7dbf38976f6D3b9c529e7D9484A71898B409eE6a" },
-    { id: "ai-inu", symbol: "AI", name: "Artificial Inu", kind: "crypto", dexChain: "robinhood", dex: "0x2E8c31162b855A2ffa90F6F8634643Ad6F111e18" },
+    { id: "qubit", symbol: "QUBIT", name: "Qubit", kind: "crypto", dexChain: "robinhood", dex: "0xd1E92BA7c7355c2698addD894919Cba198601E18" },
     { id: "vex", symbol: "VEX", name: "ProjectVex", kind: "crypto", dexChain: "robinhood", dex: "0x8Ff92566f2e81BDd68EDfAa8cde73942A723796b" },
   ];
 
@@ -1512,9 +1512,9 @@
     ZZZ: "zzz",
     zzz: "zzz",
     "custom-zzz": "zzz",
-    AI: "ai-inu",
-    "ai-inu": "ai-inu",
-    "custom-ai": "ai-inu",
+    QUBIT: "qubit",
+    qubit: "qubit",
+    "custom-qubit": "qubit",
     VEX: "vex",
     vex: "vex",
     "custom-vex": "vex",
@@ -1537,18 +1537,13 @@
     return s;
   }
   (function dropGoneTickers() {
-    const gone = { YOLO: 1, BSTONK: 1, BSTOCK: 1, PONGO: 1, SIBYL: 1, HARMONIC: 1, LINK: 1, PROLOGUE: 1 };
+    const gone = { YOLO: 1, BSTONK: 1, BSTOCK: 1, PONGO: 1, SIBYL: 1, HARMONIC: 1, LINK: 1, PROLOGUE: 1, AI: 1 };
     const n0 = (state.customAssets || []).length;
     state.customAssets = (state.customAssets || []).filter(function (a) {
       const s = String((a && (a.symbol || a.id)) || "").toUpperCase().replace(/^CUSTOM-/, "").replace(/[^A-Z0-9]/g, "");
       return !gone[s];
     });
     if (state.customAssets.length !== n0) saveState();
-  })();
-  (function restoreAi() {
-    const before = (state.hiddenMarket || []).length;
-    state.hiddenMarket = (state.hiddenMarket || []).filter(function (id) { return tickerOf(id) !== "AI"; });
-    if (state.hiddenMarket.length !== before) saveState();
   })();
   function feedByTicker(tick) {
     const t = tickerOf(tick);
@@ -2307,7 +2302,10 @@
   function renderMkt() {
     const box = document.getElementById("mktCard");
     const hiddenTicks = new Set((state.hiddenMarket || []).map(function (id) { return tickerOf(id); }));
-    const rows = allAssets().filter(function (a) { return !hiddenTicks.has(tickerOf(a)); }).map(function (a) {
+    const rows = allAssets().filter(function (a) {
+      const tick = tickerOf(a.symbol || a.id);
+      return !hiddenTicks.has(tick) && !GONE_TICK[tick];
+    }).map(function (a) {
       const asset = resolveAsset(a.id);
       const px = priceUsd(asset.id);
       return `<div class="row">
@@ -2347,7 +2345,7 @@
       <input id="fVenue" value="${escapeHtml(current || "")}" placeholder="Ou saisis une plateforme" />`;
   }
 
-  const GONE_TICK = { YOLO: 1, BSTONK: 1, BASESTONK: 1, BSTOCK: 1, PONGO: 1, SIBYL: 1, HARMONIC: 1, LINK: 1, PROLOGUE: 1 };
+  const GONE_TICK = { YOLO: 1, BSTONK: 1, BASESTONK: 1, BSTOCK: 1, PONGO: 1, SIBYL: 1, HARMONIC: 1, LINK: 1, PROLOGUE: 1, AI: 1 };
   function openTxForm(edit, presetAssetId, preset) {
     preset = preset || {};
     const assets = allAssets().filter(function (a) {
