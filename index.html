@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "007.8";
-  const APP_BUILT = "27.09.2026 10:18";
+  const APP_VERSION = "008.0";
+  const APP_BUILT = "27.09.2026 11:25";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -1545,6 +1545,11 @@
     });
     if (state.customAssets.length !== n0) saveState();
   })();
+  (function restoreAi() {
+    const before = (state.hiddenMarket || []).length;
+    state.hiddenMarket = (state.hiddenMarket || []).filter(function (id) { return tickerOf(id) !== "AI"; });
+    if (state.hiddenMarket.length !== before) saveState();
+  })();
   function feedByTicker(tick) {
     const t = tickerOf(tick);
     return CORE.find(function (a) {
@@ -2342,9 +2347,14 @@
       <input id="fVenue" value="${escapeHtml(current || "")}" placeholder="Ou saisis une plateforme" />`;
   }
 
+  const GONE_TICK = { YOLO: 1, BSTONK: 1, BASESTONK: 1, BSTOCK: 1, PONGO: 1, SIBYL: 1, HARMONIC: 1, LINK: 1, PROLOGUE: 1 };
   function openTxForm(edit, presetAssetId, preset) {
     preset = preset || {};
-    const assets = allAssets();
+    const assets = allAssets().filter(function (a) {
+      const tick = tickerOf(a.symbol || a.id);
+      if (edit && tick === tickerOf(edit.assetId)) return true;
+      return !GONE_TICK[tick];
+    });
     const pre = presetAssetId || edit?.assetId || assets[0]?.id || "";
     const isNewOpt = "__new__";
     const opts = [`<option value="${isNewOpt}">Enregistrer un autre actif</option>`]
