@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "007.6";
-  const APP_BUILT = "21.09.2026 20:54";
+  const APP_VERSION = "007.7";
+  const APP_BUILT = "27.09.2026 10:16";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -1431,7 +1431,44 @@
     } catch { return { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], hiddenMarket: [], lastExportAt: null }; }
   }
   function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function findLiquidity(currency, venue) {
+    const cur = String(currency || "USD").toUpperCase();
+    const v = String(venue || "").trim().toLowerCase();
+    return state.liquidity.find(function (c) {
+      return String(c.currency || "").toUpperCase() === cur && String(c.venue || "").trim().toLowerCase() === v;
+    }) || null;
+  }
+  function addLiquidity(currency, venue, amount) {
+    const cur = String(currency || "USD").toUpperCase();
+    const v = String(venue || "Autre").trim() || "Autre";
+    const hit = findLiquidity(cur, v);
+    if (hit) {
+      hit.amount = n(hit.amount) + n(amount);
+      hit.currency = cur;
+      hit.venue = v;
+      return { row: hit, merged: true };
+    }
+    const row = { id: uid(), kind: cur === "USD" ? "fiat" : "stablecoin", currency: cur, amount: n(amount), venue: v, note: null };
+    state.liquidity.push(row);
+    return { row: row, merged: false };
+  }
+  function mergeLiquidity() {
+    const before = state.liquidity.length;
+    const kept = [];
+    state.liquidity.forEach(function (c) {
+      const cur = String(c.currency || "USD").toUpperCase();
+      const v = String(c.venue || "Cash").trim() || "Cash";
+      const hit = kept.find(function (x) {
+        return x.currency === cur && String(x.venue).toLowerCase() === v.toLowerCase();
+      });
+      if (hit) hit.amount = n(hit.amount) + n(c.amount);
+      else kept.push({ id: c.id || uid(), kind: cur === "USD" ? "fiat" : (c.kind || "stablecoin"), currency: cur, amount: n(c.amount), venue: v, note: c.note || null });
+    });
+    state.liquidity = kept.filter(function (c) { return n(c.amount) > 1e-8; });
+    return state.liquidity.length !== before;
+  }
   let state = loadState();
+  if (mergeLiquidity()) saveState();
   let prices = {};
   try { prices = JSON.parse(localStorage.getItem(PRICE_KEY) || "{}") || {}; } catch { prices = {}; }
   let hist = {};
@@ -2152,8 +2189,8 @@
     else {
       cBox.innerHTML = state.liquidity.map((c) => `<div class="row">
         <div class="logo ph">${c.kind === "fiat" ? "$" : "S"}</div>
-        <div class="grow"><div class="name">${escapeHtml(c.currency)}</div>
-          <div class="sym">${c.venue ? escapeHtml(c.venue) : "cash"}</div></div>
+        <div class="grow"><div class="name">${escapeHtml(c.venue || "Cash")}</div>
+          <div class="sym">${escapeHtml(c.currency || "USD")}</div></div>
         <div class="right"><div class="v">${$m(n(c.amount))}</div></div>
         <button type="button" class="btn ghost" data-del-cash="${c.id}">✕</button>
       </div>`).join("");
@@ -2462,9 +2499,7 @@
         const creditId = document.getElementById("fCreditId").value;
         const proceeds = Math.max(0, qty * px - fee);
         if (creditId === "__new__" || !state.liquidity.length) {
-          const hit = state.liquidity.find((c) => c.currency === "USD" && (c.venue || "") === venue);
-          if (hit) hit.amount = n(hit.amount) + proceeds;
-          else state.liquidity.push({ id: uid(), kind: "fiat", currency: "USD", amount: proceeds, venue, note: null });
+          addLiquidity("USD", venue, proceeds);
         } else {
           const pos = state.liquidity.find((c) => c.id === creditId);
           if (pos) pos.amount = n(pos.amount) + proceeds;
@@ -2481,18 +2516,30 @@
       <div class="field"><label>Montant</label><input id="cAmt" inputmode="decimal" /></div>
       <div class="field"><label>Plateforme</label>
         <select id="cVenue">${VENUES.map((v) => `<option>${v}</option>`).join("")}</select></div>
+      <p class="hint" id="cHint"></p>
       <div class="actions"><button type="button" class="btn secondary" id="cCancel">Annuler</button>
         <button type="button" class="btn primary" id="cSave">Enregistrer</button></div>`);
+    const hint = document.getElementById("cHint");
+    const refreshHint = function () {
+      const cur = document.getElementById("cCur").value;
+      const venue = document.getElementById("cVenue").value;
+      const hit = findLiquidity(cur, venue);
+      hint.textContent = hit
+        ? ("Déjà " + formatMoney(n(hit.amount)) + " sur " + venue + " — ce montant s’ajoute.")
+        : ("Nouvelle réserve " + cur + " sur " + venue + ".");
+    };
+    document.getElementById("cCur").onchange = refreshHint;
+    document.getElementById("cVenue").onchange = refreshHint;
+    refreshHint();
     document.getElementById("cCancel").onclick = closeSheet;
     document.getElementById("cSave").onclick = () => {
       const amount = n(document.getElementById("cAmt").value);
       if (!(amount > 0)) return toast("Montant invalide");
       const cur = document.getElementById("cCur").value;
-      state.liquidity.push({
-        id: uid(), kind: cur === "USD" ? "fiat" : "stablecoin", currency: cur,
-        amount, venue: document.getElementById("cVenue").value, note: null,
-      });
-      saveState(); closeSheet(); renderAll(); toast("Liquidité ajoutée");
+      const venue = document.getElementById("cVenue").value;
+      const res = addLiquidity(cur, venue, amount);
+      saveState(); closeSheet(); renderAll();
+      toast(res.merged ? ("Ajouté à " + venue) : "Liquidité ajoutée");
     };
   }
 
