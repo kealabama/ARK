@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "007.7";
-  const APP_BUILT = "27.09.2026 10:16";
+  const APP_VERSION = "007.8";
+  const APP_BUILT = "27.09.2026 10:18";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -778,17 +778,12 @@
     { id: "hood10", symbol: "HOOD10", name: "HOOD10", kind: "crypto", dexChain: "robinhood", dex: "0x0d257ca40d40090be60c2d2ed5bb3535392838cc" },
     { id: "nasdanq", symbol: "NASDANQ", name: "NASDANQ", kind: "crypto", dexChain: "robinhood", dex: "0x51fb76be80ab6daaa345d818f4e06441816b4fea" },
     { id: "grass", symbol: "GRASS", name: "Touch Grass", kind: "crypto", dexChain: "robinhood", dex: "0x16391C40e85FB2246A2C8c17bfA2594C5d3EF84b" },
-    { id: "yolo-hood", symbol: "YOLO", name: "YOLO", kind: "crypto", dexChain: "robinhood", dex: "0x62c71cd34a52c30d894419cbcc55db2afa8032ea" },
     { id: "cash-cat", symbol: "CASHCAT", name: "Cash Cat", kind: "crypto", cg: "cash-cat", dexChain: "robinhood", dex: "0x020bfc650a365f8bb26819deaabf3e21291018b4" },
-    { id: "basestonk", symbol: "BSTONK", name: "BaseStonk", kind: "crypto", cg: "basestonk", dexChain: "base", dex: "0x0f61edbfe6cd86024c0f210c0695b08df55fdfc9" },
     { id: "stonkex", symbol: "STONKEX", name: "The Stonks Exchange", kind: "crypto", dexChain: "base", dex: "0x5ab000ff9B9FfE0349CE5ffA5fD86f217C3680F5" },
-    { id: "pongo", symbol: "PONGO", name: "Pongo", kind: "crypto", dexChain: "robinhood", dex: "0xedAee44320107CAa714BaAEc486261A87F27022d" },
-    { id: "sibyl", symbol: "SIBYL", name: "Sibyl", kind: "crypto", dexChain: "base", dex: "0x797f214a2CD64a4963A91Fa21c8C55Ec3EBa4714" },
     { id: "raxol", symbol: "RAXOL", name: "Raxol", kind: "crypto", dexChain: "robinhood", dex: "0xf44702b17d9abD53815F703e772F35E9c71A53af" },
-    { id: "harmonic", symbol: "HARMONIC", name: "Harmonic", kind: "crypto", dexChain: "robinhood", dex: "0xdEe52F2ab639b6942B0d0F0565400b93b7a0fbe5" },
-    { id: "link-hood", symbol: "LINK", name: "Link", kind: "crypto", dexChain: "robinhood", dex: "0xe6864e4630D4d7A0cAd2E61f6BC2C0dcAD777712" },
-    { id: "prologue", symbol: "PROLOGUE", name: "Prologue", kind: "crypto", dexChain: "robinhood", dex: "0xb9972CA7188e511174947E3936a5315ac7073277" },
     { id: "zzz", symbol: "ZZZ", name: "ZZZ", kind: "crypto", dexChain: "robinhood", dex: "0x7dbf38976f6D3b9c529e7D9484A71898B409eE6a" },
+    { id: "ai-inu", symbol: "AI", name: "Artificial Inu", kind: "crypto", dexChain: "robinhood", dex: "0x2E8c31162b855A2ffa90F6F8634643Ad6F111e18" },
+    { id: "vex", symbol: "VEX", name: "ProjectVex", kind: "crypto", dexChain: "robinhood", dex: "0x8Ff92566f2e81BDd68EDfAa8cde73942A723796b" },
   ];
 
   function n(v) {
@@ -1505,40 +1500,26 @@
     GRASS: "grass",
     grass: "grass",
     "custom-grass": "grass",
-    YOLO: "yolo-hood",
-    "yolo-hood": "yolo-hood",
-    "custom-yolo": "yolo-hood",
     CASHCAT: "cash-cat",
     "cash-cat": "cash-cat",
     "custom-cashcat": "cash-cat",
-    BSTONK: "basestonk",
-    basestonk: "basestonk",
-    "custom-bstonk": "basestonk",
     STONKEX: "stonkex",
     stonkex: "stonkex",
     "custom-stonkex": "stonkex",
-    PONGO: "pongo",
-    pongo: "pongo",
-    "custom-pongo": "pongo",
-    SIBYL: "sibyl",
-    sibyl: "sibyl",
-    "custom-sibyl": "sibyl",
     RAXOL: "raxol",
     raxol: "raxol",
     "custom-raxol": "raxol",
-    HARMONIC: "harmonic",
-    harmonic: "harmonic",
-    "custom-harmonic": "harmonic",
-    LINK: "link-hood",
-    "link-hood": "link-hood",
-    "custom-link": "link-hood",
-    "custom-link-hood": "link-hood",
-    PROLOGUE: "prologue",
-    prologue: "prologue",
-    "custom-prologue": "prologue",
     ZZZ: "zzz",
     zzz: "zzz",
     "custom-zzz": "zzz",
+    AI: "ai-inu",
+    "ai-inu": "ai-inu",
+    "custom-ai": "ai-inu",
+    VEX: "vex",
+    vex: "vex",
+    "custom-vex": "vex",
+    "custom-projetvex": "vex",
+    "custom-projectvex": "vex",
   };
   const PRETTY = {};
   CORE.forEach(function (a) { PRETTY[a.id] = a; PRETTY[a.symbol] = a; });
@@ -1555,6 +1536,15 @@
     }
     return s;
   }
+  (function dropGoneTickers() {
+    const gone = { YOLO: 1, BSTONK: 1, BSTOCK: 1, PONGO: 1, SIBYL: 1, HARMONIC: 1, LINK: 1, PROLOGUE: 1 };
+    const n0 = (state.customAssets || []).length;
+    state.customAssets = (state.customAssets || []).filter(function (a) {
+      const s = String((a && (a.symbol || a.id)) || "").toUpperCase().replace(/^CUSTOM-/, "").replace(/[^A-Z0-9]/g, "");
+      return !gone[s];
+    });
+    if (state.customAssets.length !== n0) saveState();
+  })();
   function feedByTicker(tick) {
     const t = tickerOf(tick);
     return CORE.find(function (a) {
