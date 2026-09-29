@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "008.1";
-  const APP_BUILT = "27.09.2026 12:30";
+  const APP_VERSION = "008.3";
+  const APP_BUILT = "29.09.2026 15:22";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -784,6 +784,8 @@
     { id: "zzz", symbol: "ZZZ", name: "ZZZ", kind: "crypto", dexChain: "robinhood", dex: "0x7dbf38976f6D3b9c529e7D9484A71898B409eE6a" },
     { id: "qubit", symbol: "QUBIT", name: "Qubit", kind: "crypto", dexChain: "robinhood", dex: "0xd1E92BA7c7355c2698addD894919Cba198601E18" },
     { id: "vex", symbol: "VEX", name: "ProjectVex", kind: "crypto", dexChain: "robinhood", dex: "0x8Ff92566f2e81BDd68EDfAa8cde73942A723796b" },
+    { id: "ripple", symbol: "XRP", name: "XRP", kind: "crypto", cg: "ripple", cb: "XRP" },
+    { id: "hedera-hashgraph", symbol: "HBAR", name: "Hedera", kind: "crypto", cg: "hedera-hashgraph", cb: "HBAR" },
   ];
 
   function n(v) {
@@ -1520,6 +1522,13 @@
     "custom-vex": "vex",
     "custom-projetvex": "vex",
     "custom-projectvex": "vex",
+    XRP: "ripple",
+    ripple: "ripple",
+    "custom-xrp": "ripple",
+    HBAR: "hedera-hashgraph",
+    "hedera-hashgraph": "hedera-hashgraph",
+    hedera: "hedera-hashgraph",
+    "custom-hbar": "hedera-hashgraph",
   };
   const PRETTY = {};
   CORE.forEach(function (a) { PRETTY[a.id] = a; PRETTY[a.symbol] = a; });
@@ -2028,13 +2037,18 @@
     }).join("");
     const legend = segments.map((seg, i) => {
       const color = seg.color || DONUT_COLORS[i % DONUT_COLORS.length];
-      const click = seg.poche ? ' click" data-open-poche="1' : "";
-      const tag = seg.poche ? "button type=\"button\"" : "div";
-      return `<${tag} class="donut-leg-row${click}">
+      if (seg.poche) {
+        return `<button type="button" class="donut-leg-row click" data-open-poche="1">
       <i style="background:${color}"></i>
       <span class="nm">${escapeHtml(seg.label)}</span>
       <span class="pc">${((seg.value / total) * 100).toFixed(0)} %</span>
-    </${tag}>`;
+    </button>`;
+      }
+      return `<div class="donut-leg-row">
+      <i style="background:${color}"></i>
+      <span class="nm">${escapeHtml(seg.label)}</span>
+      <span class="pc">${((seg.value / total) * 100).toFixed(0)} %</span>
+    </div>`;
     }).join("");
     return `<div class="donut-row"><div class="donut-stage"><div class="donut-tilt"><svg class="donut-svg" viewBox="0 0 100 100">
       <ellipse cx="50" cy="54" rx="41" ry="37" fill="none" stroke="#0a0a0b" stroke-width="17" opacity=".35"/>
@@ -2055,6 +2069,8 @@
     if (a.cg === "bitcoin" || a.symbol === "BTC") urls.push("https://assets.coingecko.com/coins/images/1/small/bitcoin.png");
     if (a.cg === "ethereum" || a.symbol === "ETH") urls.push("https://assets.coingecko.com/coins/images/279/small/ethereum.png");
     if (a.cg === "ondo-finance" || a.symbol === "ONDO") urls.push("https://assets.coingecko.com/coins/images/26580/small/ONDO.png");
+    if (a.cg === "ripple" || a.symbol === "XRP") urls.push("https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png");
+    if (a.cg === "hedera-hashgraph" || a.symbol === "HBAR") urls.push("https://assets.coingecko.com/coins/images/3441/small/Hedera_Hashgraph_Logo.png");
     if (a.dex && a.dexChain) {
       urls.push("https://dd.dexscreener.com/ds-data/tokens/" + a.dexChain + "/" + String(a.dex).toLowerCase() + ".png?size=lg");
     }
@@ -2299,8 +2315,10 @@
     box.innerHTML = html;
   }
 
+  const GONE_TICK = { YOLO: 1, BSTONK: 1, BASESTONK: 1, BSTOCK: 1, PONGO: 1, SIBYL: 1, HARMONIC: 1, LINK: 1, PROLOGUE: 1, AI: 1 };
   function renderMkt() {
     const box = document.getElementById("mktCard");
+    if (!box) return;
     const hiddenTicks = new Set((state.hiddenMarket || []).map(function (id) { return tickerOf(id); }));
     const rows = allAssets().filter(function (a) {
       const tick = tickerOf(a.symbol || a.id);
@@ -2321,11 +2339,11 @@
   }
 
   function renderAll() {
-    applyLogo();
-    renderHome();
-    if (view === "asset") renderAsset();
-    renderTx();
-    renderMkt();
+    try { applyLogo(); } catch (e) {}
+    try { renderHome(); } catch (e) {}
+    try { if (view === "asset") renderAsset(); } catch (e) {}
+    try { renderTx(); } catch (e) {}
+    try { renderMkt(); } catch (e) {}
   }
 
   function closeSheet() {
@@ -2345,7 +2363,6 @@
       <input id="fVenue" value="${escapeHtml(current || "")}" placeholder="Ou saisis une plateforme" />`;
   }
 
-  const GONE_TICK = { YOLO: 1, BSTONK: 1, BASESTONK: 1, BSTOCK: 1, PONGO: 1, SIBYL: 1, HARMONIC: 1, LINK: 1, PROLOGUE: 1, AI: 1 };
   function openTxForm(edit, presetAssetId, preset) {
     preset = preset || {};
     const assets = allAssets().filter(function (a) {
@@ -2763,8 +2780,12 @@
     }
   });
 
-  document.querySelectorAll(".nav button").forEach((b) => b.onclick = () => {
-    setView(b.dataset.view); renderAll();
+  document.querySelectorAll(".nav button").forEach((b) => b.onclick = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeSheet();
+    setView(b.getAttribute("data-view"));
+    renderAll();
   });
   document.getElementById("sheetBg").onclick = closeSheet;
   document.getElementById("btnAddCash").onclick = openCashForm;
