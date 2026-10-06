@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "007.3";
-  const APP_BUILT = "13.09.2026 11:24";
+  const APP_VERSION = "008.5";
+  const APP_BUILT = "06.10.2026 12:16";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -771,24 +771,39 @@
   const CORE = [
     { id: "bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", cg: "bitcoin", cb: "BTC" },
     { id: "ethereum", symbol: "ETH", name: "Ethereum", kind: "crypto", cg: "ethereum", cb: "ETH" },
-    { id: "ondo-finance", symbol: "ONDO", name: "Ondo", kind: "crypto", cg: "ondo-finance", cb: "ONDO", dexChain: "ethereum", dex: "0x0F5D2fB29fb7d3CFeE444a200298f468908cC942" },
     { id: "COIN", symbol: "COIN", name: "Coinbase", kind: "equity", yahoo: "COIN", cg: "coinbase-xstock" },
     { id: "CRCL", symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL", cg: "circle-xstock" },
-    { id: "the-index", symbol: "INDEX", name: "The Index", kind: "crypto", dexChain: "robinhood", dex: "0x56910d4409f3a0c78c64dd8d0545ff0705389870" },
-    { id: "hood10", symbol: "HOOD10", name: "HOOD10", kind: "crypto", dexChain: "robinhood", dex: "0x0d257ca40d40090be60c2d2ed5bb3535392838cc" },
-    { id: "nasdanq", symbol: "NASDANQ", name: "NASDANQ", kind: "crypto", dexChain: "robinhood", dex: "0x51fb76be80ab6daaa345d818f4e06441816b4fea" },
-    { id: "grass", symbol: "GRASS", name: "Touch Grass", kind: "crypto", dexChain: "robinhood", dex: "0x16391C40e85FB2246A2C8c17bfA2594C5d3EF84b" },
-    { id: "yolo-hood", symbol: "YOLO", name: "YOLO", kind: "crypto", dexChain: "robinhood", dex: "0x62c71cd34a52c30d894419cbcc55db2afa8032ea" },
-    { id: "cash-cat", symbol: "CASHCAT", name: "Cash Cat", kind: "crypto", cg: "cash-cat", dexChain: "robinhood", dex: "0x020bfc650a365f8bb26819deaabf3e21291018b4" },
-    { id: "basestonk", symbol: "BSTONK", name: "BaseStonk", kind: "crypto", cg: "basestonk", dexChain: "base", dex: "0x0f61edbfe6cd86024c0f210c0695b08df55fdfc9" },
-    { id: "stonkex", symbol: "STONKEX", name: "The Stonks Exchange", kind: "crypto", dexChain: "base", dex: "0x5ab000ff9B9FfE0349CE5ffA5fD86f217C3680F5" },
-    { id: "pongo", symbol: "PONGO", name: "Pongo", kind: "crypto", dexChain: "robinhood", dex: "0xedAee44320107CAa714BaAEc486261A87F27022d" },
-    { id: "sibyl", symbol: "SIBYL", name: "Sibyl", kind: "crypto", dexChain: "base", dex: "0x797f214a2CD64a4963A91Fa21c8C55Ec3EBa4714" },
+    { id: "cash-cat", symbol: "CASHCAT", name: "Cash Cat", kind: "crypto", dexChain: "robinhood", dex: "0x020bfc650a365f8bb26819deaabf3e21291018b4" },
     { id: "raxol", symbol: "RAXOL", name: "Raxol", kind: "crypto", dexChain: "robinhood", dex: "0xf44702b17d9abD53815F703e772F35E9c71A53af" },
-    { id: "harmonic", symbol: "HARMONIC", name: "Harmonic", kind: "crypto", dexChain: "robinhood", dex: "0xdEe52F2ab639b6942B0d0F0565400b93b7a0fbe5" },
+    { id: "nasdanq", symbol: "NASDANQ", name: "NASDANQ", kind: "crypto", dexChain: "robinhood", dex: "0x51fb76be80ab6daaa345d818f4e06441816b4fea" },
+    { id: "the-index", symbol: "INDEX", name: "The Index", kind: "crypto", dexChain: "robinhood", dex: "0x56910d4409f3a0c78c64dd8d0545ff0705389870" },
+    { id: "vex", symbol: "VEX", name: "ProjectVex", kind: "crypto", dexChain: "robinhood", dex: "0x8Ff92566f2e81BDd68EDfAa8cde73942A723796b" },
+    { id: "hood10", symbol: "HOOD10", name: "HOOD10", kind: "crypto", dexChain: "robinhood", dex: "0x0d257ca40d40090be60c2d2ed5bb3535392838cc" },
+    { id: "umia", symbol: "UMIA", name: "Umia", kind: "crypto", dexChain: "base", dex: "0x56ab53b77F07DA3af732150E8aeC4783eB5BbA7D" },
   ];
+  const KEEP = { BTC: 1, ETH: 1, COIN: 1, CRCL: 1, CASHCAT: 1, RAXOL: 1, NASDANQ: 1, INDEX: 1, VEX: 1, HOOD10: 1, UMIA: 1 };
 
-  const n = (v) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
+  function n(v) {
+    if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+    if (v == null) return 0;
+    let s = String(v).trim().replace(/[\s\u00a0\u202f\u2009'’`ʼ]/g, "");
+    if (!s) return 0;
+    if (/^[+-]?\d+(?:\.\d+)?e[+-]?\d+$/i.test(s)) {
+      const x = Number(s);
+      return Number.isFinite(x) ? x : 0;
+    }
+    const dot = s.lastIndexOf(".");
+    const com = s.lastIndexOf(",");
+    if (dot >= 0 && com >= 0) {
+      if (com > dot) s = s.replace(/\./g, "").replace(",", ".");
+      else s = s.replace(/,/g, "");
+    } else if (com >= 0) {
+      const parts = s.split(",");
+      s = (parts.length === 2 && parts[1].length <= 12) ? parts[0] + "." + parts[1] : s.replace(/,/g, "");
+    }
+    const x = Number(s);
+    return Number.isFinite(x) ? x : 0;
+  }
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
   function unescapeHtml(s) {
     var amp = "\u0026";
@@ -827,8 +842,9 @@
     return new Intl.NumberFormat("fr-CH", { maximumFractionDigits: d }).format(v);
   }
   function formatUnit(v) {
-    if (!(v > 0)) return "—";
-    const d = v >= 1000 ? 0 : v >= 1 ? 2 : 6;
+    if (!Number.isFinite(v)) return "—";
+    const a = Math.abs(v);
+    const d = a >= 1 ? 2 : a >= 0.01 ? 6 : a >= 0.000001 ? 10 : 12;
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: d }).format(v);
   }
   function formatPct(v) {
@@ -1407,7 +1423,44 @@
     } catch { return { version: 1, currency: "usd", txs: [], liquidity: [], customAssets: [], hiddenMarket: [], lastExportAt: null }; }
   }
   function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function findLiquidity(currency, venue) {
+    const cur = String(currency || "USD").toUpperCase();
+    const v = String(venue || "").trim().toLowerCase();
+    return state.liquidity.find(function (c) {
+      return String(c.currency || "").toUpperCase() === cur && String(c.venue || "").trim().toLowerCase() === v;
+    }) || null;
+  }
+  function addLiquidity(currency, venue, amount) {
+    const cur = String(currency || "USD").toUpperCase();
+    const v = String(venue || "Autre").trim() || "Autre";
+    const hit = findLiquidity(cur, v);
+    if (hit) {
+      hit.amount = n(hit.amount) + n(amount);
+      hit.currency = cur;
+      hit.venue = v;
+      return { row: hit, merged: true };
+    }
+    const row = { id: uid(), kind: cur === "USD" ? "fiat" : "stablecoin", currency: cur, amount: n(amount), venue: v, note: null };
+    state.liquidity.push(row);
+    return { row: row, merged: false };
+  }
+  function mergeLiquidity() {
+    const before = state.liquidity.length;
+    const kept = [];
+    state.liquidity.forEach(function (c) {
+      const cur = String(c.currency || "USD").toUpperCase();
+      const v = String(c.venue || "Cash").trim() || "Cash";
+      const hit = kept.find(function (x) {
+        return x.currency === cur && String(x.venue).toLowerCase() === v.toLowerCase();
+      });
+      if (hit) hit.amount = n(hit.amount) + n(c.amount);
+      else kept.push({ id: c.id || uid(), kind: cur === "USD" ? "fiat" : (c.kind || "stablecoin"), currency: cur, amount: n(c.amount), venue: v, note: c.note || null });
+    });
+    state.liquidity = kept.filter(function (c) { return n(c.amount) > 1e-8; });
+    return state.liquidity.length !== before;
+  }
   let state = loadState();
+  if (mergeLiquidity()) saveState();
   let prices = {};
   try { prices = JSON.parse(localStorage.getItem(PRICE_KEY) || "{}") || {}; } catch { prices = {}; }
   let hist = {};
@@ -1421,10 +1474,10 @@
   const ALIASES = {
     "btc-bitcoin": "bitcoin",
     bitcoin: "bitcoin",
+    BTC: "bitcoin",
     "eth-ethereum": "ethereum",
     ethereum: "ethereum",
-    "ondo-ondo": "ondo-finance",
-    "ondo-finance": "ondo-finance",
+    ETH: "ethereum",
     "eq-COIN": "COIN",
     COIN: "COIN",
     "eq-CRCL": "CRCL",
@@ -1441,33 +1494,21 @@
     NASDANQ: "nasdanq",
     nasdanq: "nasdanq",
     "custom-nasdanq": "nasdanq",
-    GRASS: "grass",
-    grass: "grass",
-    "custom-grass": "grass",
-    YOLO: "yolo-hood",
-    "yolo-hood": "yolo-hood",
-    "custom-yolo": "yolo-hood",
     CASHCAT: "cash-cat",
     "cash-cat": "cash-cat",
     "custom-cashcat": "cash-cat",
-    BSTONK: "basestonk",
-    basestonk: "basestonk",
-    "custom-bstonk": "basestonk",
-    STONKEX: "stonkex",
-    stonkex: "stonkex",
-    "custom-stonkex": "stonkex",
-    PONGO: "pongo",
-    pongo: "pongo",
-    "custom-pongo": "pongo",
-    SIBYL: "sibyl",
-    sibyl: "sibyl",
-    "custom-sibyl": "sibyl",
+    CASCAT: "cash-cat",
     RAXOL: "raxol",
     raxol: "raxol",
     "custom-raxol": "raxol",
-    HARMONIC: "harmonic",
-    harmonic: "harmonic",
-    "custom-harmonic": "harmonic",
+    VEX: "vex",
+    vex: "vex",
+    "custom-vex": "vex",
+    "custom-projetvex": "vex",
+    "custom-projectvex": "vex",
+    UMIA: "umia",
+    umia: "umia",
+    "custom-umia": "umia",
   };
   const PRETTY = {};
   CORE.forEach(function (a) { PRETTY[a.id] = a; PRETTY[a.symbol] = a; });
@@ -1484,6 +1525,17 @@
     }
     return s;
   }
+  (function pruneCatalog() {
+    const n0 = (state.customAssets || []).length;
+    state.customAssets = (state.customAssets || []).filter(function (a) {
+      return KEEP[tickerOf(a)];
+    });
+    const h0 = (state.hiddenMarket || []).length;
+    state.hiddenMarket = (state.hiddenMarket || []).filter(function (id) {
+      return !KEEP[tickerOf(id)];
+    });
+    if (state.customAssets.length !== n0 || state.hiddenMarket.length !== h0) saveState();
+  })();
   function feedByTicker(tick) {
     const t = tickerOf(tick);
     return CORE.find(function (a) {
@@ -1532,7 +1584,8 @@
         dex: pretty.dex,
         dexChain: pretty.dexChain,
         dexSearch: pretty.dexSearch,
-        cb: pretty.cb
+        cb: pretty.cb,
+        logo: pretty.logo
       };
     }
     const custom = (state.customAssets || []).find(function (a) {
@@ -1967,13 +2020,18 @@
     }).join("");
     const legend = segments.map((seg, i) => {
       const color = seg.color || DONUT_COLORS[i % DONUT_COLORS.length];
-      const click = seg.poche ? ' click" data-open-poche="1' : "";
-      const tag = seg.poche ? "button type=\"button\"" : "div";
-      return `<${tag} class="donut-leg-row${click}">
+      if (seg.poche) {
+        return `<button type="button" class="donut-leg-row click" data-open-poche="1">
       <i style="background:${color}"></i>
       <span class="nm">${escapeHtml(seg.label)}</span>
       <span class="pc">${((seg.value / total) * 100).toFixed(0)} %</span>
-    </${tag}>`;
+    </button>`;
+      }
+      return `<div class="donut-leg-row">
+      <i style="background:${color}"></i>
+      <span class="nm">${escapeHtml(seg.label)}</span>
+      <span class="pc">${((seg.value / total) * 100).toFixed(0)} %</span>
+    </div>`;
     }).join("");
     return `<div class="donut-row"><div class="donut-stage"><div class="donut-tilt"><svg class="donut-svg" viewBox="0 0 100 100">
       <ellipse cx="50" cy="54" rx="41" ry="37" fill="none" stroke="#0a0a0b" stroke-width="17" opacity=".35"/>
@@ -1993,8 +2051,8 @@
     }
     if (a.cg === "bitcoin" || a.symbol === "BTC") urls.push("https://assets.coingecko.com/coins/images/1/small/bitcoin.png");
     if (a.cg === "ethereum" || a.symbol === "ETH") urls.push("https://assets.coingecko.com/coins/images/279/small/ethereum.png");
-    if (a.cg === "ondo-finance" || a.symbol === "ONDO") urls.push("https://assets.coingecko.com/coins/images/26580/small/ONDO.png");
     if (a.dex && a.dexChain) {
+      if (a.logo) urls.push(a.logo);
       urls.push("https://dd.dexscreener.com/ds-data/tokens/" + a.dexChain + "/" + String(a.dex).toLowerCase() + ".png?size=lg");
     }
     if (!urls.length) return ph;
@@ -2118,8 +2176,8 @@
     else {
       cBox.innerHTML = state.liquidity.map((c) => `<div class="row">
         <div class="logo ph">${c.kind === "fiat" ? "$" : "S"}</div>
-        <div class="grow"><div class="name">${escapeHtml(c.currency)}</div>
-          <div class="sym">${c.venue ? escapeHtml(c.venue) : "cash"}</div></div>
+        <div class="grow"><div class="name">${escapeHtml(c.venue || "Cash")}</div>
+          <div class="sym">${escapeHtml(c.currency || "USD")}</div></div>
         <div class="right"><div class="v">${$m(n(c.amount))}</div></div>
         <button type="button" class="btn ghost" data-del-cash="${c.id}">✕</button>
       </div>`).join("");
@@ -2240,28 +2298,28 @@
 
   function renderMkt() {
     const box = document.getElementById("mktCard");
-    const hiddenTicks = new Set((state.hiddenMarket || []).map(function (id) { return tickerOf(id); }));
-    const rows = allAssets().filter(function (a) { return !hiddenTicks.has(tickerOf(a)); }).map(function (a) {
+    if (!box) return;
+    const rows = CORE.filter(function (a) { return KEEP[tickerOf(a.symbol)]; }).map(function (a) {
       const asset = resolveAsset(a.id);
       const px = priceUsd(asset.id);
       return `<div class="row">
         <button type="button" class="pos" style="border:0;padding:.2rem 0;flex:1" data-set-price="${escapeHtml(asset.id)}">
           ${assetLogo(asset)}
-          <div class="grow"><div class="name">${escapeHtml(asset.name)}</div></div>
+          <div class="grow"><div class="name">${escapeHtml(asset.name)}</div>
+            <div class="sym">${escapeHtml(asset.symbol)}</div></div>
           <div class="right"><div class="v">${px > 0 ? formatUnit(px) : "—"}</div></div>
         </button>
-        <button type="button" class="btn ghost" data-del-asset="${escapeHtml(asset.id)}" aria-label="Retirer">✕</button>
       </div>`;
     });
     box.innerHTML = rows.join("") || '<div class="empty">Aucun actif.</div>';
   }
 
   function renderAll() {
-    applyLogo();
-    renderHome();
-    if (view === "asset") renderAsset();
-    renderTx();
-    renderMkt();
+    try { applyLogo(); } catch (e) {}
+    try { renderHome(); } catch (e) {}
+    try { if (view === "asset") renderAsset(); } catch (e) {}
+    try { renderTx(); } catch (e) {}
+    try { renderMkt(); } catch (e) {}
   }
 
   function closeSheet() {
@@ -2283,7 +2341,7 @@
 
   function openTxForm(edit, presetAssetId, preset) {
     preset = preset || {};
-    const assets = allAssets();
+    const assets = CORE.filter(function (a) { return KEEP[tickerOf(a.symbol)]; });
     const pre = presetAssetId || edit?.assetId || assets[0]?.id || "";
     const isNewOpt = "__new__";
     const opts = [`<option value="${isNewOpt}">Enregistrer un autre actif</option>`]
@@ -2308,6 +2366,7 @@
       </div>
       <div class="field"><label>Quantité</label><input id="fQty" inputmode="decimal" value="${edit ? edit.quantity : (preset.qty || "")}" /></div>
       <div class="field"><label>Prix USD</label><input id="fPx" inputmode="decimal" value="${edit ? edit.priceUsd : (preset.px || "")}" /></div>
+      <p class="hint">1 000 000 et 0,0004 (virgule ou point) sont acceptés.</p>
       <div class="field"><label>Date et heure</label><input id="fWhen" type="datetime-local" value="${local}" /></div>
       <div class="field"><label>Plateforme</label>${venueChips(edit?.venue || "")}</div>
       <div class="field"><label>Frais USD</label><input id="fFee" inputmode="decimal" value="${edit?.feeUsd || ""}" /></div>
@@ -2398,7 +2457,8 @@
       }
       const qty = n(document.getElementById("fQty").value);
       const px = n(document.getElementById("fPx").value);
-      if (!(qty > 0) || !(px >= 0)) return toast("Quantité / prix invalides");
+      if (!(qty > 0)) return toast("Quantité invalide");
+      if (!(px > 0)) return toast("Prix invalide — ex. 0,0004");
       const when = document.getElementById("fWhen").value;
       const executedAt = when ? new Date(when).toISOString() : new Date().toISOString();
       const venue = document.getElementById("fVenue").value.trim() || "Autre";
@@ -2426,9 +2486,7 @@
         const creditId = document.getElementById("fCreditId").value;
         const proceeds = Math.max(0, qty * px - fee);
         if (creditId === "__new__" || !state.liquidity.length) {
-          const hit = state.liquidity.find((c) => c.currency === "USD" && (c.venue || "") === venue);
-          if (hit) hit.amount = n(hit.amount) + proceeds;
-          else state.liquidity.push({ id: uid(), kind: "fiat", currency: "USD", amount: proceeds, venue, note: null });
+          addLiquidity("USD", venue, proceeds);
         } else {
           const pos = state.liquidity.find((c) => c.id === creditId);
           if (pos) pos.amount = n(pos.amount) + proceeds;
@@ -2445,18 +2503,30 @@
       <div class="field"><label>Montant</label><input id="cAmt" inputmode="decimal" /></div>
       <div class="field"><label>Plateforme</label>
         <select id="cVenue">${VENUES.map((v) => `<option>${v}</option>`).join("")}</select></div>
+      <p class="hint" id="cHint"></p>
       <div class="actions"><button type="button" class="btn secondary" id="cCancel">Annuler</button>
         <button type="button" class="btn primary" id="cSave">Enregistrer</button></div>`);
+    const hint = document.getElementById("cHint");
+    const refreshHint = function () {
+      const cur = document.getElementById("cCur").value;
+      const venue = document.getElementById("cVenue").value;
+      const hit = findLiquidity(cur, venue);
+      hint.textContent = hit
+        ? ("Déjà " + formatMoney(n(hit.amount)) + " sur " + venue + " — ce montant s’ajoute.")
+        : ("Nouvelle réserve " + cur + " sur " + venue + ".");
+    };
+    document.getElementById("cCur").onchange = refreshHint;
+    document.getElementById("cVenue").onchange = refreshHint;
+    refreshHint();
     document.getElementById("cCancel").onclick = closeSheet;
     document.getElementById("cSave").onclick = () => {
       const amount = n(document.getElementById("cAmt").value);
       if (!(amount > 0)) return toast("Montant invalide");
       const cur = document.getElementById("cCur").value;
-      state.liquidity.push({
-        id: uid(), kind: cur === "USD" ? "fiat" : "stablecoin", currency: cur,
-        amount, venue: document.getElementById("cVenue").value, note: null,
-      });
-      saveState(); closeSheet(); renderAll(); toast("Liquidité ajoutée");
+      const venue = document.getElementById("cVenue").value;
+      const res = addLiquidity(cur, venue, amount);
+      saveState(); closeSheet(); renderAll();
+      toast(res.merged ? ("Ajouté à " + venue) : "Liquidité ajoutée");
     };
   }
 
@@ -2466,7 +2536,7 @@
     if (status) status.textContent = "Cours : chargement…";
     pricesLoading = true;
     renderMkt();
-    const assets = allAssets();
+    const assets = CORE.slice();
     function applyPx(assetId, usd) {
       if (!(usd > 0)) return;
       const tick = tickerOf(assetId);
@@ -2505,12 +2575,19 @@
           const addr = ((p.baseToken && p.baseToken.address) || "").toLowerCase();
           const px = Number(p.priceUsd);
           const liq = Number((p.liquidity && p.liquidity.usd) || 0);
+          const img = (p.info && p.info.imageUrl) || "";
           if (!(px > 0) || !addr) return;
-          if (!best[addr] || liq > best[addr].liq) best[addr] = { px: px, liq: liq };
+          if (!best[addr] || liq > best[addr].liq) best[addr] = { px: px, liq: liq, img: img };
         });
         byChain[chain].forEach(function (x) {
           const hit = best[String(x.dex).toLowerCase()];
-          if (hit) applyPx(x.id, hit.px);
+          if (hit) {
+            applyPx(x.id, hit.px);
+            if (hit.img) {
+              const a = CORE.find(function (c) { return c.id === x.id; });
+              if (a) a.logo = hit.img;
+            }
+          }
         });
       } catch (e) {}
     }
@@ -2682,8 +2759,12 @@
     }
   });
 
-  document.querySelectorAll(".nav button").forEach((b) => b.onclick = () => {
-    setView(b.dataset.view); renderAll();
+  document.querySelectorAll(".nav button").forEach((b) => b.onclick = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeSheet();
+    setView(b.getAttribute("data-view"));
+    renderAll();
   });
   document.getElementById("sheetBg").onclick = closeSheet;
   document.getElementById("btnAddCash").onclick = openCashForm;
