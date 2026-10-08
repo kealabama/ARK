@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "008.5";
-  const APP_BUILT = "06.10.2026 12:16";
+  const APP_VERSION = "008.6";
+  const APP_BUILT = "08.10.2026 21:01";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -771,6 +771,7 @@
   const CORE = [
     { id: "bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", cg: "bitcoin", cb: "BTC" },
     { id: "ethereum", symbol: "ETH", name: "Ethereum", kind: "crypto", cg: "ethereum", cb: "ETH" },
+    { id: "uniswap", symbol: "UNI", name: "Uniswap", kind: "crypto", cg: "uniswap", cb: "UNI" },
     { id: "COIN", symbol: "COIN", name: "Coinbase", kind: "equity", yahoo: "COIN", cg: "coinbase-xstock" },
     { id: "CRCL", symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL", cg: "circle-xstock" },
     { id: "cash-cat", symbol: "CASHCAT", name: "Cash Cat", kind: "crypto", dexChain: "robinhood", dex: "0x020bfc650a365f8bb26819deaabf3e21291018b4" },
@@ -781,7 +782,7 @@
     { id: "hood10", symbol: "HOOD10", name: "HOOD10", kind: "crypto", dexChain: "robinhood", dex: "0x0d257ca40d40090be60c2d2ed5bb3535392838cc" },
     { id: "umia", symbol: "UMIA", name: "Umia", kind: "crypto", dexChain: "base", dex: "0x56ab53b77F07DA3af732150E8aeC4783eB5BbA7D" },
   ];
-  const KEEP = { BTC: 1, ETH: 1, COIN: 1, CRCL: 1, CASHCAT: 1, RAXOL: 1, NASDANQ: 1, INDEX: 1, VEX: 1, HOOD10: 1, UMIA: 1 };
+  const KEEP = { BTC: 1, ETH: 1, UNI: 1, COIN: 1, CRCL: 1, CASHCAT: 1, RAXOL: 1, NASDANQ: 1, INDEX: 1, VEX: 1, HOOD10: 1, UMIA: 1 };
 
   function n(v) {
     if (typeof v === "number") return Number.isFinite(v) ? v : 0;
@@ -1478,6 +1479,9 @@
     "eth-ethereum": "ethereum",
     ethereum: "ethereum",
     ETH: "ethereum",
+    UNI: "uniswap",
+    uniswap: "uniswap",
+    "custom-uni": "uniswap",
     "eq-COIN": "COIN",
     COIN: "COIN",
     "eq-CRCL": "CRCL",
@@ -2051,6 +2055,7 @@
     }
     if (a.cg === "bitcoin" || a.symbol === "BTC") urls.push("https://assets.coingecko.com/coins/images/1/small/bitcoin.png");
     if (a.cg === "ethereum" || a.symbol === "ETH") urls.push("https://assets.coingecko.com/coins/images/279/small/ethereum.png");
+    if (a.cg === "uniswap" || a.symbol === "UNI") urls.push("https://assets.coingecko.com/coins/images/12504/small/uniswap-logo.png");
     if (a.dex && a.dexChain) {
       if (a.logo) urls.push(a.logo);
       urls.push("https://dd.dexscreener.com/ds-data/tokens/" + a.dexChain + "/" + String(a.dex).toLowerCase() + ".png?size=lg");
