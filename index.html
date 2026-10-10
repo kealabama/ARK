@@ -736,8 +736,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "008.8";
-  const APP_BUILT = "08.10.2026 21:18";
+  const APP_VERSION = "009.0";
+  const APP_BUILT = "10.10.2026 15:10";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -777,13 +777,14 @@
     { id: "CRCL", symbol: "CRCL", name: "Circle", kind: "equity", yahoo: "CRCL", cg: "circle-xstock" },
     { id: "cash-cat", symbol: "CASHCAT", name: "Cash Cat", kind: "crypto", dexChain: "robinhood", dex: "0x020bfc650a365f8bb26819deaabf3e21291018b4" },
     { id: "raxol", symbol: "RAXOL", name: "Raxol", kind: "crypto", dexChain: "robinhood", dex: "0xf44702b17d9abD53815F703e772F35E9c71A53af" },
-    { id: "nasdanq", symbol: "NASDANQ", name: "NASDANQ", kind: "crypto", dexChain: "robinhood", dex: "0x51fb76be80ab6daaa345d818f4e06441816b4fea" },
+    { id: "nasdanq", symbol: "NASDANQ", name: "NASDANQ", kind: "crypto", dexChain: "robinhood", dex: "0x4DC9DA81Fa378181e113d7c67F77adc5Cd857602" },
+    { id: "zzz", symbol: "ZZZ", name: "ZZZ", kind: "crypto", dexChain: "robinhood", dex: "0x7dbf38976f6D3b9c529e7D9484A71898B409eE6a" },
     { id: "the-index", symbol: "INDEX", name: "The Index", kind: "crypto", dexChain: "robinhood", dex: "0x56910d4409f3a0c78c64dd8d0545ff0705389870" },
     { id: "vex", symbol: "VEX", name: "ProjectVex", kind: "crypto", dexChain: "robinhood", dex: "0x8Ff92566f2e81BDd68EDfAa8cde73942A723796b" },
     { id: "hood10", symbol: "HOOD10", name: "HOOD10", kind: "crypto", dexChain: "robinhood", dex: "0x0d257ca40d40090be60c2d2ed5bb3535392838cc" },
     { id: "umia", symbol: "UMIA", name: "Umia", kind: "crypto", dexChain: "base", dex: "0x56ab53b77F07DA3af732150E8aeC4783eB5BbA7D" },
   ];
-  const KEEP = { BTC: 1, ETH: 1, UNI: 1, ONDO: 1, COIN: 1, CRCL: 1, CASHCAT: 1, RAXOL: 1, NASDANQ: 1, INDEX: 1, VEX: 1, HOOD10: 1, UMIA: 1 };
+  const KEEP = { BTC: 1, ETH: 1, UNI: 1, ONDO: 1, COIN: 1, CRCL: 1, CASHCAT: 1, RAXOL: 1, NASDANQ: 1, ZZZ: 1, INDEX: 1, VEX: 1, HOOD10: 1, UMIA: 1 };
 
   function n(v) {
     if (typeof v === "number") return Number.isFinite(v) ? v : 0;
@@ -1503,6 +1504,9 @@
     NASDANQ: "nasdanq",
     nasdanq: "nasdanq",
     "custom-nasdanq": "nasdanq",
+    ZZZ: "zzz",
+    zzz: "zzz",
+    "custom-zzz": "zzz",
     CASHCAT: "cash-cat",
     "cash-cat": "cash-cat",
     "custom-cashcat": "cash-cat",
