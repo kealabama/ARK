@@ -722,8 +722,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "009.3";
-  const APP_BUILT = "16.10.2026 13:50";
+  const APP_VERSION = "009.4";
+  const APP_BUILT = "16.10.2026 14:30";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -2019,41 +2019,65 @@
       if (!(pt[0] <= ts)) continue;
       if (pt[0] >= bestT) { bestT = pt[0]; best = pt[1]; }
     }
-    if (!(best > 0) || ts - bestT > 3 * 86400000) return 0;
+    if (!(best > 0) || ts - bestT > 14 * 86400000) return 0;
+    return best;
+  }
+  function cashAt(ts) {
+    let cash = state.liquidity.reduce((s, c) => s + cashToUsd(n(c.amount)), 0);
+    for (const tx of state.txs) {
+      if (!tx.cashMove || !tx.cashMove.delta) continue;
+      if (Date.parse(tx.executedAt) > ts) cash -= n(tx.cashMove.delta);
+    }
+    return cash;
+  }
+  function histPoints(id) {
+    const keys = [id + ":365", id + ":30", id + ":7"];
+    let best = [];
+    for (const k of keys) {
+      const pts = hist[k] && hist[k].points;
+      if (pts && pts.length > best.length) best = pts;
+    }
     return best;
   }
   function buildPortfolioPoints(days) {
     const now = Date.now(), from = now - days * 86400000;
     const assets = [...new Set(state.txs.map((tx) => canonId(tx.assetId)))];
-    const step = days <= 1 ? 3600000 : days <= 7 ? 3 * 3600000 : 86400000;
-    const cash = state.liquidity.reduce((s, c) => s + cashToUsd(n(c.amount)), 0);
+    const step = days <= 1 ? 3600000 : days <= 7 ? 6 * 3600000 : 86400000;
+    const live = {};
+    assets.forEach(function (id) { live[id] = priceUsd(id); });
     const pts = [];
     for (let ts = from; ts <= now; ts += step) {
-      const isNow = now - ts < step;
-      let v = isNow ? cash : 0;
-      let priced = false;
+      let v = cashAt(ts);
       for (const id of assets) {
         const q = qtyAt(id, ts);
         if (q <= 0) continue;
-        const raw = hist[id + ":" + days]?.points || hist[id + ":365"]?.points || [];
-        let px = lookupPx(raw, ts);
-        if (!(px > 0) && isNow) px = priceUsd(id);
-        if (!(px > 0)) continue;
-        priced = true;
-        v += q * px;
+        let px = lookupPx(histPoints(id), ts);
+        if (!(px > 0)) px = live[id];
+        if (px > 0) v += q * px;
       }
-      if (priced || isNow) pts.push([ts, v]);
+      pts.push([ts, v]);
     }
+    if (!pts.length) pts.push([from, 0], [now, 0]);
+    const tot = portfolioTotals();
+    pts[pts.length - 1] = [now, tot.totalUsd];
     return pts;
   }
   function buildAssetPoints(assetId, days) {
     const now = Date.now(), from = now - days * 86400000;
-    const raw = hist[assetId + ":" + days]?.points || hist[assetId + ":365"]?.points || [];
-    if (raw.length) return raw.filter((pt) => pt[0] >= from && pt[0] <= now).map(([ts, px]) => [ts, qtyAt(assetId, ts) * px]);
-    const px = priceUsd(assetId);
-    const q = qtyAt(assetId, now);
-    if (q > 0 && px > 0) return [[now - 86400000, q * px], [now, q * px]];
-    return [];
+    const id = canonId(assetId);
+    const raw = histPoints(id);
+    const live = priceUsd(id);
+    const step = days <= 1 ? 3600000 : days <= 7 ? 6 * 3600000 : 86400000;
+    const pts = [];
+    for (let ts = from; ts <= now; ts += step) {
+      const q = qtyAt(id, ts);
+      let px = lookupPx(raw, ts);
+      if (!(px > 0)) px = live;
+      pts.push([ts, q * (px > 0 ? px : 0)]);
+    }
+    const h = portfolioTotals().holdings.find(function (x) { return canonId(x.assetId) === id; });
+    if (pts.length && h) pts[pts.length - 1][1] = h.valueUsd;
+    return pts.length ? pts : [];
   }
   function toUnitPoints(pts) {
     if (!pts || unit !== "btc") return pts || [];
@@ -2271,8 +2295,10 @@
     syncUnitToggle();
     document.getElementById("netWorth").textContent = veil ? "Confidentiel" : $c(t.totalUsd, t.totalBtc);
     const pts = toUnitPoints(buildPortfolioPoints(PERIODS.find((p) => p.id === homePeriod).days));
-    const first = pts[0]?.[1] || (unit === "btc" ? t.totalBtc : t.totalUsd);
-    const last = pts.at(-1)?.[1] || (unit === "btc" ? t.totalBtc : t.totalUsd);
+    const liveNow = unit === "btc" ? t.totalBtc : t.totalUsd;
+    if (pts.length) pts[pts.length - 1] = [Date.now(), liveNow];
+    const first = pts[0]?.[1] || liveNow;
+    const last = liveNow;
     const d = last - first;
     const dp = first > 0 ? (d / first) * 100 : 0;
     const up = d >= 0;
@@ -2876,22 +2902,58 @@
     refreshHist();
   }
 
-  async function refreshHist() {
-    const assets = allAssets();
-    for (const a of assets) {
-      if (a.cg) {
-        try {
-          const raw = await fetch("https://api.coingecko.com/api/v3/coins/" + a.cg + "/market_chart?vs_currency=usd&days=365").then((r) => r.json());
-          if (raw.prices) {
-            hist[a.id + ":365"] = { at: Date.now(), points: raw.prices };
-            hist[a.id + ":30"] = { at: Date.now(), points: raw.prices.slice(-30) };
-            hist[a.id + ":7"] = { at: Date.now(), points: raw.prices.slice(-7) };
-          }
-        } catch {}
-      }
+  function histFresh(id) {
+    const row = hist[id + ":365"];
+    return !!(row && row.points && row.points.length > 2 && Date.now() - row.at < 12 * 3600000);
+  }
+  async function fetchYahooSeries(sym) {
+    const path = "https://query1.finance.yahoo.com/v8/finance/chart/" + sym + "?interval=1d&range=1y";
+    const urls = [path, "https://corsproxy.io/?" + encodeURIComponent(path)];
+    for (const u of urls) {
+      try {
+        const raw = await fetch(u).then(function (r) { return r.json(); });
+        const res = raw.chart && raw.chart.result && raw.chart.result[0];
+        const close = res && res.indicators && res.indicators.quote && res.indicators.quote[0] && res.indicators.quote[0].close;
+        if (!res || !res.timestamp || !close) continue;
+        const pts = [];
+        for (let i = 0; i < res.timestamp.length; i++) if (close[i] > 0) pts.push([res.timestamp[i] * 1000, close[i]]);
+        if (pts.length) return pts;
+      } catch (e) {}
     }
-    localStorage.setItem(HIST_KEY, JSON.stringify(hist));
-    if (view === "home") renderHome();
+    return null;
+  }
+  async function fetchDexSeries(chain, address) {
+    const net = chain === "ethereum" ? "eth" : chain;
+    const pools = await fetch("https://api.geckoterminal.com/api/v2/networks/" + net + "/tokens/" + address + "/pools?page=1").then(function (r) { return r.json(); });
+    const pool = pools && pools.data && pools.data[0] && pools.data[0].id;
+    if (!pool) return null;
+    const addr = String(pool).slice(String(pool).indexOf("_") + 1);
+    const raw = await fetch("https://api.geckoterminal.com/api/v2/networks/" + net + "/pools/" + addr + "/ohlcv/day?aggregate=1&limit=180&currency=usd").then(function (r) { return r.json(); });
+    const list = raw && raw.data && raw.data.attributes && raw.data.attributes.ohlcv_list;
+    if (!list || !list.length) return null;
+    return list.filter(function (row) { return row[4] > 0; }).map(function (row) { return [row[0] * 1000, row[4]]; }).sort(function (a, b) { return a[0] - b[0]; });
+  }
+  async function refreshHist() {
+    const assets = CORE.slice();
+    for (const a of assets) {
+      if (histFresh(a.id)) continue;
+      const f = resolveAsset(a.id);
+      try {
+        if (f.yahoo) {
+          const pts = await fetchYahooSeries(f.yahoo);
+          if (pts && pts.length) hist[a.id + ":365"] = { at: Date.now(), points: pts };
+        } else if (f.cg) {
+          const raw = await fetch("https://api.coingecko.com/api/v3/coins/" + f.cg + "/market_chart?vs_currency=usd&days=365").then(function (r) { return r.json(); });
+          if (raw.prices && raw.prices.length) hist[a.id + ":365"] = { at: Date.now(), points: raw.prices };
+        } else if (f.dex && f.dexChain) {
+          const pts = await fetchDexSeries(f.dexChain, f.dex);
+          if (pts && pts.length) hist[a.id + ":365"] = { at: Date.now(), points: pts };
+        }
+      } catch (e) {}
+      await new Promise(function (ok) { setTimeout(ok, 350); });
+    }
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(hist)); } catch (e) {}
+    if (view === "home" || view === "asset") renderAll();
   }
 
   document.getElementById("netWorth").onclick = toggleVeil;
