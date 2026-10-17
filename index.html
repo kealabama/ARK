@@ -26,13 +26,13 @@
     }
     * { box-sizing: border-box; }
     html, body {
-      margin: 0; min-height: 100%; background: var(--bg); color: var(--fg);
+      margin: 0; min-height: 100%; min-height: 100dvh; background: var(--bg); color: var(--fg);
       font-family: var(--font); -webkit-font-smoothing: antialiased;
-      overflow-x: hidden; overscroll-behavior-y: contain;
+      overscroll-behavior-y: contain;
     }
     button, input, select, textarea { font: inherit; color: inherit; }
     button { cursor: pointer; border: none; background: none; }
-    .app { max-width: 28rem; margin: 0 auto; padding: 0 1rem calc(5.4rem + var(--safe-b)); }
+    .app { max-width: 28rem; margin: 0 auto; min-height: 100dvh; padding: 0 1rem calc(5.4rem + var(--safe-b)); overflow-x: clip; }
     header.top {
       position: sticky; top: 0; z-index: 20;
       display: flex; align-items: center; justify-content: space-between;
@@ -257,7 +257,7 @@
     .btn.ghost { color: var(--muted); height: 2rem; padding: 0 .55rem; font-size: .72rem; }
     .btn.danger { background: color-mix(in oklab, var(--down) 16%, transparent); color: var(--down); }
     .btn.sm { height: 2.25rem; min-height: 2.25rem; padding: 0 .75rem; font-size: .75rem; border-radius: 12px; }
-    .nav { position: fixed; inset-inline: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(16px); padding-bottom: var(--safe-b); }
+    .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding-bottom: var(--safe-b); }
     .nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem; height: 3.4rem; font-size: .62rem; color: var(--muted); }
     .nav button.on { color: var(--fg); }
     .nav svg { width: 1.2rem; height: 1.2rem; }
@@ -772,8 +772,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "009.7";
-  const APP_BUILT = "17.10.2026 08:40";
+  const APP_VERSION = "009.8";
+  const APP_BUILT = "17.10.2026 08:50";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -2720,7 +2720,7 @@
     const cash = row ? row.cash || 0 : 0;
     const sum = venues.reduce(function (s, v) { return s + v.value; }, 0) || 1;
     title.textContent = name;
-    document.getElementById("venueMark").innerHTML = venueLogo(name);
+    document.getElementById("venueMark").innerHTML = name.toLowerCase() === "autre" ? "" : venueLogo(name);
     document.getElementById("venueValue").textContent = veil ? "Confidentiel" : $m(value);
     document.getElementById("venueStats").innerHTML =
       '<div class="stat"><div class="k">Positions</div><div class="n">' + (veil ? "•••" : $m(Math.max(0, value - cash))) + "</div></div>" +
@@ -2751,7 +2751,7 @@
       if (!all.some(function (n) { return n.toLowerCase() === String(txVenueFilter).toLowerCase(); })) txVenueFilter = "Toutes";
       filters.innerHTML = all.map(function (name) {
         const on = name.toLowerCase() === String(txVenueFilter).toLowerCase();
-        const logo = name === "Toutes" ? "" : venueLogo(name, true);
+        const logo = name === "Toutes" || name.toLowerCase() === "autre" ? "" : venueLogo(name, true);
         return '<button type="button" data-tx-venue="' + escapeHtml(name) + '" class="' + (on ? "on" : "") + '">' + logo + escapeHtml(name) + "</button>";
       }).join("");
     }
