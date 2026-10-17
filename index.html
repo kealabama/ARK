@@ -277,7 +277,10 @@
     .side-toggle button.on-sell { background: color-mix(in oklab, var(--down) 22%, transparent); color: var(--down); }
     .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
     .chips button { height: 1.85rem; padding: 0 .65rem; border-radius: 999px; font-size: .72rem; border: 1px solid var(--border); color: var(--muted); }
-    .chips button.on { background: var(--surface-2); color: var(--fg); border-color: transparent; }
+    .chips button.on { background: #fff; color: #111; border-color: transparent; }
+    .chips button { display: inline-flex; align-items: center; gap: .35rem; }
+    .logo-box.sm, .logo.sm { width: .95rem; height: .95rem; }
+    .logo-box.sm { display: inline-grid; }
     .actions { display: flex; gap: .5rem; margin-top: 1rem; }
     .actions .btn { flex: 1; }
     .vfx-layer {
@@ -622,7 +625,6 @@
         <div class="periods" id="homePeriods"></div>
         <div class="chart-wrap" id="homeChart"></div>
         <div class="chart-read" id="chartRead"></div>
-        <p class="hint chart-note">La variation inclut les achats, les ventes et le cash. Ce n’est pas seulement la hausse du marché.</p>
         <div class="subrow">
           <span class="chg flat" id="pnlPill">—</span>
           <span id="periodDelta">période</span>
@@ -647,7 +649,6 @@
       </section>
       <section>
         <div class="sec-head"><h2>Plateformes</h2></div>
-        <p class="status" style="margin:0 0 .4rem">Valeur actuelle des quantités restantes ici — le coût d’achat est indiqué à part.</p>
         <div class="card" id="venuesCard"><div class="empty">Aucun solde.</div></div>
       </section>
       <p class="ver" id="appVersion"></p>
@@ -672,11 +673,26 @@
       </section>
     </main>
 
+    <main id="view-venue" class="hidden">
+      <button type="button" class="btn ghost" id="btnBackVenue">← Accueil</button>
+      <section>
+        <div id="venueMark"></div>
+        <p class="status" style="margin:.55rem 0 0" id="venueTitle">—</p>
+        <h1 class="hero" id="venueValue">—</h1>
+        <div class="stats" id="venueStats"></div>
+      </section>
+      <section>
+        <div class="sec-head"><h2>Mouvements</h2></div>
+        <div class="card" id="venueTxs"></div>
+      </section>
+    </main>
+
     <main id="view-tx" class="hidden">
       <section>
         <div class="sec-head"><h2>Transactions</h2>
           <button type="button" class="btn sm primary" id="btnAddTx">+</button>
         </div>
+        <div class="chips" id="txFilters"></div>
         <div id="txTimeline"></div>
       </section>
     </main>
@@ -710,15 +726,6 @@
         </div>
         <h2 style="margin:1.4rem 0 .4rem;font-size:.92rem">À vérifier</h2>
         <div id="integrityBox"><p class="hint">Rien à signaler.</p></div>
-        <h2 style="margin:1.4rem 0 .4rem;font-size:.92rem">Poche</h2>
-        <p class="hint">Regroupe les lignes sous ce montant. 0 affiche tout.</p>
-        <div class="field"><label>Seuil USD</label><input id="pocketMin" inputmode="decimal" /></div>
-        <div class="actions"><button type="button" class="btn secondary" id="btnPocket">Enregistrer le seuil</button></div>
-        <h2 style="margin:1.4rem 0 .4rem;font-size:.92rem">Animations</h2>
-        <div class="actions">
-          <button type="button" class="btn secondary" id="btnMotionOn">Fluide</button>
-          <button type="button" class="btn secondary" id="btnMotionOff">Off</button>
-        </div>
         <h2 style="margin:1.4rem 0 .4rem;font-size:.92rem">Copie</h2>
         <div class="actions"><button type="button" class="btn secondary" id="btnRestorePrev">Revenir à la copie précédente</button></div>
         <h2 style="margin:1.6rem 0 .4rem;font-size:.92rem">Zone danger</h2>
@@ -765,8 +772,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "009.6";
-  const APP_BUILT = "17.10.2026 08:30";
+  const APP_VERSION = "009.7";
+  const APP_BUILT = "17.10.2026 08:40";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
@@ -796,6 +803,17 @@
   })();
   const DONUT_COLORS = ["#3ecf8e","#5b8def","#f0b429","#a78bfa","#eb5757","#2dd4bf","#f472b6","#94a3b8"];
   const VENUES = ["Ledger","MetaMask","Coinbase","Binance","Kraken","Swissquote","IBKR","Revolut","Bitstamp","Autre"];
+  const VENUE_LOGO = {
+    Ledger: "https://www.google.com/s2/favicons?domain=ledger.com&sz=128",
+    MetaMask: "https://www.google.com/s2/favicons?domain=metamask.io&sz=128",
+    Coinbase: "https://www.google.com/s2/favicons?domain=coinbase.com&sz=128",
+    Binance: "https://www.google.com/s2/favicons?domain=binance.com&sz=128",
+    Kraken: "https://www.google.com/s2/favicons?domain=kraken.com&sz=128",
+    Swissquote: "https://www.google.com/s2/favicons?domain=swissquote.com&sz=128",
+    IBKR: "https://www.google.com/s2/favicons?domain=interactivebrokers.com&sz=128",
+    Revolut: "https://www.google.com/s2/favicons?domain=revolut.com&sz=128",
+    Bitstamp: "https://www.google.com/s2/favicons?domain=bitstamp.net&sz=128"
+  };
   const PERIODS = [{ id: "1d", label: "1J", days: 1 }, { id: "1w", label: "1S", days: 7 }, { id: "1m", label: "1M", days: 30 }, { id: "1y", label: "1A", days: 365 }];
   const CORE = [
     { id: "bitcoin", symbol: "BTC", name: "Bitcoin", kind: "crypto", cg: "bitcoin", cb: "BTC" },
@@ -1531,7 +1549,7 @@
     vfx.emitters = [];
   }
   function vfxResize() { if (vfx.on) vfx.emitters.forEach(vfxFit); }
-  function motionOn() { return !(state.settings && state.settings.motion === "off"); }
+  function motionOn() { return true; }
   function startBraiseWindow() {
     if (!motionOn()) { braiseLive = false; vfxStop(); document.body.classList.add("quiet"); return; }
     document.body.classList.remove("quiet");
@@ -2171,10 +2189,7 @@
     if (!best.at || Date.now() - best.at > 20 * 60 * 1000) return "cache";
     return "";
   }
-  function pocheMin() {
-    const v = state.settings && state.settings.pocketMin;
-    return v == null ? 5000 : Math.max(0, n(v));
-  }
+  function pocheMin() { return 5000; }
   function integrityIssues() {
     const issues = [];
     const qty = {};
@@ -2491,12 +2506,31 @@
 
   function setView(id) {
     view = id;
-    ["home","asset","tx","mkt","set"].forEach((v) => {
+    ["home","asset","venue","tx","mkt","set"].forEach((v) => {
       document.getElementById("view-" + v).classList.toggle("hidden", v !== id);
     });
-    document.querySelectorAll(".nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === (id === "asset" ? "home" : id)));
-    document.getElementById("hdrTitle").textContent = id === "asset" ? "Actif" : "ARK";
+    const nav = id === "asset" || id === "venue" ? "home" : id;
+    document.querySelectorAll(".nav button").forEach((b) => b.classList.toggle("on", b.dataset.view === nav));
+    document.getElementById("hdrTitle").textContent = id === "asset" ? "Actif" : id === "venue" ? "Plateforme" : "ARK";
   }
+  function venueLogo(name, small) {
+    const raw = String(name || "").trim();
+    const key = Object.keys(VENUE_LOGO).find(function (k) { return k.toLowerCase() === raw.toLowerCase(); });
+    const url = key ? VENUE_LOGO[key] : "";
+    const letters = escapeHtml((raw || "?").slice(0, 2).toUpperCase());
+    if (!url) return '<div class="logo ph">' + letters + "</div>";
+    const cls = small ? "logo sm" : "logo";
+    return '<span class="logo-box' + (small ? " sm" : "") + '"><img class="' + cls + '" alt="" src="' + url + '" onerror="window.arkLogoFail&&window.arkLogoFail(this)"><div class="logo ph">' + letters + "</div></span>";
+  }
+  function txTouchesVenue(tx, venue) {
+    const v = String(venue || "").trim().toLowerCase();
+    if (!v || v === "toutes") return true;
+    const from = String(tx.venue || "").trim().toLowerCase();
+    const to = String(tx.toVenue || "").trim().toLowerCase();
+    return from === v || (tx.side === "transfer" && to === v);
+  }
+  let txVenueFilter = "Toutes";
+  let openVenueName = "";
 
   function renderHome() {
     const t = portfolioTotals();
@@ -2515,7 +2549,7 @@
     pill.textContent = veil ? formatPct(dp) : formatPct(dp) + " · " + (unit === "btc" ? formatBtc(d) : formatMoney(d));
     document.getElementById("periodDelta").textContent = veil
       ? "montants masqués · tape ici pour réafficher"
-      : (unit === "btc" ? "contre BTC · inclut dépôts · " : "sur la période · inclut dépôts · ") + $pct(t.pnlPct, t.pnlPctBtc);
+      : (unit === "btc" ? "contre BTC · " : "sur la période · ") + $pct(t.pnlPct, t.pnlPctBtc);
     drawChart(document.getElementById("homeChart"), pts, up, document.getElementById("chartMeta"));
     renderPeriods("homePeriods", homePeriod, (id) => { homePeriod = id; renderHome(); });
     document.getElementById("dashStats").innerHTML = `
@@ -2591,7 +2625,7 @@
     if (!state.liquidity.length) cBox.innerHTML = '<div class="empty">Aucune liquidité USD / stablecoin.</div>';
     else {
       cBox.innerHTML = state.liquidity.map((c) => `<div class="row">
-        <div class="logo ph">${c.kind === "fiat" ? "$" : "S"}</div>
+        ${venueLogo(c.venue || "Cash")}
         <div class="grow"><div class="name">${escapeHtml(c.venue || "Cash")}</div>
           <div class="sym">${escapeHtml(c.currency || "USD")}</div></div>
         <div class="right"><div class="v">${$m(liqBalance(c))}</div></div>
@@ -2603,12 +2637,12 @@
     if (!venues.length) vBox.innerHTML = '<div class="empty">Renseigne la plateforme sur tes mouvements.</div>';
     else {
       const sum = venues.reduce((s, v) => s + v.value, 0) || 1;
-      vBox.innerHTML = venues.map((v) => `<div class="row">
-        <div class="logo ph">${escapeHtml(v.name.slice(0, 2).toUpperCase())}</div>
+      vBox.innerHTML = venues.map((v) => `<button type="button" class="row" data-open-venue="${escapeHtml(v.name)}">
+        ${venueLogo(v.name)}
         <div class="grow"><div class="name">${escapeHtml(v.name)}</div>
-          <div class="sym">${((v.value / sum) * 100).toFixed(0)} %${veil ? "" : " · coût " + $m(v.cost)}</div></div>
+          <div class="sym">${((v.value / sum) * 100).toFixed(0)} %</div></div>
         <div class="right"><div class="v">${veil ? ((v.value / sum) * 100).toFixed(0) + " %" : $m(v.value)}</div></div>
-      </div>`).join("");
+      </button>`).join("");
     }
     document.getElementById("appVersion").textContent = "version " + APP_VERSION + " · " + APP_BUILT;
     const statusEl = document.getElementById("priceStatus");
@@ -2676,8 +2710,53 @@
     </button>`;
   }
 
+  function renderVenue() {
+    const name = openVenueName;
+    const title = document.getElementById("venueTitle");
+    if (!name || !title) return;
+    const venues = venueBalances();
+    const row = venues.find(function (v) { return v.name.toLowerCase() === name.toLowerCase(); });
+    const value = row ? row.value : 0;
+    const cash = row ? row.cash || 0 : 0;
+    const sum = venues.reduce(function (s, v) { return s + v.value; }, 0) || 1;
+    title.textContent = name;
+    document.getElementById("venueMark").innerHTML = venueLogo(name);
+    document.getElementById("venueValue").textContent = veil ? "Confidentiel" : $m(value);
+    document.getElementById("venueStats").innerHTML =
+      '<div class="stat"><div class="k">Positions</div><div class="n">' + (veil ? "•••" : $m(Math.max(0, value - cash))) + "</div></div>" +
+      '<div class="stat"><div class="k">Cash</div><div class="n">' + (veil ? "•••" : $m(cash)) + "</div></div>" +
+      '<div class="stat"><div class="k">Part</div><div class="n">' + ((value / sum) * 100).toFixed(0) + " %</div></div>";
+    const txs = state.txs.filter(function (tx) { return txTouchesVenue(tx, name); })
+      .sort(function (a, b) { return Date.parse(b.executedAt) - Date.parse(a.executedAt); });
+    document.getElementById("venueTxs").innerHTML = txs.length
+      ? txs.map(txRow).join("")
+      : '<div class="empty">Aucun mouvement sur cette plateforme.</div>';
+  }
   function renderTx() {
-    const txs = [...state.txs].sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
+    const names = [];
+    const seen = {};
+    function addName(raw) {
+      const name = String(raw || "").trim();
+      if (!name) return;
+      const k = name.toLowerCase();
+      if (seen[k]) return;
+      seen[k] = 1;
+      names.push(name);
+    }
+    state.txs.forEach(function (tx) { addName(tx.venue); if (tx.side === "transfer") addName(tx.toVenue); });
+    state.liquidity.forEach(function (c) { addName(c.venue); });
+    const filters = document.getElementById("txFilters");
+    if (filters) {
+      const all = ["Toutes"].concat(names);
+      if (!all.some(function (n) { return n.toLowerCase() === String(txVenueFilter).toLowerCase(); })) txVenueFilter = "Toutes";
+      filters.innerHTML = all.map(function (name) {
+        const on = name.toLowerCase() === String(txVenueFilter).toLowerCase();
+        const logo = name === "Toutes" ? "" : venueLogo(name, true);
+        return '<button type="button" data-tx-venue="' + escapeHtml(name) + '" class="' + (on ? "on" : "") + '">' + logo + escapeHtml(name) + "</button>";
+      }).join("");
+    }
+    const txs = [...state.txs].filter(function (tx) { return txTouchesVenue(tx, txVenueFilter); })
+      .sort((a, b) => Date.parse(b.executedAt) - Date.parse(a.executedAt));
     const box = document.getElementById("txTimeline");
     if (!txs.length) { box.innerHTML = '<div class="empty">Aucun mouvement.</div>'; return; }
     const byYear = new Map();
@@ -2741,13 +2820,6 @@
         }).join("")
         : '<p class="hint">Rien à signaler.</p>';
     }
-    const inp = document.getElementById("pocketMin");
-    if (inp && document.activeElement !== inp) inp.value = String(pocheMin());
-    document.body.classList.toggle("quiet", !motionOn());
-    const on = document.getElementById("btnMotionOn");
-    const off = document.getElementById("btnMotionOff");
-    if (on) on.className = "btn " + (motionOn() ? "primary" : "secondary");
-    if (off) off.className = "btn " + (!motionOn() ? "primary" : "secondary");
     const eye = document.getElementById("veilBtn");
     if (eye) {
       eye.innerHTML = veil
@@ -2760,6 +2832,7 @@
     try { applyLogo(); } catch (e) {}
     try { renderHome(); } catch (e) {}
     try { if (view === "asset") renderAsset(); } catch (e) {}
+    try { if (view === "venue") renderVenue(); } catch (e) {}
     try { renderTx(); } catch (e) {}
     try { renderMkt(); } catch (e) {}
     try { renderSettings(); } catch (e) {}
@@ -3299,6 +3372,17 @@
   document.getElementById("btnAddTx").onclick = () => openTxForm(null);
   document.getElementById("btnAddTxAsset").onclick = () => openTxForm(null, openAssetId);
   document.getElementById("btnBackHome").onclick = () => { setView("home"); renderHome(); };
+  document.getElementById("btnBackVenue").onclick = () => { setView("home"); renderHome(); };
+  document.getElementById("txFilters").onclick = (e) => {
+    const name = e.target.closest("[data-tx-venue]")?.dataset?.txVenue;
+    if (!name) return;
+    txVenueFilter = name;
+    renderTx();
+  };
+  document.getElementById("venueTxs").addEventListener("click", (e) => {
+    const id = e.target.closest("[data-edit-tx]")?.dataset?.editTx;
+    if (id) openTxForm(state.txs.find((t) => t.id === id));
+  });
   document.getElementById("btnRefreshPrices").onclick = refreshPrices;
   document.getElementById("btnRefreshMkt").onclick = refreshPrices;
   document.getElementById("view-home").addEventListener("click", (e) => {
@@ -3306,6 +3390,8 @@
       openPocheSheet(splitPoche(portfolioTotals().holdings).poche);
       return;
     }
+    const venue = e.target.closest("[data-open-venue]")?.dataset?.openVenue;
+    if (venue) { openVenueName = venue; setView("venue"); renderVenue(); return; }
     const id = e.target.closest("[data-open-asset]")?.dataset?.openAsset;
     if (id) { openAssetId = id; setView("asset"); renderAsset(); }
     const del = e.target.closest("[data-del-cash]")?.dataset?.delCash;
@@ -3422,22 +3508,6 @@
       syncCashAmounts();
       saveState(); renderAll(); toast("Copie précédente restaurée");
     } catch (err) { toast("Copie illisible"); }
-  };
-  document.getElementById("btnPocket").onclick = () => {
-    state.settings.pocketMin = Math.max(0, n(document.getElementById("pocketMin").value));
-    saveState(); renderAll(); toast("Seuil enregistré");
-  };
-  document.getElementById("btnMotionOff").onclick = () => {
-    state.settings.motion = "off";
-    braiseLive = false;
-    vfxStop();
-    saveState(); renderAll();
-  };
-  document.getElementById("btnMotionOn").onclick = () => {
-    state.settings.motion = "on";
-    saveState();
-    startBraiseWindow();
-    renderAll();
   };
   document.getElementById("veilBtn").onclick = toggleVeil;
   document.getElementById("btnReset").onclick = () => {
