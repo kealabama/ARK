@@ -522,17 +522,17 @@
     }
 
     #holdingsCard.card { background: transparent; padding: 0 .05rem; border-radius: 0; }
-    #holdingsCard .pos, #holdingsCard .pal {
-      background: transparent !important;
-      border: 0 !important;
-      border-bottom: 1px solid #ffffff14 !important;
-      border-radius: 0 !important;
-      margin: 0 !important;
-      box-shadow: none !important;
+    #holdingsCard .pos:not(.pal) {
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid #ffffff14;
+      border-radius: 0;
+      margin: 0;
+      box-shadow: none;
       width: 100%;
-      padding: 1rem 0 !important;
-      animation: none !important;
+      padding: 1rem 0;
     }
+    #holdingsCard .pal { margin: .35rem 0; }
     #holdingsCard .pos { opacity: 1; }
     .libre {
       display: flex; flex-direction: column; align-items: flex-start;
@@ -765,8 +765,8 @@
   const STORAGE_KEY = "ark.local.v1";
   const PRICE_KEY = "ark.local.prices.v1";
   const HIST_KEY = "ark.local.hist.v1";
-  const APP_VERSION = "009.5";
-  const APP_BUILT = "17.10.2026 08:20";
+  const APP_VERSION = "009.6";
+  const APP_BUILT = "17.10.2026 08:30";
   const LOCK_KEY = "ark.local.lock.v1";
   const UNLOCK_KEY = "ark.session.unlock";
   (function migrateVelaKeys() {
